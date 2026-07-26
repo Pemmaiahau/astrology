@@ -32,6 +32,10 @@ interface ChartContextValue {
   setAyanamsha: (a: AyanamshaId) => void;
   chartStyle: "rashi" | "chalit";
   setChartStyle: (s: "rashi" | "chalit") => void;
+  predictionYear: number;
+  setPredictionYear: (y: number) => void;
+  predictionWindow: "calendar" | "solar";
+  setPredictionWindow: (w: "calendar" | "solar") => void;
   commitAuto: (d: AutoInputState) => void;
   commitManual: (d: ManualInputState) => void;
   chart: ChartData | null;
@@ -53,6 +57,8 @@ export function ChartProvider({ children }: { children: ReactNode }) {
   const [chartStyle, setChartStyle] = useState<"rashi" | "chalit">("rashi");
   const [committed, setCommitted] = useState<CommittedInput>(null);
   const [now] = useState(() => new Date());
+  const [predictionYear, setPredictionYear] = useState(() => new Date().getFullYear());
+  const [predictionWindow, setPredictionWindow] = useState<"calendar" | "solar">("calendar");
 
   const chart = useMemo<ChartData | null>(() => {
     if (!committed) return null;
@@ -121,6 +127,10 @@ export function ChartProvider({ children }: { children: ReactNode }) {
     setAyanamsha,
     chartStyle,
     setChartStyle,
+    predictionYear,
+    setPredictionYear,
+    predictionWindow,
+    setPredictionWindow,
     commitAuto: (d) => setCommitted({ kind: "auto", data: d }),
     commitManual: (d) => setCommitted({ kind: "manual", data: d }),
     chart,

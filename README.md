@@ -2,6 +2,8 @@
 
 A production-ready Vedic astrology web application: Next.js 15 (App Router) + TypeScript + Tailwind CSS 4 + Lucide icons, fully client-side calculation, optimized for Vercel.
 
+For how the calculation and prediction engine actually works (file-by-file, formulas, and where to make changes), see [ENGINE.md](ENGINE.md).
+
 ## Features
 
 - **Two input modes**

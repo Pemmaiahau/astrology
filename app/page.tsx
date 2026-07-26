@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   BookOpen,
   CalendarDays,
+  Compass,
   Grid3x3,
   Hourglass,
   Moon,
@@ -20,6 +21,7 @@ import ManualInput from "@/components/inputs/ManualInput";
 import DashaPanel from "@/components/panels/DashaPanel";
 import FunctionalLords from "@/components/panels/FunctionalLords";
 import InterpretationPanel from "@/components/panels/InterpretationPanel";
+import LifeAreasPanel from "@/components/panels/LifeAreasPanel";
 import PanchangPanel from "@/components/panels/PanchangPanel";
 import PredictionPanel from "@/components/panels/PredictionPanel";
 import { AYANAMSHA_LABELS } from "@/utils/astrology/ayanamsha";
@@ -27,6 +29,7 @@ import type { AyanamshaId } from "@/utils/astrology/types";
 
 const TABS = [
   { key: "interpret", label: "Interpretation", icon: BookOpen },
+  { key: "life", label: "Life Areas", icon: Compass },
   { key: "dasha", label: "Dasha", icon: Hourglass },
   { key: "predict", label: "Predictions", icon: TrendingUp },
   { key: "panchang", label: "Panchang", icon: CalendarDays },
@@ -175,6 +178,7 @@ function Workspace() {
               ))}
             </div>
             {tab === "interpret" && <InterpretationPanel />}
+            {tab === "life" && <LifeAreasPanel />}
             {tab === "dasha" && <DashaPanel />}
             {tab === "predict" && <PredictionPanel />}
             {tab === "panchang" && <PanchangPanel />}

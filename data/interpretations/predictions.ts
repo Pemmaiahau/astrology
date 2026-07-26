@@ -11,7 +11,7 @@ export interface PredictionSection {
   paragraphs: string[];
 }
 
-function dashaLordAssessment(chart: ChartData, lord: PlanetId, role: string): string {
+export function dashaLordAssessment(chart: ChartData, lord: PlanetId, role: string): string {
   const p = chart.planets.find((q) => q.id === lord);
   if (!p) return "";
   const owned = ownedHouses(lord, chart.ascendant.sign);
