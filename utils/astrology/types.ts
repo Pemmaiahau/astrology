@@ -4,6 +4,9 @@ export type PlanetId = "Su" | "Mo" | "Ma" | "Me" | "Ju" | "Ve" | "Sa" | "Ra" | "
 
 export type AyanamshaId = "lahiri" | "pushya";
 
+/** Natural relationship between a planet and the lord of the nakshatra it occupies. */
+export type NakshatraRelation = "self" | "friend" | "neutral" | "enemy";
+
 export type Dignity =
   | "exalted"
   | "moolatrikona"
@@ -31,6 +34,10 @@ export interface PlanetPosition {
   nakshatra: number;
   /** 1–4 */
   pada: number;
+  /** Dispositor of the occupied nakshatra (Vimshottari lord of that nakshatra) */
+  nakshatraLord: PlanetId;
+  /** Natural relation of this planet to its nakshatra dispositor */
+  nakshatraRelation: NakshatraRelation;
   retrograde: boolean;
   combust: boolean;
   /** degrees/day, sidereal (negative = retrograde) */

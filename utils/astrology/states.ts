@@ -2,13 +2,14 @@ import {
   COMBUSTION_ORBS,
   EXALTATION,
   MOOLATRIKONA,
+  NAKSHATRA_LORDS,
   NATURAL_ENEMIES,
   NATURAL_FRIENDS,
   OWN_SIGNS,
   SIGN_LORDS,
 } from "./constants";
 import { separation, signOf } from "./math";
-import type { Dignity, PlanetId, PlanetPosition } from "./types";
+import type { Dignity, NakshatraRelation, PlanetId, PlanetPosition } from "./types";
 
 /**
  * Compound dignity: naisargika (natural) relationship combined with
@@ -53,6 +54,25 @@ export function computeDignity(
   if (score === 0) return "neutral";
   if (score === -1) return "enemy";
   return "greatEnemy";
+}
+
+/**
+ * The nakshatra dispositor (Vimshottari lord of the occupied nakshatra) and the
+ * planet's naisargika relation to it. A planet in its own nakshatra acts with
+ * undiluted intent; in an enemy's nakshatra its results are filtered through a
+ * hostile agent even when the sign-based dignity is strong. Lives here beside
+ * `computeDignity` because it is a per-planet state, and so that `chart.ts` can
+ * populate it without importing the strength/ashtakavarga graph.
+ */
+export function nakshatraRelation(
+  id: PlanetId,
+  nakshatra: number
+): { lord: PlanetId; relation: NakshatraRelation } {
+  const lord = NAKSHATRA_LORDS[nakshatra];
+  if (lord === id) return { lord, relation: "self" };
+  if (NATURAL_FRIENDS[id].includes(lord)) return { lord, relation: "friend" };
+  if (NATURAL_ENEMIES[id].includes(lord)) return { lord, relation: "enemy" };
+  return { lord, relation: "neutral" };
 }
 
 export function isCombust(id: PlanetId, longitude: number, sunLongitude: number, retro: boolean): boolean {

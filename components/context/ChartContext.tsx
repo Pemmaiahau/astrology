@@ -7,6 +7,12 @@ import { computeAshtakavarga, type AshtakavargaResult } from "@/utils/astrology/
 import { computePanchang } from "@/utils/astrology/panchang";
 import { currentTransits, sadeSatiPhase } from "@/utils/astrology/transits";
 import { detectYogas } from "@/utils/astrology/yogas";
+import { allStrengths, type PlanetStrength } from "@/utils/astrology/strength";
+import { interpretFullChart, type HouseInterpretation } from "@/data/interpretations/synthesis";
+import {
+  buildPersonalityProfile,
+  type PersonalityProfile,
+} from "@/data/interpretations/personality";
 import { PLANETS } from "@/utils/astrology/constants";
 import type {
   AutoInputState,
@@ -46,6 +52,10 @@ interface ChartContextValue {
   panchang: PanchangData | null;
   ashtakavarga: AshtakavargaResult | null;
   yogas: YogaFinding[];
+  strengths: Partial<Record<PlanetId, PlanetStrength>>;
+  /** All twelve houses, occupied or not */
+  houseReadings: HouseInterpretation[];
+  personality: PersonalityProfile | null;
   now: Date;
 }
 
@@ -120,6 +130,21 @@ export function ChartProvider({ children }: { children: ReactNode }) {
 
   const yogas = useMemo(() => (chart ? detectYogas(chart) : []), [chart]);
 
+  const strengths = useMemo(
+    () => (chart ? allStrengths(chart, ashtakavarga) : {}),
+    [chart, ashtakavarga]
+  );
+
+  const houseReadings = useMemo(
+    () => (chart ? interpretFullChart(chart, strengths) : []),
+    [chart, strengths]
+  );
+
+  const personality = useMemo(
+    () => (chart ? buildPersonalityProfile(chart, strengths, yogas) : null),
+    [chart, strengths, yogas]
+  );
+
   const value: ChartContextValue = {
     mode,
     setMode,
@@ -141,6 +166,9 @@ export function ChartProvider({ children }: { children: ReactNode }) {
     panchang,
     ashtakavarga,
     yogas,
+    strengths,
+    houseReadings,
+    personality,
     now,
   };
 

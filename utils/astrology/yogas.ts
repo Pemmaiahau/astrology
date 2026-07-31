@@ -116,6 +116,51 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
     });
   }
 
+  // --- Pancha Mahapurusha Yogas ---
+  // One of the five tara grahas in its own sign or exaltation AND in a kendra
+  // from the Lagna. Read from the Rashi (whole-sign) house, consistent with the
+  // rest of this file. Moolatrikona counts as own-sign for this purpose.
+  const MAHAPURUSHA: Record<string, { name: string; trait: string }> = {
+    Ma: {
+      name: "Ruchaka",
+      trait:
+        "a commanding, athletic physicality and fearless executive nerve. The native leads from the front, thrives in competition, defence, surgery or engineering, and carries authority that is taken rather than granted. Anger is the tax on the gift.",
+    },
+    Me: {
+      name: "Bhadra",
+      trait:
+        "an exceptionally quick, articulate and commercially fluent intelligence. Learning comes fast, speech persuades, and the native is trusted with analysis, negotiation and the written word. Restlessness and over-cleverness are the failure modes.",
+    },
+    Ju: {
+      name: "Hamsa",
+      trait:
+        "a dignified, principled and genuinely wise bearing. Others bring this native their decisions; teaching, counsel, law and philanthropy come naturally, and reputation outruns self-promotion. Moral certainty is the only excess to watch.",
+    },
+    Ve: {
+      name: "Malavya",
+      trait:
+        "beauty, refinement and magnetic social grace, with real comfort and artistic capacity in the life. Relationships, luxury, design and diplomacy all favour this native. Indulgence, not scarcity, is the discipline required.",
+    },
+    Sa: {
+      name: "Sasa",
+      trait:
+        "formidable endurance and organisational authority built slowly and held for a long time. The native governs systems, labour and institutions, and outlasts flashier rivals. Coldness and a taste for control are the shadow.",
+    },
+  };
+
+  for (const p of chart.planets) {
+    const mp = MAHAPURUSHA[p.id];
+    if (!mp) continue;
+    const dignified = p.dignity === "exalted" || p.dignity === "own" || p.dignity === "moolatrikona";
+    if (!dignified || !KENDRA.includes(p.house)) continue;
+    out.push({
+      key: `mahapurusha-${p.id}`,
+      name: `${mp.name} Yoga (Pancha Mahapurusha)`,
+      planets: [p.id],
+      description: `${PLANET_NAMES[p.id]} is ${p.dignity === "exalted" ? "exalted" : p.dignity === "moolatrikona" ? "in its moolatrikona" : "in its own sign"} and occupies the ${p.house}th house, a kendra — one of the five Mahapurusha ("great person") combinations. It stamps the whole personality with ${mp.trait}`,
+    });
+  }
+
   // --- Yogakaraka placement ---
   const YOGAKARAKA: Partial<Record<number, PlanetId>> = {
     3: "Ma", 4: "Ma", 1: "Sa", 6: "Sa", 9: "Ve", 10: "Ve",

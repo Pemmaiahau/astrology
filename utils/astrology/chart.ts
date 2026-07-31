@@ -4,7 +4,7 @@ import { PLANETS } from "./constants";
 import { dailySpeed, isRetrograde, tropicalLongitude } from "./ephemeris";
 import { bhavaOf, sripatiHouses } from "./houses";
 import { degInSign, houseFromSign, nakshatraOf, norm360, padaOf, signOf } from "./math";
-import { applyGrahaYuddha, computeDignity, isCombust } from "./states";
+import { applyGrahaYuddha, computeDignity, isCombust, nakshatraRelation } from "./states";
 import { localToUtc } from "./time";
 import type {
   AutoInputState,
@@ -35,6 +35,8 @@ export function computeAutoChart(input: AutoInputState, ayanamsha: AyanamshaId):
   const planets: PlanetPosition[] = PLANETS.map((id) => {
     const lonSid = longitudes[id]!;
     const retro = isRetrograde(id, utc);
+    const nak = nakshatraOf(lonSid);
+    const nakRel = nakshatraRelation(id, nak);
     return {
       id,
       longitude: lonSid,
@@ -42,8 +44,10 @@ export function computeAutoChart(input: AutoInputState, ayanamsha: AyanamshaId):
       degInSign: degInSign(lonSid),
       house: houseFromSign(signOf(lonSid), lagnaSign),
       bhava: bhavaOf(lonSid, sandhi),
-      nakshatra: nakshatraOf(lonSid),
+      nakshatra: nak,
       pada: padaOf(lonSid),
+      nakshatraLord: nakRel.lord,
+      nakshatraRelation: nakRel.relation,
       retrograde: retro,
       combust: id !== "Su" && isCombust(id, lonSid, sunLon, retro),
       speed: dailySpeed(id, utc),
@@ -116,6 +120,8 @@ export function computeManualChart(input: ManualInputState, ayanamsha: Ayanamsha
   const planets: PlanetPosition[] = input.planets.map((mp) => {
     const lonSid = longitudes[mp.id]!;
     const retro = mp.id === "Ra" || mp.id === "Ke" ? false : mp.retro;
+    const nak = nakshatraOf(lonSid);
+    const nakRel = nakshatraRelation(mp.id, nak);
     return {
       id: mp.id,
       longitude: lonSid,
@@ -123,8 +129,10 @@ export function computeManualChart(input: ManualInputState, ayanamsha: Ayanamsha
       degInSign: degInSign(lonSid),
       house: mp.house,
       bhava: sandhi ? bhavaOf(lonSid, sandhi) : mp.house,
-      nakshatra: nakshatraOf(lonSid),
+      nakshatra: nak,
       pada: padaOf(lonSid),
+      nakshatraLord: nakRel.lord,
+      nakshatraRelation: nakRel.relation,
       retrograde: retro,
       combust: mp.id !== "Su" && isCombust(mp.id, lonSid, sunLon, retro),
       speed: retro ? -0.1 : 0.5,

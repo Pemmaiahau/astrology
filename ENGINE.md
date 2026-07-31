@@ -24,6 +24,8 @@ ChartData  { ascendant, mc, planets[], cusps, sandhis, birthUtc, lat/lon, meta }
         ├──► utils/astrology/ashtakavarga.ts → BAV/SAV bindu grids
         ├──► utils/astrology/transits.ts     → live gochara + Sade Sati phase
         ├──► utils/astrology/yogas.ts        → rule-based yoga detection
+        ├──► utils/astrology/aspects.ts      → graha drishti (with offsets)
+        ├──► utils/astrology/strength.ts     → composite strength + conjunction strength
         │
         ▼
 data/interpretations/*  (pure text/composition layer, no astronomy)
@@ -169,7 +171,8 @@ Two house systems coexist:
 Parashari drishti, **whole-sign** based (a drishti either lands on a sign or it doesn't — the classical partial aspects of 3/4, 1/2, 1/4 strength are deliberately not modelled):
 
 - Every graha aspects the 7th sign from itself; `SPECIAL_DRISHTI` adds Mars 4/8, Jupiter 5/9, Saturn 3/10, and **Rahu/Ketu 5/9** (the BPHS reading — some traditions omit nodal drishti entirely; changing that is a one-line edit to `SPECIAL_DRISHTI`).
-- `aspectedSigns(id, fromSign)` — signs receiving a planet's drishti. `aspectsOnSign` / `aspectsOnHouse` / `planetsAspecting` — the reverse lookups. **Occupancy is not an aspect**: a planet never "aspects" the sign it sits in (conjunction is handled separately in `conjunctions.ts`).
+- `aspectedSigns(id, fromSign)` — signs receiving a planet's drishti. `aspectsOnSign` / `aspectsOnHouse` / `planetsAspecting` — the reverse lookups, returning bare `PlanetId[]`. **Occupancy is not an aspect**: a planet never "aspects" the sign it sits in (conjunction is handled separately in `conjunctions.ts`).
+- `drishtiOnSign(chart, sign)` / `drishtiOnHouse(chart, house)` — the same reverse lookup but returning `Drishti[]` (`{ from, offset, special }`), i.e. carrying **which** aspect landed. Added for the interpretation layer, which reads Saturn's 3rd (grinding), 7th (delaying) and 10th (imposing duty) differently, and Jupiter's 5th differently from its 9th. The bare-id functions are deliberately left untouched so `strength.ts`/`lifeAreas.ts` are unaffected. A planet can never cast two drishtis on one sign (the offset sets are pairwise distinct), so entries are unique per `from`.
 - `naturalBenefics(chart)` — Jupiter and Venus always; the **Moon only when waxing** (Shukla paksha, elongation < 180°); **Mercury only when not sharing a sign with a natural malefic** (Su/Ma/Sa/Ra/Ke). `naturalMalefics` is the complement. This is the classical conditional-benefic rule, so benefic/malefic drishti verdicts are chart-specific, not static.
 
 ### 10b. Composite planetary strength — [utils/astrology/strength.ts](utils/astrology/strength.ts)
@@ -188,7 +191,18 @@ A transparent 0–100 score per planet — **deliberately not Shadbala** (the fu
 | Nakshatra dispositor (self/friend/neutral/enemy) | +6/+4/0/−4 |
 | Ashtakavarga bindus in occupied sign (7 planets) | ±2 per bindu from 4, capped ±8 |
 
-Clamped 0–100 → grade: ≥75 Excellent, ≥60 Strong, ≥45 Moderate, ≥30 Weak, else Afflicted. `nakshatraRelation(id, nakshatra)` also stands alone — it's the "nakshatra lord of the planet and its relationship" primitive. `allStrengths(chart, av)` computes all nine at once.
+Clamped 0–100 → grade: ≥75 Excellent, ≥60 Strong, ≥45 Moderate, ≥30 Weak, else Afflicted. `allStrengths(chart, av)` computes all nine at once.
+
+`nakshatraRelation(id, nakshatra)` **now lives in `states.ts`** (re-exported here for existing callers) so that `chart.ts` can populate `PlanetPosition.nakshatraLord`/`.nakshatraRelation` without importing the strength/ashtakavarga dependency graph. `computeStrength` reads those fields off the planet rather than recomputing them.
+
+**`conjunctionStrength(chart, strengths, members)` → `ConjunctionStrength | null`** — how forcefully a conjunction actually expresses, which the static per-pair text in `conjunctions.ts` cannot say on its own. Takes a **precomputed strengths map** (not an `AshtakavargaResult`) so a house with several conjunctions doesn't recompute composites. Returns `{ members, orb, score, tier, leader, factors }`:
+
+- `orb` is the **widest pairwise separation** among members — the group's *span*. For a pair that is just the orb; for 3+ it measures real fusion (three grahas spread over 25° of one sign share a sign, not a blend).
+- `score` = base 50 + each member's `(composite − 50) / memberCount` (so members contribute their mean) + an orb band (+12 at ≤1° down to −8 above 15°) + the two afflictions a *per-planet* score structurally cannot see: a graha yuddha fought **between two members** (−6) and a member burnt by a Sun that is **itself in the group** (−6). Individual dignity/retrogression/combustion are already inside each composite and are deliberately **not** re-charged.
+- `tier`: `Dominant` (≥65 **and** orb ≤6°), `Balanced` (≥52), `Weak blend` (≥38), else `Afflicted`. A high-scoring but wide conjunction is Balanced, never Dominant — tightness is required for dominance.
+- `leader` = highest composite among members ("who chairs the combination").
+
+Weights and tier cut-offs here are tuning knobs of the same kind as the composite score itself — directionally classical, not shastra.
 
 ## 11. Chart orchestrator — [utils/astrology/chart.ts](utils/astrology/chart.ts)
 
@@ -285,6 +299,7 @@ Rule-based, returns `YogaFinding[]` (key/name/planets/description — descriptio
 - **Budhaditya Yoga** — Sun+Mercury conjunct (same sign).
 - **Chandra-Mangala Yoga** — Moon+Mars conjunct.
 - **Yogakaraka in Strength** — the lagna's yogakaraka (from `FUNCTIONAL_ROLES`, see §17) placed in a kendra or trikona (5/9).
+- **Pancha Mahapurusha** (`mahapurusha-<id>`) — Ruchaka (Mars) / Bhadra (Mercury) / Hamsa (Jupiter) / Malavya (Venus) / Sasa (Saturn): the graha in its **own sign, moolatrikona or exaltation** *and* in a **kendra from the Lagna**. Read from the Rashi house like everything else here. Moolatrikona is accepted as own-sign for this test. These are the most personality-defining classical yogas and are consumed by the personality profile (§17c) as well as displayed.
 
 `ownedHouses(id, lagnaSign)` is the shared helper (which houses a planet rules for this Lagna) — reused heavily by `lordships.ts`/`synthesis.ts`/`predictions.ts` too, so it effectively lives at the boundary between "calculation" and "interpretation."
 
@@ -305,7 +320,12 @@ This layer is **pure text composition** — no astronomy, only conditionals over
 `PLANET_IN_HOUSE[planet][house-1]` — the 9×12 = **108 curated core paragraphs**, one per planet-in-whole-sign-house combination, written in a consistent "professional astrologer" voice. This is the single largest content surface in the app and the most likely target for "the wording for X placement should say Y instead."
 
 ### [conjunctions.ts](data/interpretations/conjunctions.ts)
-`CONJUNCTION_TEXT` — 35 hand-written two-planet conjunction readings (all pairs except Rahu-Ketu, which can't conjoin), keyed by `conjunctionKey(a,b)` (canonical order via `PLANETS` array index so `"Ma-Su"` and `"Su-Ma"` normalize to the same key). Triple+ conjunctions are **not** individually curated — `synthesis.ts` combines the pairwise texts and adds one generic sentence naming the dignity-strongest planet as "chairing" the combination (see `interpretHouse`, the `occupants.length === 3` branch).
+`CONJUNCTION_TEXT` — 35 hand-written two-planet conjunction readings (all pairs except Rahu-Ketu, which can't conjoin), keyed by `conjunctionKey(a,b)` (canonical order via `PLANETS` array index so `"Ma-Su"` and `"Su-Ma"` normalize to the same key). These texts are **static** — they say what a pairing means, never how strongly it fires. `synthesis.ts` appends a measured qualifier from `conjunctionStrength` (§10b) to each one; triple+ conjunctions are still not individually curated, but the group now gets a real scored verdict rather than a dignity-rank guess.
+
+### [aspectTexts.ts](data/interpretations/aspectTexts.ts)
+`ASPECT_ON_HOUSE[planet][house-1]` — **9 × 12 = 108 curated paragraphs**, the drishti counterpart to `planetInHouse.ts`: what each graha's aspect does to each house. This is the content surface that makes a *vacant* house readable and an occupied one properly qualified. `DRISHTI_CHARACTER[planet][offset]` + `drishtiCharacter(from, offset)` name the specific glance that landed (Saturn's 3rd vs 7th vs 10th, Jupiter's 5th vs 9th), falling back to the universal 7th for planets with no special drishti.
+
+**This and `planetInHouse.ts` are the two biggest content surfaces in the app** — "the wording for X aspecting the Nth should say Y" is an edit here, not in the synthesis engine.
 
 ### [transitTexts.ts](data/interpretations/transitTexts.ts)
 - `SATURN_FROM_MOON` / `JUPITER_FROM_MOON` / `RAHU_FROM_MOON` / `KETU_FROM_MOON` — 12 entries each (house-from-Moon 1–12), classical gochara phalam for the four slow/nodal transits, including the Sade Sati narrative baked into the Saturn table's own house-4/1/2/12 entries (`Kantaka Shani` etc.).
@@ -316,16 +336,35 @@ This layer is **pure text composition** — no astronomy, only conditionals over
 - `VARA_TEXT` (7), `KARANA_TEXT` (11), `YOGA_TEXT` (27) — birth-panchang trait readings, consumed by `PanchangPanel.tsx`.
 
 ### [synthesis.ts](data/interpretations/synthesis.ts) — the house-by-house composer
-`interpretHouse(chart, house)` builds one house's full write-up by layering, in order:
-1. House signification header (`HOUSE_SIGNIFICATIONS`).
-2. Per occupant: `lordshipSentence` (which houses this planet rules for this Lagna + functional classification from `lordships.ts`, computed via `ownedHouses`) → the curated `PLANET_IN_HOUSE` core → `stateSentences` (dignity modifier sentence from `DIGNITY_MODIFIER`, plus conditional retrograde/combust/Graha-Yuddha sentences).
-3. If Bhava Chalit shifted this planet's house (`p.bhava !== p.house`), an explanatory note pointing the reader to read *results* from the bhava while keeping *dignity* from the sign.
-4. Pairwise conjunction text for every occupant pair (from `conjunctions.ts`), plus a synthesizing sentence if 3 planets share the house.
 
-`lagnaOverview(chart)` — a short Lagna-sign + Lagna-lord-placement paragraph, shown above the house-by-house breakdown.
-`interpretFullChart(chart)` — runs `interpretHouse` for all 12 houses, skipping empty ones.
+`interpretHouse(chart, house, strengths?)` builds one house's full write-up. It returns a `HouseInterpretation` for **every** house 1–12 — it no longer returns `null` for vacant houses, because a house with no occupant is not unreadable, it is read *the classical way*: by its lord and by the drishti it receives. Layers, in order:
+
+1. **The field** — sign + `HOUSE_SIGNIFICATIONS`, and whether the house is occupied, singly occupied, or vacant.
+2. **The lord** — `SIGN_LORDS[sign]`, its placement/dignity/state flags, its house **counted from the house it rules** (`fromOwnHouse`; 1 = in its own house, dusthana-from-own = undermined from within), which house its placement carries the agenda into, and a strength-tiered verdict (uses composite strength when available, falls back to dignity bands when not).
+3. **The lord's nakshatra** — star, pada, dispositor and the friend/enemy relation to it (`NAKSHATRA_QUALITIES` + `NAK_RELATION_TEXT`), i.e. *how* the house's results get transmitted.
+4. **Per occupant** — `lordshipSentence` → curated `PLANET_IN_HOUSE` core → `stateSentences` → Bhava Chalit note when `p.bhava !== p.house` → **its own nakshatra sentence**.
+5. **Nakshatra threads** — explicit call-outs when the house lord and an occupant, or two occupants, share a nakshatra dispositor (compounding signal: that dispositor's dasha activates the house twice over).
+6. **Drishti** — one paragraph per incoming aspect: source house/sign/dignity/state, natural benefic-or-malefic **for this chart** (`naturalBenefics`, so it is paksha- and association-conditional), functional role for this Lagna, the curated `ASPECT_ON_HOUSE` text, and a qualifier that crosses benefic/malefic × dignity × functional role (including the "naturally benefic but functionally adverse" split). Closed by an aspect-balance sentence — including the genuine "no graha aspects this house" case.
+7. **Conjunctions** — the static pair text plus a `conjunctionStrength` qualifier per tier; for 3+ occupants a scored committee verdict naming the leader, span and tier.
+8. **Vacant-house close** — an explicit "in sum, this house rests on its lord and these aspects" judgement.
+
+`interpretFullChart(chart, strengths?)` — all 12 houses, in order, none skipped.
+`functionalRole(id, lagnaSign)` and `ordinal(n)` are exported helpers reused by `personality.ts`.
 
 **This is the file to edit if you want to change *how* placements are described (structure/ordering/tone)**, as opposed to *what* they say (that's the data files above).
+
+### 17c. Personality profile — [personality.ts](data/interpretations/personality.ts)
+
+`buildPersonalityProfile(chart, strengths, yogas) → PersonalityProfile` (`{ headline, sections[], strongest, weakest }`). Character is read from the three classical seats at once and then modified by measured strength and by yoga:
+
+1. **Lagna — the body and the bearing**: `LAGNA_TEMPERAMENT[12]` + the *rising nakshatra*, then the Lagna lord's house/sign/dignity/composite/nakshatra, then the `FUNCTIONAL_ROLES` note.
+2. **Chandra — the mind and its weather**: `MOON_MIND[12]` + the Moon's nakshatra (flagged as the chart's most personal signature, since it also sets the Vimshottari sequence) + the house its emotional life orbits.
+3. **Surya — the will and the self**: `SUN_CORE[12]` + the house the identity is staked on + the Sun's nakshatra.
+4. **The strong / weak axis**: highest and lowest composite from `allStrengths`, each with its top ±3 contributing factors quoted, framed as the negotiation the personality actually is.
+5. **Yoga signatures**: yogas partitioned into *temperament* (`mahapurusha-*`, `gajakesari`, `budhaditya`, `chandra-mangala`, `yk-*`) and *resilience* (`nbrj-*`, `vrj-*`), folded into narrative rather than listed. The no-yoga case is written copy, not an empty section.
+6. **Functional weather**: yogakaraka/benefics/malefics/neutrals for the Lagna, each with placement, dignity and composite grade.
+
+This **replaces `lagnaOverview()`**, which is gone from `synthesis.ts` — its content is absorbed into section 1. It is pure text composition; no astronomy, no new computation beyond what `strengths`/`yogas` already carry.
 
 ### [predictions.ts](data/interpretations/predictions.ts) — time-bound forecasting
 Two entry points, both pure functions of already-computed state (no new astronomy):
@@ -383,7 +422,9 @@ Rendered by [LifeAreasPanel.tsx](components/panels/LifeAreasPanel.tsx) (expandab
 
 ## 18. Wiring — [components/context/ChartContext.tsx](components/context/ChartContext.tsx)
 
-`ChartProvider` holds all UI state (`mode`, `ayanamsha`, `chartStyle`, plus `predictionYear`/`predictionWindow` for the year-forecast selector) and the **committed** input (`commitAuto`/`commitManual` — the chart only recomputes when the user submits, not on every keystroke). Everything computed (`chart`, `dashaTree`, `activeDasha`, `transits`, `sadeSati`, `panchang`, `ashtakavarga`, `yogas`) is a `useMemo` cascade off `committed`/`ayanamsha`/`now`. `now` is captured **once** at provider mount (`useState(() => new Date())`), not live-updating — "current transits" means "at page load," not a ticking clock.
+`ChartProvider` holds all UI state (`mode`, `ayanamsha`, `chartStyle`, plus `predictionYear`/`predictionWindow` for the year-forecast selector) and the **committed** input (`commitAuto`/`commitManual` — the chart only recomputes when the user submits, not on every keystroke). Everything computed (`chart`, `dashaTree`, `activeDasha`, `transits`, `sadeSati`, `panchang`, `ashtakavarga`, `yogas`, `strengths`, `houseReadings`, `personality`) is a `useMemo` cascade off `committed`/`ayanamsha`/`now`.
+
+`strengths` (`allStrengths`), `houseReadings` (`interpretFullChart`, all 12) and `personality` (`buildPersonalityProfile`) are computed **once here** and threaded to panels, rather than re-derived per panel — `houseReadings` and `personality` both consume `strengths`, so computing it in the provider avoids three separate composite passes. `LifeAreasPanel` still computes its own report locally (it is off the global cascade by design, like the year forecast); it could be pointed at `strengths` if that ever becomes a hot path. `now` is captured **once** at provider mount (`useState(() => new Date())`), not live-updating — "current transits" means "at page load," not a ticking clock.
 
 **Year forecast wiring**: `predictionYear` (default = current year) and `predictionWindow` (`"calendar"` | `"solar"`, default calendar) live in context so they persist across tab switches. The actual forecast is *not* computed in the provider — [PredictionPanel.tsx](components/panels/PredictionPanel.tsx) does it locally with its own `useMemo`s: first it derives the `{start, end}` window (calendar bounds, or `solarReturn()` bounds when solar mode + birth data), then calls `buildYearForecast(chart, dashaTree, ayanamsha, start, end)`. This keeps the (potentially heavier, span-scanning) forecast off the global cascade so it only runs when the Predictions tab is open and its selector changes. Solar-return mode is disabled in the UI when there's no birth anchor.
 
@@ -405,7 +446,10 @@ These were deliberate, verified choices — see also the `aipems-astrology` memo
 - **Graha Yuddha winner = lower degree-in-sign.** This is one defensible convention among a few in classical literature; if a user cites a different tie-break rule they were taught, it's a one-line change in `applyGrahaYuddha` (states.ts), not a deep fix.
 - **"Now" for the *current*-state computations is frozen at page load** (`now` in ChartContext), not a live clock. A request for "live updating countdown to dasha change" or similar needs an actual timer (`setInterval`/`Date.now()` re-read), which this architecture doesn't currently provide. Note this does **not** limit the year forecast (§17a) — that takes an explicit selected year and computes transits/dasha at arbitrary past/future instants via `scan.ts`.
 - **Solar-return mode is a *sidereal* solar return** (Sun back to natal *sidereal* longitude), which is why consecutive returns are one sidereal year apart. It is **not** the full classical Varshaphal/Tajika annual-chart system (no muntha, year-lord, sahams, or mudda dasha) — it's the existing snapshot techniques re-based to a birthday-to-birthday window. A true Tajika build would be a separate, much larger feature.
-- **Drishti is whole-sign and binary** — no Parashari partial aspects (3/4, 1/2, 1/4) and no degree-based orbs. **Rahu/Ketu are given 5/7/9 drishti** (BPHS reading); traditions that deny nodal aspects would edit `SPECIAL_DRISHTI` in aspects.ts. Conjunction (same sign) is intentionally *not* counted as an aspect anywhere.
+- **Drishti is whole-sign and binary** — no Parashari partial aspects (3/4, 1/2, 1/4) and no degree-based orbs. **Rahu/Ketu are given 5/7/9 drishti** (BPHS reading); traditions that deny nodal aspects would edit `SPECIAL_DRISHTI` in aspects.ts. Conjunction (same sign) is intentionally *not* counted as an aspect anywhere. The *interpretation* layer now distinguishes **which** drishti landed (`Drishti.offset`), but that is narrative granularity only — it does not reintroduce partial-strength aspects into any calculation.
+- **Conjunction orb is measured in degrees, but conjunction itself is still whole-sign.** `conjunctionStrength` uses real separation to grade how fused a combination is, yet two planets only *count* as conjunct when they share a sign (`interpretHouse` groups by house occupancy). Two planets 3° apart across a sign boundary are not treated as a conjunction. That is consistent with the rest of the engine's whole-sign stance; changing it would be a genuine convention change, not a refinement.
+- **Every house is now interpreted, including vacant ones.** `interpretHouse` never returns `null`. A house with no occupant is read from its lord and its drishti — the classical method — so the Interpretation tab always renders 12 sections. If a future change wants the old "occupied only" behaviour, filter on `HouseInterpretation.occupied` at the panel, don't reintroduce the null return.
+- **`PlanetPosition` carries `nakshatraLord`/`nakshatraRelation` as first-class fields**, populated in `chart.ts` from `states.ts`. `nakshatraRelation()` was moved out of `strength.ts` (which re-exports it) specifically so `chart.ts` need not depend on the strength/ashtakavarga graph. Don't move it back.
 - **The strength score is a composite heuristic, not Shadbala.** It is transparent (every factor listed) and directionally classical, but its weights (+25 exalted, −15 combust, etc.) are engineering choices, not shastra. Don't present it as Shadbala; if true Shadbala is requested, that's a new `shadbala.ts` with real time-based sub-balas.
 - **Life-area verdict thresholds (68/56/45/34) and score weights (0.5 lord / 0.35 karaka) are tuning knobs**, not classical constants — adjust freely in `lifeAreas.ts` if verdicts feel too harsh/generous. Marriage analysis is single-chart only (no synastry/kuta matching — that would be a separate feature taking two charts).
 - **Year-forecast segmentation is driven by antardasha changes + slow-planet (Ju/Sa/Ra/Ke) ingresses only.** Fast planets (Sun/Mars) appear in the month grid, not as segment boundaries; Mercury/Venus transits are not tracked at all yet. Deeper dasha levels (pratyantar) are *listed within* segments but don't themselves create new segments (that would over-fragment the year). If a request wants finer segmentation, that's a deliberate change to the boundary set in `buildYearForecast`.
@@ -418,8 +462,13 @@ These were deliberate, verified choices — see also the `aipems-astrology` memo
 | Feature request | Primary file(s) |
 |---|---|
 | New/changed placement wording | `data/interpretations/planetInHouse.ts` (and `conjunctions.ts` for pairs) |
+| New/changed **aspect** wording (planet aspecting a house) | `data/interpretations/aspectTexts.ts` (`ASPECT_ON_HOUSE`, 9×12) |
+| Reword which drishti landed (Saturn's 3rd vs 10th, etc.) | `data/interpretations/aspectTexts.ts` (`DRISHTI_CHARACTER`) |
+| Change house write-up structure/ordering, empty-house handling | `data/interpretations/synthesis.ts` (`interpretHouse`) |
+| Change/extend the personality reading | `data/interpretations/personality.ts` (+ its 3 × 12 temperament tables) |
+| Tune conjunction tiers, orb bands or conjunction scoring | `utils/astrology/strength.ts` (`conjunctionStrength`, `orbFactor`, `conjunctionTier`) |
 | New/changed "who's good/bad for this Lagna" logic | `data/interpretations/lordships.ts` |
-| New yoga (Raja Yoga variant, Dhana Yoga, Pancha Mahapurusha, etc.) | `utils/astrology/yogas.ts` |
+| New yoga (Raja Yoga variant, Dhana Yoga, etc. — Pancha Mahapurusha already present) | `utils/astrology/yogas.ts` |
 | New ayanamsha | `utils/astrology/ayanamsha.ts` + `types.ts` (`AyanamshaId`) + `app/page.tsx` toggle |
 | New divisional chart (D9, D10, D60…) | new file alongside `utils/astrology/chart.ts`, reusing stored sidereal longitudes |
 | New dasha system (Yogini, Ashtottari…) | new file alongside `utils/astrology/dasha.ts` |

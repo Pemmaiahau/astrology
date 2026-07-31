@@ -1,14 +1,12 @@
 import { naturalBenefics, planetsAspecting } from "./aspects";
 import type { AshtakavargaResult } from "./ashtakavarga";
-import {
-  NAKSHATRA_LORDS,
-  NAKSHATRAS,
-  NATURAL_ENEMIES,
-  NATURAL_FRIENDS,
-  PLANET_NAMES,
-  PLANETS,
-} from "./constants";
-import type { ChartData, Dignity, PlanetId } from "./types";
+import { NAKSHATRAS, PLANET_NAMES, PLANETS } from "./constants";
+import { separation } from "./math";
+import { nakshatraRelation } from "./states";
+import type { ChartData, Dignity, NakshatraRelation, PlanetId } from "./types";
+
+/** Re-exported from states.ts, where it now lives beside the other per-planet state derivations. */
+export { nakshatraRelation };
 
 /**
  * Composite planetary strength: a transparent 0–100 score assembled from the
@@ -33,7 +31,7 @@ export interface PlanetStrength {
   factors: StrengthFactor[];
   /** The planet's nakshatra dispositor and its natural relation to the planet. */
   nakshatraLord: PlanetId;
-  nakshatraRelation: "self" | "friend" | "neutral" | "enemy";
+  nakshatraRelation: NakshatraRelation;
 }
 
 const BASE = 40;
@@ -59,20 +57,16 @@ const HOUSE_DELTA: Record<number, number> = {
   1: 8, 2: 3, 3: 0, 4: 6, 5: 6, 6: -2, 7: 6, 8: -8, 9: 6, 10: 6, 11: 3, 12: -8,
 };
 
+const NAKSHATRA_RELATION_DELTA: Record<NakshatraRelation, number> = {
+  self: 6, friend: 4, neutral: 0, enemy: -4,
+};
+
 function grade(score: number): StrengthGrade {
   if (score >= 75) return "Excellent";
   if (score >= 60) return "Strong";
   if (score >= 45) return "Moderate";
   if (score >= 30) return "Weak";
   return "Afflicted";
-}
-
-export function nakshatraRelation(id: PlanetId, nakshatra: number): { lord: PlanetId; relation: "self" | "friend" | "neutral" | "enemy" } {
-  const lord = NAKSHATRA_LORDS[nakshatra];
-  if (lord === id) return { lord, relation: "self" };
-  if (NATURAL_FRIENDS[id].includes(lord)) return { lord, relation: "friend" };
-  if (NATURAL_ENEMIES[id].includes(lord)) return { lord, relation: "enemy" };
-  return { lord, relation: "neutral" };
 }
 
 export function computeStrength(
@@ -108,9 +102,11 @@ export function computeStrength(
     else add(`Aspect from ${PLANET_NAMES[q]}`, -5);
   }
 
-  const nak = nakshatraRelation(id, p.nakshatra);
-  const nakDelta = { self: 6, friend: 4, neutral: 0, enemy: -4 }[nak.relation];
-  add(`Nakshatra lord ${PLANET_NAMES[nak.lord]} (${NAKSHATRAS[p.nakshatra]}) — ${nak.relation}`, nakDelta);
+  const nakDelta = NAKSHATRA_RELATION_DELTA[p.nakshatraRelation];
+  add(
+    `Nakshatra lord ${PLANET_NAMES[p.nakshatraLord]} (${NAKSHATRAS[p.nakshatra]}) — ${p.nakshatraRelation}`,
+    nakDelta
+  );
 
   if (ashtakavarga && ashtakavarga.bav[id]) {
     const bindus = ashtakavarga.bav[id][p.sign];
@@ -121,7 +117,14 @@ export function computeStrength(
   const raw = BASE + factors.reduce((s, f) => s + f.delta, 0);
   const score = Math.max(0, Math.min(100, Math.round(raw)));
 
-  return { id, score, grade: grade(score), factors, nakshatraLord: nak.lord, nakshatraRelation: nak.relation };
+  return {
+    id,
+    score,
+    grade: grade(score),
+    factors,
+    nakshatraLord: p.nakshatraLord,
+    nakshatraRelation: p.nakshatraRelation,
+  };
 }
 
 export function allStrengths(
@@ -134,4 +137,113 @@ export function allStrengths(
     if (s) out[id] = s;
   }
   return out;
+}
+
+/* ------------------------------------------------------------------ *
+ * Conjunction strength
+ * ------------------------------------------------------------------ */
+
+export type ConjunctionTier = "Dominant" | "Balanced" | "Weak blend" | "Afflicted";
+
+export interface ConjunctionStrength {
+  members: PlanetId[];
+  /**
+   * Widest pairwise separation among the members, in degrees — the group's
+   * *span*. For a two-planet conjunction this is simply the orb; for three or
+   * more it measures how fused the group actually is (three grahas spread over
+   * 25° of one sign share a sign, not a blend).
+   */
+  orb: number;
+  /** 0–100 expressive force of the combination */
+  score: number;
+  tier: ConjunctionTier;
+  /** Member with the highest composite strength — the planet that sets the tone */
+  leader: PlanetId;
+  factors: StrengthFactor[];
+}
+
+/** Orb-band contribution: tightness intensifies a blend, distance dilutes it. */
+function orbFactor(orb: number): StrengthFactor {
+  const band =
+    orb <= 1 ? { delta: 12, word: "exact — the grahas act as one body" }
+    : orb <= 3 ? { delta: 8, word: "tight" }
+    : orb <= 6 ? { delta: 4, word: "close" }
+    : orb <= 10 ? { delta: 0, word: "moderate" }
+    : orb <= 15 ? { delta: -4, word: "wide" }
+    : { delta: -8, word: "very wide — a shared sign more than a true blend" };
+  return { label: `Orb ${orb.toFixed(1)}° (${band.word})`, delta: band.delta };
+}
+
+function conjunctionTier(score: number, orb: number): ConjunctionTier {
+  if (score >= 65 && orb <= 6) return "Dominant";
+  if (score >= 52) return "Balanced";
+  if (score >= 38) return "Weak blend";
+  return "Afflicted";
+}
+
+/**
+ * Expressive force of a conjunction, built on top of the composite scores the
+ * members already carry. Base 50 plus each member's deviation from 50 (shared
+ * out so the members average to their mean), plus the orb band, plus the two
+ * genuinely *conjunction-level* afflictions that a per-planet score cannot see:
+ * a graha yuddha fought between two members, and a member burnt by a Sun that
+ * is itself part of the group. Individual dignity, retrogression and general
+ * combustion are already inside each member's composite and are not re-charged.
+ */
+export function conjunctionStrength(
+  chart: ChartData,
+  strengths: Partial<Record<PlanetId, PlanetStrength>>,
+  members: PlanetId[]
+): ConjunctionStrength | null {
+  if (members.length < 2) return null;
+  const positions = members
+    .map((id) => chart.planets.find((p) => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => p !== undefined);
+  if (positions.length < 2) return null;
+
+  let orb = 0;
+  for (let i = 0; i < positions.length; i++) {
+    for (let j = i + 1; j < positions.length; j++) {
+      orb = Math.max(orb, separation(positions[i].longitude, positions[j].longitude));
+    }
+  }
+
+  const factors: StrengthFactor[] = [];
+  const share = positions.length;
+  for (const p of positions) {
+    const s = strengths[p.id];
+    if (!s) continue;
+    factors.push({
+      label: `${PLANET_NAMES[p.id]} composite ${s.score}/100 (${s.grade})`,
+      delta: Math.round((s.score - 50) / share),
+    });
+  }
+
+  factors.push(orbFactor(orb));
+
+  const ids = positions.map((p) => p.id);
+  const warPair = positions.find((p) => p.warWith && ids.includes(p.warWith));
+  if (warPair && warPair.warWith) {
+    factors.push({
+      label: `Graha yuddha fought inside the conjunction (${PLANET_NAMES[warPair.id]} vs ${PLANET_NAMES[warPair.warWith]})`,
+      delta: -6,
+    });
+  }
+
+  if (ids.includes("Su")) {
+    for (const p of positions) {
+      if (p.id !== "Su" && p.combust) {
+        factors.push({ label: `${PLANET_NAMES[p.id]} burnt by the Sun within the group`, delta: -6 });
+      }
+    }
+  }
+
+  const raw = 50 + factors.reduce((s, f) => s + f.delta, 0);
+  const score = Math.max(0, Math.min(100, Math.round(raw)));
+
+  const leader = [...positions].sort(
+    (a, b) => (strengths[b.id]?.score ?? 0) - (strengths[a.id]?.score ?? 0)
+  )[0].id;
+
+  return { members: ids, orb, score, tier: conjunctionTier(score, orb), leader, factors };
 }

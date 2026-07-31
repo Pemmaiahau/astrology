@@ -38,6 +38,44 @@ export function aspectsOnHouse(chart: ChartData, house: number): PlanetId[] {
   return aspectsOnSign(chart, sign);
 }
 
+/**
+ * A single drishti landing on a sign, carrying *which* aspect landed.
+ * The offset matters interpretively: Saturn's 3rd glance (grinding persistence)
+ * reads differently from its 10th (imposed duty) or its 7th (delay and weight),
+ * and Jupiter's 5th (blessing on intelligence/progeny) differs from its 9th
+ * (blessing on fortune/dharma). `aspectsOnSign` and friends deliberately keep
+ * returning bare ids so existing callers (strength.ts, lifeAreas.ts) are
+ * unaffected; this richer shape is what the interpretation layer consumes.
+ */
+export interface Drishti {
+  from: PlanetId;
+  /** Inclusive sign-count of the aspect that landed: 3, 4, 5, 7, 8, 9 or 10 */
+  offset: number;
+  /** False for the universal 7th drishti, true for a planet's special aspects */
+  special: boolean;
+}
+
+/** Every drishti landing on a sign, with the aspect offset that produced it. */
+export function drishtiOnSign(chart: ChartData, sign: number): Drishti[] {
+  const out: Drishti[] = [];
+  for (const p of chart.planets) {
+    if (p.sign === sign) continue; // occupancy is not an aspect
+    const offsets = [7, ...(SPECIAL_DRISHTI[p.id] ?? [])];
+    for (const o of offsets) {
+      if ((p.sign + o - 1) % 12 === sign) {
+        out.push({ from: p.id, offset: o, special: o !== 7 });
+      }
+    }
+  }
+  return out;
+}
+
+/** Every drishti landing on a whole-sign house counted from the Lagna. */
+export function drishtiOnHouse(chart: ChartData, house: number): Drishti[] {
+  const sign = (chart.ascendant.sign + house - 1) % 12;
+  return drishtiOnSign(chart, sign);
+}
+
 /** Planets casting drishti on the sign occupied by `target` (conjunction excluded). */
 export function planetsAspecting(chart: ChartData, target: PlanetId): PlanetId[] {
   const t = chart.planets.find((p) => p.id === target);
