@@ -26,34 +26,34 @@ function PeriodRow({
   const labels = ["Mahadasha", "Antardasha", "Pratyantardasha"];
 
   return (
-    <div className={depth > 0 ? "ml-4 border-l border-indigo-800/40 pl-2" : ""}>
+    <div className={depth > 0 ? "ml-4 border-l border-line-soft pl-2" : ""}>
       <button
         type="button"
         onClick={() => hasChildren && setOpen(!open)}
-        className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition hover:bg-indigo-900/40 ${
-          isActive ? "bg-amber-950/40 ring-1 ring-inset ring-amber-600/40" : ""
+        className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition hover:bg-inset ${
+          isActive ? "bg-primary-wash-2 ring-1 ring-inset ring-primary-ring" : ""
         }`}
       >
         {hasChildren ? (
           open ? (
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-amber-500/70" />
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-eyebrow" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
           )
         ) : (
           <span className="w-3.5" />
         )}
-        <span className={`font-semibold ${isActive ? "text-amber-300" : "text-slate-200"}`}>
+        <span className={`font-semibold ${isActive ? "text-heading" : "text-fg-2"}`}>
           {PLANET_NAMES[period.lord]}
-          <span className="ml-1 hidden text-xs font-normal text-slate-500 sm:inline">
+          <span className="ml-1 hidden text-xs font-normal text-fg-subtle sm:inline">
             ({PLANET_SANSKRIT[period.lord]})
           </span>
         </span>
-        <span className="ml-auto font-mono text-xs text-slate-400">
+        <span className="ml-auto font-mono text-xs text-fg-muted">
           {fmt(period.start)} → {fmt(period.end)}
         </span>
         {isActive && (
-          <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+          <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-heading">
             {labels[depth]} now
           </span>
         )}
@@ -75,7 +75,7 @@ export default function DashaPanel() {
   if (!chart) return null;
   if (!dashaTree || !chart.birthUtc) {
     return (
-      <p className="rounded-xl border border-indigo-800/50 bg-indigo-950/40 p-4 text-sm text-slate-400">
+      <p className="rounded-xl border border-line bg-surface p-4 text-sm text-fg-muted">
         Provide the birth date, time and place (the Dasha Anchor in manual mode) to compute Vimshottari
         timelines.
       </p>
@@ -86,22 +86,22 @@ export default function DashaPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 p-3 text-sm text-slate-300">
+      <div className="rounded-xl border border-heading-border bg-primary-wash p-3 text-sm text-fg">
         <p className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-amber-400" />
+          <Clock className="h-4 w-4 text-primary" />
           Opening balance at birth:{" "}
-          <span className="font-semibold text-amber-300">
+          <span className="font-semibold text-heading">
             {PLANET_NAMES[balance.lord]} Mahadasha, {balance.years.toFixed(2)} years remaining
           </span>
         </p>
         {activeDasha && (
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-fg-muted">
             Running now: {PLANET_NAMES[activeDasha.maha.lord]} — {PLANET_NAMES[activeDasha.antar.lord]} —{" "}
             {PLANET_NAMES[activeDasha.pratyantar.lord]}
           </p>
         )}
       </div>
-      <div className="space-y-1 rounded-xl border border-indigo-800/50 bg-indigo-950/40 p-3">
+      <div className="space-y-1 rounded-xl border border-line bg-surface p-3">
         {dashaTree.map((md, i) => (
           <PeriodRow key={`${md.lord}-${i}`} period={md} now={now} depth={0} />
         ))}

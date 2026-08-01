@@ -140,6 +140,132 @@ export const HOUSE_SIGNIFICATIONS: string[] = [
   "expenditure, losses, foreign lands, isolation, sleep and moksha",
 ];
 
+// ---------------------------------------------------------------------------
+// Shadbala / varga / classification tables (BPHS unless noted)
+// ---------------------------------------------------------------------------
+
+/** The seven Shadbala grahas (nodes take no Shadbala). */
+export type PlanetId7 = "Su" | "Mo" | "Ma" | "Me" | "Ju" | "Ve" | "Sa";
+export const SHADBALA_PLANETS: PlanetId7[] = ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa"];
+
+/**
+ * Naisargika (natural) bala in virupas — BPHS Ch. on Shadbala: fixed ladder
+ * Saturn weakest → Sun strongest, each step 60/7 virupas.
+ */
+export const NAISARGIKA_BALA: Record<PlanetId7, number> = {
+  Su: 60, Mo: 51.43, Ve: 42.86, Ju: 34.29, Me: 25.71, Ma: 17.14, Sa: 8.57,
+};
+
+/**
+ * Planetary gender per BPHS Ch.3 (graha characteristics). Drekkana bala:
+ * male strong in 1st decanate, female in 2nd, neuter in 3rd.
+ * Rahu/Ketu attributions are the common tradition (not used by Shadbala).
+ */
+export const PLANET_GENDER: Record<PlanetId, "male" | "female" | "neuter"> = {
+  Su: "male", Ma: "male", Ju: "male",
+  Mo: "female", Ve: "female", Ra: "female",
+  Me: "neuter", Sa: "neuter", Ke: "neuter",
+};
+
+/**
+ * Nathonnatha bala: diurnal planets are strong at midday, nocturnal at
+ * midnight; Mercury is always strong (gets the full 60).
+ */
+export const DIURNAL_PLANETS: PlanetId7[] = ["Su", "Ju", "Ve"];
+export const NOCTURNAL_PLANETS: PlanetId7[] = ["Mo", "Ma", "Sa"];
+
+/** Odd (male) signs: Aries, Gemini, Leo, Libra, Sagittarius, Aquarius. */
+export function isOddSign(sign: number): boolean {
+  return sign % 2 === 0;
+}
+
+/** Movable (chara) / fixed (sthira) / dual (dvisvabhava) — BPHS Ch.4. */
+export function signMobility(sign: number): "movable" | "fixed" | "dual" {
+  const m = sign % 3;
+  return m === 0 ? "movable" : m === 1 ? "fixed" : "dual";
+}
+
+/**
+ * Minimum required total Shadbala in virupas (BPHS: 6.5/6/5/7/6.5/5.5/5 rupas).
+ * A planet at or above its requirement is deemed strong enough to protect
+ * its significations.
+ */
+export const SHADBALA_MINIMUM: Record<PlanetId7, number> = {
+  Su: 390, Mo: 360, Ma: 300, Me: 420, Ju: 390, Ve: 330, Sa: 300,
+};
+
+/**
+ * Mean daily motion in degrees/day. For Mercury and Venus these are the
+ * seeghrocca (heliocentric mean) rates used by the Cheshta bala calculation;
+ * for the Sun/Moon they are the mean geocentric rates.
+ */
+export const MEAN_DAILY_MOTION: Record<PlanetId7, number> = {
+  Su: 0.9856, Mo: 13.1764, Ma: 0.5240, Me: 4.0923, Ju: 0.0831, Ve: 1.6021, Sa: 0.0335,
+};
+
+// ---------------------------------------------------------------------------
+// Lucky number / colour / direction tables (numerology + Jyotisha convention)
+// ---------------------------------------------------------------------------
+
+/**
+ * Classical 1–9 planetary rulership of numbers (Cheiro/Vedic numerology
+ * convention): 1 Sun, 2 Moon, 3 Jupiter, 4 Rahu, 5 Mercury, 6 Venus,
+ * 7 Ketu, 8 Saturn, 9 Mars.
+ */
+export const PLANET_NUMBER: Record<PlanetId, number> = {
+  Su: 1, Mo: 2, Ju: 3, Ra: 4, Me: 5, Ve: 6, Ke: 7, Sa: 8, Ma: 9,
+};
+
+/**
+ * Digpati (lords of the directions) — the standard Vastu/Jyotisha scheme:
+ * Sun E, Venus SE, Mars S, Rahu SW, Saturn W, Moon NW, Mercury N, Jupiter NE.
+ * Ketu has no direction seat in this scheme (often given SW with Rahu).
+ */
+export const PLANET_DIRECTION: Partial<Record<PlanetId, string>> = {
+  Su: "East", Ve: "South-East", Ma: "South", Ra: "South-West",
+  Sa: "West", Mo: "North-West", Me: "North", Ju: "North-East",
+};
+
+/** Classical colour associations (BPHS Ch.3 graha complexions + tradition). */
+export const PLANET_COLOURS: Record<PlanetId, { primary: string; supporting: string[] }> = {
+  Su: { primary: "copper-red / orange", supporting: ["saffron", "gold"] },
+  Mo: { primary: "white", supporting: ["cream", "silver", "pearl"] },
+  Ma: { primary: "red", supporting: ["scarlet", "coral"] },
+  Me: { primary: "green", supporting: ["emerald", "light green"] },
+  Ju: { primary: "yellow", supporting: ["gold", "cream-yellow"] },
+  Ve: { primary: "white / pastel", supporting: ["silver", "light blue", "pink"] },
+  Sa: { primary: "dark blue / black", supporting: ["navy", "iron grey"] },
+  Ra: { primary: "smoky grey", supporting: ["electric blue", "dark shades"] },
+  Ke: { primary: "variegated / grey", supporting: ["brown", "multi-colour"] },
+};
+
+/** Classical gemstones (informational only — not a prescription). */
+export const PLANET_GEMSTONES: Record<PlanetId, string> = {
+  Su: "Ruby (Manikya)", Mo: "Pearl (Moti)", Ma: "Red Coral (Moonga)",
+  Me: "Emerald (Panna)", Ju: "Yellow Sapphire (Pukhraj)", Ve: "Diamond (Heera)",
+  Sa: "Blue Sapphire (Neelam)", Ra: "Hessonite (Gomed)", Ke: "Cat's Eye (Lehsunia)",
+};
+
+/**
+ * Chaldean name-number letter values. Chaldean assigns no letter to 9
+ * (the number was held sacred); values run 1–8 only.
+ */
+export const CHALDEAN_MAP: Record<string, number> = {
+  A: 1, I: 1, J: 1, Q: 1, Y: 1,
+  B: 2, K: 2, R: 2,
+  C: 3, G: 3, L: 3, S: 3,
+  D: 4, M: 4, T: 4,
+  E: 5, H: 5, N: 5, X: 5,
+  U: 6, V: 6, W: 6,
+  O: 7, Z: 7,
+  F: 8, P: 8,
+};
+
+/** Pythagorean letter values: A=1 … I=9, repeating. */
+export const PYTHAGOREAN_MAP: Record<string, number> = Object.fromEntries(
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((ch, i) => [ch, (i % 9) + 1])
+);
+
 export const NAKSHATRA_QUALITIES: string[] = [
   "swift, pioneering, healing energy; initiates with speed and freshness",
   "intense, transformative bearing; carries burdens and creative extremes",

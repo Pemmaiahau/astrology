@@ -1,3 +1,4 @@
+import { drishtiOnHouse } from "@/utils/astrology/aspects";
 import {
   HOUSE_SIGNIFICATIONS,
   NAKSHATRA_QUALITIES,
@@ -6,10 +7,14 @@ import {
   SIGN_LORDS,
   SIGNS,
 } from "@/utils/astrology/constants";
+import type { JaiminiInfo } from "@/utils/astrology/jaimini";
 import { fmtDeg } from "@/utils/astrology/math";
+import type { ShadbalaSet } from "@/utils/astrology/shadbala";
 import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import type { PlanetStrength } from "@/utils/astrology/strength";
 import type { ChartData, PlanetId, PlanetPosition, YogaFinding } from "@/utils/astrology/types";
+import type { VargaSet } from "@/utils/astrology/varga";
+import { drishtiCharacter } from "./aspectTexts";
 import { FUNCTIONAL_ROLES } from "./lordships";
 import { ordinal } from "./synthesis";
 
@@ -118,10 +123,18 @@ function isTemperamentYoga(key: string): boolean {
   );
 }
 
+/** Optional deep-analysis inputs; every section they power degrades gracefully when absent. */
+export interface PersonalityExtras {
+  vargas?: VargaSet | null;
+  jaimini?: JaiminiInfo | null;
+  shadbala?: ShadbalaSet | null;
+}
+
 export function buildPersonalityProfile(
   chart: ChartData,
   strengths: Partial<Record<PlanetId, PlanetStrength>>,
-  yogas: YogaFinding[]
+  yogas: YogaFinding[],
+  extras: PersonalityExtras = {}
 ): PersonalityProfile {
   const lagnaSign = chart.ascendant.sign;
   const roles = FUNCTIONAL_ROLES[lagnaSign];
@@ -201,6 +214,80 @@ export function buildPersonalityProfile(
           .map((f) => f.label)
           .join("; ") || "diffuse rather than acute"}.`,
         `The personality is largely the negotiation between these two. Growth in this chart looks less like adding to ${sName} — which needs no help — and more like refusing to let ${wName}'s weakness set the terms, since it is precisely the area the native is most tempted to route around.`,
+      ],
+    });
+  }
+
+  /* --- 4b. The soul's own signature: Atmakaraka and Karakamsa --- */
+  const { jaimini, vargas, shadbala } = extras;
+  if (jaimini) {
+    const ak = chart.planets.find((p) => p.id === jaimini.karakas.AK);
+    const akParas: string[] = [];
+    if (ak) {
+      akParas.push(
+        `${PLANET_NAMES[ak.id]} is the Atmakaraka (the soul significator — the planet that travelled furthest through its sign, at ${fmtDeg(ak.degInSign)}). In simple terms: whatever ${PLANET_NAMES[ak.id]} stands for — placed in your ${ordinal(ak.house)} house in ${SIGNS[ak.sign]} — is the lesson this life keeps returning to, in relationships, in work, everywhere. It is less "what you do" and more "what you cannot avoid becoming good at".`
+      );
+      akParas.push(
+        `Its Karakamsa (the Navamsa sign of the Atmakaraka) is ${SIGNS[jaimini.karakamsa]}: the inner room where that lesson is actually worked out. A ${SIGNS[jaimini.karakamsa]} Karakamsa gives the soul's work a ${LAGNA_TEMPERAMENT[jaimini.karakamsa].split("—")[0].trim()} flavour.`
+      );
+    }
+    if (akParas.length) {
+      sections.push({ heading: "Atmakaraka — what this life is for", paragraphs: akParas });
+    }
+  }
+
+  /* --- 4c. Navamsa lagna: the inner person --- */
+  if (vargas) {
+    const d9 = vargas.charts.D9;
+    const navParas: string[] = [
+      `The Navamsa (D-9) Lagna is ${SIGNS[d9.ascendant]}. If the birth chart is how life presents itself, the Navamsa is how you are on the inside once the noise settles — and a ${SIGNS[d9.ascendant]} inner nature is ${LAGNA_TEMPERAMENT[d9.ascendant].split("—")[0].trim()}. When the outer (${SIGNS[lagnaSign]}) and inner (${SIGNS[d9.ascendant]}) signs differ in element, people who only know you casually often misread you; those close to you meet the Navamsa.`,
+    ];
+    if (vargas.vargottama.length) {
+      navParas.push(
+        `${vargas.vargottama.map((id) => PLANET_NAMES[id]).join(", ")} ${vargas.vargottama.length === 1 ? "is" : "are"} Vargottama — occupying the same sign in both D-1 and D-9. A Vargottama planet keeps its promises: what it shows on the surface is what it actually is underneath, and it holds steady under pressure.`
+      );
+    }
+    sections.push({ heading: "Navamsa — the inner person", paragraphs: navParas });
+  }
+
+  /* --- 4d. Six-fold strength (Shadbala) --- */
+  if (shadbala) {
+    const s = shadbala.planets[shadbala.strongest];
+    const w = shadbala.planets[shadbala.weakest];
+    sections.push({
+      heading: "By the classical six-fold measure (Shadbala)",
+      paragraphs: [
+        `Measured the full classical way — position, direction, time of birth, motion, nature and aspects together — ${PLANET_NAMES[shadbala.strongest]} is this chart's strongest planet at ${s.rupas.toFixed(2)} rupas (${Math.round(s.ratio * 100)}% of its required strength) and ${PLANET_NAMES[shadbala.weakest]} the weakest at ${w.rupas.toFixed(2)} rupas (${Math.round(w.ratio * 100)}%). ${shadbala.strongest === (strongest?.p.id ?? "") ? "This agrees with the quick composite score above, which strengthens the reading." : "Note this differs from the quick composite score above — the six-fold measure weighs birth-time and motion factors the composite does not; where they disagree, the Shadbala verdict is the classical one."}`,
+        `Practically: lean on ${PLANET_NAMES[shadbala.strongest]}'s themes when stakes are high, and give ${PLANET_NAMES[shadbala.weakest]}'s themes more preparation time than feels necessary.`,
+      ],
+    });
+  }
+
+  /* --- 4e. Glances on the Lagna --- */
+  {
+    const drishtis = drishtiOnHouse(chart, 1);
+    if (drishtis.length) {
+      const paras = drishtis.map((d) => {
+        const glance = drishtiCharacter(d.from, d.offset);
+        return `${PLANET_NAMES[d.from]} casts its ${d.special ? "special " : ""}${ordinal(d.offset)} glance onto the Lagna — ${glance}`;
+      });
+      paras.push(
+        "Aspects on the first house edit the personality others meet: each glance above adds its colour on top of the rising sign itself."
+      );
+      sections.push({ heading: "Glances on the Lagna — who edits the personality", paragraphs: paras });
+    }
+  }
+
+  /* --- 4f. Perceived vs actual: Arudha Lagna --- */
+  if (jaimini) {
+    const al = jaimini.arudhaLagna;
+    const same = al === lagnaSign;
+    sections.push({
+      heading: "How you are seen vs how you are (Arudha Lagna)",
+      paragraphs: [
+        same
+          ? `The Arudha Lagna (how the world perceives you) falls in ${SIGNS[al]} — the same sign as the Lagna itself. What you project and what you are largely coincide: people's image of this native is unusually accurate, which builds trust but also means there is nowhere to hide on a bad day.`
+          : `The Arudha Lagna (how the world perceives you) falls in ${SIGNS[al]}, while the actual rising sign is ${SIGNS[lagnaSign]}. The public image runs on ${SIGNS[al]}'s wavelength — ${LAGNA_TEMPERAMENT[al].split("—")[0].trim()} — while the person underneath operates as ${SIGNS[lagnaSign]}. The gap is not dishonesty; it is simply that reputation forms around the ${ordinal(((al - lagnaSign + 12) % 12) + 1)} house's themes. Knowing which conversations are about the image and which are about you is a lifelong advantage.`,
       ],
     });
   }

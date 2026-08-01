@@ -12,6 +12,8 @@ import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import type { ChartData, DashaPeriod, PlanetId, YogaFinding } from "@/utils/astrology/types";
 import { ownedHouses } from "@/utils/astrology/yogas";
 import { FUNCTIONAL_ROLES } from "./lordships";
+// Verdict thresholds shared with the scored Interpretation sections.
+import { verdictOf } from "./report";
 import { ordinal } from "./synthesis";
 
 /**
@@ -154,14 +156,6 @@ const DUSTHANA = [6, 8, 12];
 const UPACHAYA = [3, 6, 10, 11];
 const YEAR_MS = 365.25 * 86400000;
 const HORIZON_YEARS = 20;
-
-function verdictOf(score: number): AreaVerdict {
-  if (score >= 68) return "Strong promise";
-  if (score >= 56) return "Supportive";
-  if (score >= 45) return "Mixed";
-  if (score >= 34) return "Needs effort";
-  return "Challenged";
-}
 
 function firstSentence(text: string): string {
   const i = text.indexOf(". ");

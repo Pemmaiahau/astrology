@@ -489,3 +489,60 @@ These were deliberate, verified choices — see also the `aipems-astrology` memo
 | New computed panel/feature in the UI | add util → wire in `ChartContext.tsx` → consume in a new/existing panel |
 | True (not mean) Rahu/Ketu node | `utils/astrology/ephemeris.ts` (`meanLunarNode` sibling) |
 | Ashtakavarga refinements (Kaksha, Shodhya Pinda, Prastarashtakavarga) | `utils/astrology/ashtakavarga.ts`, layered on existing `bav`/`sav` |
+
+
+---
+
+## 21. Interpretation Engine v2 (2026-08) — vargas, Shadbala, Jaimini, timing, scored sections, theme
+
+A second calculation tier and six new scored Interpretation-tab sections were added on top of the pipeline above. Numeric verification for everything in this section lives in the dev-only harness **`utils/astrology/__checks__/verify.ts`** (run `npx tsx utils/astrology/__checks__/verify.ts` — this is the regression ritual after any calc change). Classical citations and the disagreement log live in **`data/interpretations/SOURCES.md`**.
+
+### 21.1 New calculation modules (`utils/astrology/`)
+
+- **`varga.ts`** — all sixteen Shodasavarga charts (D-1…D-60) as pure longitude→sign remaps of the stored sidereal longitudes. Exposes `vargaSign(vargaId, lon)` (the primitive), `computeVargaChart`, `computeVargaSet` → `VargaSet { charts, vargottama, vimshopaka }`, plus `houseInVarga`/`vargaPositionOf` helpers and the exported `VIMSHOPAKA_WEIGHTS` tables (each scheme totals 20, harness-checked). Varga dignity is judged at sign level via `dignityInSign` with the tatkalika component fixed from the rashi chart.
+- **`shadbala.ts`** — full six-fold Shadbala (`computeShadbala(chart) → ShadbalaSet | null`): Sthana (Uchcha, Saptavargaja over 7 vargas, Ojha-Yugma, Kendradi, Drekkana), Dig (cusp-based), Kala (Nathonnatha, Paksha, Tribhaga, Abda/Masa/Vara/Hora, Ayana, Yuddha), Cheshta (seeghrocca), Naisargika, Drik (sputa-drishti curve, exported as `sputaDrishti`) — in virupas/rupas with Ishta/Kashta and the classical minimum table. **Returns `null` for charts without a real birth anchor**; every consumer falls back to the `strength.ts` composite *and says so*. Also `computeBhavaBala`. Deliberate approximations (temporal hours for Nathonnatha/Tribhaga, mean-element seeghrocca, Ayana clamp) are flagged inline and in SOURCES.md.
+- **`jaimini.ts`** — chara karakas (7-scheme, `AK…DK`), Karakamsa, `arudhaSign`/`arudhaOfHouse` (with the 1st/7th→10th exception), Upapada, per-house Argala, and `doubleTransitOnSign` (the Saturn+Jupiter gate — a modern synthesis, labelled).
+- **`numerology.ts`** — Moolank/Bhagyank digit roots, Chaldean (default; no letter maps to 9) and Pythagorean name numbers, Kua number with the male/female formulas and 5→2/8 rule.
+- **`states.ts` refactor** — `naturalRelation`, `temporalRelation` and the longitude-free **`dignityInSign`** are now exported; `computeDignity` is a thin wrapper (behavior-identical, harness-checked). These unblock varga dignity and Saptavargaja bala.
+- **`ephemeris.ts` additions** — `sunsetFor`, `nextSunrise`, `declination` (kranti via ecliptic-of-date + obliquity), and **`trueLunarNode`** (osculating node from GeoMoonState r×v, verified against `SearchMoonNode` to 0.0000°). `tropicalLongitude`/`dailySpeed` take an optional `nodeMode` (default `"mean"`), threaded through `chart.ts`, `scan.ts`, `transits.ts` and surfaced as a header toggle + `ChartMeta.nodeMode`.
+- **`scan.ts` additions** — generic `refineCrossing` bisector (the two previously-inlined bisections now share it; the 2024-05-01 Jupiter→Taurus regression guards it), `occupancyIntervals` (piecewise sign occupancy), and **`findActivationWindows(chart, tree, ayanamsha, av, criteria, from, to)`** — the timing backbone: every Antardasha whose Maha/Antar lord connects to the criteria (lordship/occupancy/karaka/aspect) is scored, refined by double-transit coverage over the target signs (piecewise on ingress intervals — no daily sampling; ~25 bisections per 20 years) and weighted by Jupiter's BAV bindus. Returns ranked windows with 5–95 confidence and per-window reasons. `ActivationCriteria { houses, karakas?, extraSigns?, requireDoubleTransit?, minBindus?, maxWindows? }`.
+- **`yogas.ts` additions** — Raja (kendra–trikona link), Dhana family, Lakshmi, Kemadruma (cancellations *reported inside the finding*, never silently suppressed), Shakata, Daridra, Kala Sarpa, Amala. Keys are namespaced (`raja-*`, `dhana-*`, …) so earlier consumers are unaffected.
+
+### 21.2 The scored-section layer (`data/interpretations/`)
+
+Shared vocabulary in **`report.ts`**: `SectionReport { key, title, headline, score?, verdict?, confidence, blocks, caveats, hasDasha }`, `Evidence { text, weight, source? }` (source = `{ work, ref? }`, ref only when verified), `RankedItem`, `TimingWindow` (with optional month-level `subWindows`), `verdictOf` (the Life-Areas thresholds, now shared), `themeConnection`, `toTimingWindow`, and the `plain()` glossary. Every section renders **the reading + the "why" + a confidence badge**, and every builder is deterministic (`now` injected, no randomness — harness-checked) and degrades with explicit `caveats` when shadbala/gender/name/birth-time are missing.
+
+| File | Section | Notes |
+|---|---|---|
+| `career.ts` | 5–8 ranked career fields with fit scores; job-vs-business verdict; environment; `careerTimingWindows` | Votes from the 10th lord (from Lagna/Moon/Sun), 10th occupants, D-10, Amatyakaraka, strongest planet, yogas — each vote is an `Evidence` row |
+| `wealth.ts` | Ranked income streams + a percentage split that sums to exactly 100 (harness-checked); the "planets that pay"; per-stream `wealthTimingWindows` | D-2 Hora tally feeds the self-earned vs accumulation lean |
+| `marriage.ts` | Harmony/delay factor lists; **`checkMangalDosha`** (1/4/7/8/12 from Lagna+Moon, with implemented cancellations); spouse indications; remedies-as-tradition; `marriageTimingWindows` → top-3 windows with Jupiter-transit month sub-windows | All timing language is probabilistic by construction (harness greps against "will marry") |
+| `foreign.ts` | Travel / long-stay / settlement scored separately; purpose; digpati direction (confidence capped ≤ 75 by design); `foreignTimingWindows` | |
+| `cautions.ts` | `Caution { caution: Evidence, counterMeasure: string }` — **the type makes a caution without a counter-measure unrepresentable**; adverse dasha windows (both lords functional malefics) | Marakas framed as health-attention periods; no fatalist wording |
+| `lucky.ts` | Numerology and Jyotisha verdicts **shown separately, then combined; disagreements rendered, never averaged** (Jyotisha ranked first, rationale stated); gemstones informational-only | Planet→number/direction/colour/day maps live in `constants.ts` |
+| `personality.ts` (extended) | New sections: Atmakaraka/Karakamsa, Navamsa lagna + vargottama, Shadbala strongest/weakest, drishti on the Lagna, Arudha-vs-Lagna | Signature gained an optional `extras` bag — old call sites still compile |
+
+UI: `components/panels/interpretation/` — `InterpretationPanel` (moved from `components/panels/`) + `SectionCard` (collapsible; **children mount on first expand**, which is the lazy boundary), `ConfidenceBadge`, `WhyList`, `RankedList`, `TimingWindows`, and one thin card per section. Timing scans additionally hide behind an explicit "Compute timing windows" button inside each card. `vargas`/`jaimini`/`shadbala`/`bhavaBala` are cheap and live as always-on `ChartContext` memos (the context `value` itself is now memoised); numerology is computed inside `LuckyCard`.
+
+Inputs: optional **gender** (`AutoInput` + `ManualInput`, "Prefer not to say" default) and a name field in manual mode — carried on `ChartMeta` (`gender`, `nodeMode`), which is the only channel panels read. A dismissible global disclaimer (`components/ui/Disclaimer.tsx`, localStorage-persisted) renders under the header.
+
+### 21.3 Theme system
+
+`app/globals.css` now defines the whole palette as **semantic tokens** (`--color-surface/-line/-fg*/-heading/-primary*/-good/-bad/-accent/…`) via `@theme inline` over CSS variables, with two value sets: **light (default) — AstroSage-inspired** (white surfaces, saffron primary, maroon headings, blue links, grey table borders; saffron never used for small text — darkened variants keep WCAG AA) and **dark (`.dark`) — the original indigo/amber look, value-for-value**. `@custom-variant dark` + class strategy; a no-flash script in `layout.tsx` applies the stored theme (`jyotisha.theme`) pre-paint with a `prefers-color-scheme` fallback; `components/ui/ThemeToggle.tsx` flips it. **No raw Tailwind palette classes remain in components** — the gate is `grep -rE "(bg|text|border|ring|from|to|via)-(indigo|amber|slate|fuchsia|emerald|rose|sky|orange)-[0-9]" app components` returning nothing. A handful of near-duplicate alpha steps were merged into single tokens (e.g. indigo-900/30·40·50 → one `--inset`), so dark mode is value-identical for the dominant styles and imperceptibly consolidated for the long tail.
+
+### 21.4 New "I want to add X" rows
+
+| Feature request | Primary file(s) |
+|---|---|
+| New varga or a varga-rule variant | `utils/astrology/varga.ts` (`vargaSign` switch + `VIMSHOPAKA_WEIGHTS`) |
+| Tune/verify a Shadbala sub-bala | `utils/astrology/shadbala.ts` (one function per sub-bala) + harness |
+| New Jaimini technique (karakamsa yogas, more arudhas) | `utils/astrology/jaimini.ts` |
+| New scored section ("children", "health"…) | `data/interpretations/report.ts` types + new builder file + thin card in `components/panels/interpretation/` |
+| Change a section's timing criteria | its `*TimingWindows` wrapper (career/wealth/marriage/foreign) → `ActivationCriteria` |
+| Change activation-window scoring/weights | `utils/astrology/scan.ts` (`findActivationWindows`) |
+| Mangal Dosha rules/cancellations | `data/interpretations/marriage.ts` (`checkMangalDosha`) |
+| Numerology systems/maps | `utils/astrology/numerology.ts` + letter maps in `constants.ts` |
+| Lucky colour/direction/gemstone tables | `utils/astrology/constants.ts` (`PLANET_COLOURS`, `PLANET_DIRECTION`, `PLANET_GEMSTONES`, `PLANET_NUMBER`) |
+| Theme colours (either mode) | `app/globals.css` (`:root` = light, `.dark` = dark) — components never hard-code colours |
+| Add a caution rule | `data/interpretations/cautions.ts` (must ship with a counter-measure — the type enforces it) |
+| Cite or change a classical source | inline comment + `data/interpretations/SOURCES.md` (module→rule→citation + disagreement log) |

@@ -7,12 +7,13 @@ const TRANSIT_BODIES: PlanetId[] = ["Ju", "Sa", "Ra", "Ke", "Su", "Ma"];
 
 export function currentTransits(chart: ChartData, ayanamsha: AyanamshaId, now: Date): TransitInfo[] {
   const ay = getAyanamsha(ayanamsha, now);
+  const nodeMode = chart.meta.nodeMode ?? "mean";
   const moon = chart.planets.find((p) => p.id === "Mo");
   const moonSign = moon ? moon.sign : chart.ascendant.sign;
   const lagnaSign = chart.ascendant.sign;
 
   return TRANSIT_BODIES.map((id) => {
-    const lon = norm360(tropicalLongitude(id, now) - ay);
+    const lon = norm360(tropicalLongitude(id, now, nodeMode) - ay);
     const sign = signOf(lon);
     return {
       id,

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Compass } from "lucide-react";
 import { useChart } from "@/components/context/ChartContext";
 import { PLANETS, PLANET_NAMES, SIGNS, SIGNS_SANSKRIT } from "@/utils/astrology/constants";
-import type { GeoPlace, ManualPlanetInput } from "@/utils/astrology/types";
+import type { Gender, GeoPlace, ManualPlanetInput } from "@/utils/astrology/types";
 import CitySearch from "./CitySearch";
 
 const DEFAULT_PLANETS: ManualPlanetInput[] = PLANETS.map((id) => ({
@@ -23,6 +23,8 @@ export default function ManualInput() {
   const [dateISO, setDateISO] = useState("");
   const [time, setTime] = useState("");
   const [place, setPlace] = useState<GeoPlace | null>(null);
+  const [name, setName] = useState("");
+  const [gender, setGender] = useState<Gender | "">("");
 
   function update(idx: number, patch: Partial<ManualPlanetInput>) {
     setPlanets((prev) => prev.map((p, i) => (i === idx ? { ...p, ...patch } : p)));
@@ -37,19 +39,21 @@ export default function ManualInput() {
           ascDeg,
           planets,
           anchor: { dateISO, time, place },
+          name: name || undefined,
+          gender: gender || undefined,
         });
       }}
       className="space-y-4"
     >
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-amber-500/80">
+          <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-eyebrow">
             Ascendant (Lagna)
           </label>
           <select
             value={lagnaSign}
             onChange={(e) => setLagnaSign(Number(e.target.value))}
-            className="w-full rounded-lg border border-indigo-800/60 bg-indigo-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500/60"
+            className="w-full rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-sm text-fg-strong outline-none focus:border-primary-border"
           >
             {SIGNS.map((s, i) => (
               <option key={s} value={i}>
@@ -59,7 +63,7 @@ export default function ManualInput() {
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-amber-500/80">
+          <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-eyebrow">
             Asc Degree (0–30)
           </label>
           <input
@@ -69,15 +73,15 @@ export default function ManualInput() {
             step={0.01}
             value={ascDeg}
             onChange={(e) => setAscDeg(Number(e.target.value))}
-            className="w-full rounded-lg border border-indigo-800/60 bg-indigo-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500/60"
+            className="w-full rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-sm text-fg-strong outline-none focus:border-primary-border"
           />
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-indigo-800/60">
+      <div className="overflow-hidden rounded-lg border border-line-2">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-indigo-900/50 text-left text-xs uppercase tracking-wider text-amber-500/80">
+            <tr className="bg-inset text-left text-xs uppercase tracking-wider text-eyebrow">
               <th className="px-2 py-2">Graha</th>
               <th className="px-2 py-2">House</th>
               <th className="px-2 py-2">Degree</th>
@@ -86,13 +90,13 @@ export default function ManualInput() {
           </thead>
           <tbody>
             {planets.map((p, i) => (
-              <tr key={p.id} className="border-t border-indigo-900/50 bg-indigo-950/40">
-                <td className="px-2 py-1.5 font-medium text-slate-200">{PLANET_NAMES[p.id]}</td>
+              <tr key={p.id} className="border-t border-line-faint bg-surface">
+                <td className="px-2 py-1.5 font-medium text-fg-2">{PLANET_NAMES[p.id]}</td>
                 <td className="px-2 py-1.5">
                   <select
                     value={p.house}
                     onChange={(e) => update(i, { house: Number(e.target.value) })}
-                    className="w-full rounded border border-indigo-800/60 bg-indigo-950 px-1.5 py-1 text-xs text-slate-100 outline-none focus:border-amber-500/60"
+                    className="w-full rounded border border-line-2 bg-surface-solid px-1.5 py-1 text-xs text-fg-strong outline-none focus:border-primary-border"
                   >
                     {Array.from({ length: 12 }, (_, h) => (
                       <option key={h + 1} value={h + 1}>
@@ -109,7 +113,7 @@ export default function ManualInput() {
                     step={0.01}
                     value={p.deg}
                     onChange={(e) => update(i, { deg: Number(e.target.value) })}
-                    className="w-20 rounded border border-indigo-800/60 bg-indigo-950 px-1.5 py-1 text-xs text-slate-100 outline-none focus:border-amber-500/60"
+                    className="w-20 rounded border border-line-2 bg-surface-solid px-1.5 py-1 text-xs text-fg-strong outline-none focus:border-primary-border"
                   />
                 </td>
                 <td className="px-2 py-1.5 text-center">
@@ -121,7 +125,7 @@ export default function ManualInput() {
                       className="h-3.5 w-3.5 accent-amber-500"
                     />
                   ) : (
-                    <span className="text-slate-600">—</span>
+                    <span className="text-fg-faint">—</span>
                   )}
                 </td>
               </tr>
@@ -130,11 +134,11 @@ export default function ManualInput() {
         </table>
       </div>
 
-      <fieldset className="rounded-lg border border-indigo-800/60 p-3">
-        <legend className="px-1 text-xs font-medium uppercase tracking-wider text-amber-500/80">
+      <fieldset className="rounded-lg border border-line-2 p-3">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wider text-eyebrow">
           Dasha Anchor — Birth Date, Time &amp; Place
         </legend>
-        <p className="mb-2 text-xs text-slate-400">
+        <p className="mb-2 text-xs text-fg-muted">
           Used only to anchor Vimshottari timelines and Bhava Chalit cusps to your manually mapped degrees.
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -142,23 +146,43 @@ export default function ManualInput() {
             type="date"
             value={dateISO}
             onChange={(e) => setDateISO(e.target.value)}
-            className="w-full rounded-lg border border-indigo-800/60 bg-indigo-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500/60 [color-scheme:dark]"
+            className="w-full rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-sm text-fg-strong outline-none focus:border-primary-border"
           />
           <input
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="w-full rounded-lg border border-indigo-800/60 bg-indigo-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500/60 [color-scheme:dark]"
+            className="w-full rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-sm text-fg-strong outline-none focus:border-primary-border"
           />
         </div>
         <div className="mt-3">
           <CitySearch value={place} onSelect={setPlace} placeholder="Place of birth (for timezone)…" />
         </div>
+        <div className="mt-3 grid grid-cols-[1fr_auto] gap-3">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Native's name (optional)"
+            className="w-full rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-sm text-fg-strong placeholder-fg-subtle outline-none focus:border-primary-border"
+          />
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value as Gender | "")}
+            className="w-full rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-sm text-fg-strong outline-none focus:border-primary-border"
+            title="Optional — used only where classical rules differ by gender"
+          >
+            <option value="">Prefer not to say</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
       </fieldset>
 
       <button
         type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 px-4 py-2.5 text-sm font-semibold text-indigo-950 shadow-lg shadow-amber-900/30 transition hover:from-amber-500 hover:to-amber-400"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cta-from to-cta-to px-4 py-2.5 text-sm font-semibold text-cta-fg shadow-lg shadow-cta-shadow transition hover:from-cta-from-hover hover:to-cta-to-hover"
       >
         <Compass className="h-4 w-4" />
         Cast Chart

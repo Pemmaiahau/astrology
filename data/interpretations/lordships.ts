@@ -1,4 +1,4 @@
-import { SIGN_LORDS } from "@/utils/astrology/constants";
+import { SIGN_LORDS, signMobility } from "@/utils/astrology/constants";
 import type { PlanetId } from "@/utils/astrology/types";
 
 export interface FunctionalRoles {
@@ -119,4 +119,14 @@ export function marakasFor(lagnaSign: number): PlanetId[] {
   const second = SIGN_LORDS[(lagnaSign + 1) % 12];
   const seventh = SIGN_LORDS[(lagnaSign + 6) % 12];
   return second === seventh ? [second] : [second, seventh];
+}
+
+/**
+ * Badhaka (obstructor) lord — the standard scheme: for a movable lagna the
+ * 11th lord, for a fixed lagna the 9th lord, for a dual lagna the 7th lord.
+ */
+export function badhakaFor(lagnaSign: number): { house: number; lord: PlanetId } {
+  const mobility = signMobility(lagnaSign);
+  const house = mobility === "movable" ? 11 : mobility === "fixed" ? 9 : 7;
+  return { house, lord: SIGN_LORDS[(lagnaSign + house - 1) % 12] };
 }

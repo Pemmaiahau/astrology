@@ -16,7 +16,7 @@ export default function PanchangPanel() {
   if (!chart) return null;
   if (!panchang) {
     return (
-      <p className="rounded-xl border border-indigo-800/50 bg-indigo-950/40 p-4 text-sm text-slate-400">
+      <p className="rounded-xl border border-line bg-surface p-4 text-sm text-fg-muted">
         Panchang requires the birth instant — add date, time and place to compute the five limbs of time.
       </p>
     );
@@ -53,11 +53,11 @@ export default function PanchangPanel() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 p-3">
-        <h3 className="flex items-center gap-2 font-serif text-base font-bold text-amber-300">
+      <div className="rounded-xl border border-heading-border bg-primary-wash p-3">
+        <h3 className="flex items-center gap-2 font-serif text-base font-bold text-heading">
           <CalendarDays className="h-4 w-4" /> Panchang at Birth
         </h3>
-        <p className="mt-1 text-xs text-slate-400">
+        <p className="mt-1 text-xs text-fg-muted">
           The five pillars of the birth moment — the baseline energetic signature beneath the chart.
           {panchang.sunrise && (
             <> Sunrise (used for Vara): {panchang.sunrise.toLocaleTimeString("en-GB", { timeZone: chart.meta.timezone })} local.</>
@@ -65,12 +65,12 @@ export default function PanchangPanel() {
         </p>
       </div>
       {pillars.map((p) => (
-        <div key={p.label} className="rounded-xl border border-indigo-800/50 bg-indigo-950/40 p-4">
+        <div key={p.label} className="rounded-xl border border-line bg-surface p-4">
           <div className="flex items-baseline justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-amber-500/80">{p.label}</span>
-            <span className="font-serif text-sm font-bold text-slate-100">{p.value}</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-eyebrow">{p.label}</span>
+            <span className="font-serif text-sm font-bold text-fg-strong">{p.value}</span>
           </div>
-          <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{p.text}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-fg">{p.text}</p>
         </div>
       ))}
     </div>

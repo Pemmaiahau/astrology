@@ -24,19 +24,19 @@ function PlanetChip({ p, chalit }: { p: PlanetPosition; chalit: boolean }) {
   if (p.warWith) flags.push(p.warWinner ? "W+" : "W−");
   const dignityColor =
     p.dignity === "exalted" || p.dignity === "moolatrikona" || p.dignity === "own"
-      ? "text-emerald-300"
+      ? "text-good"
       : p.dignity === "debilitated"
-        ? "text-rose-400"
-        : "text-slate-200";
+        ? "text-bad-strong"
+        : "text-fg-2";
   return (
     <div className="flex items-baseline gap-1 leading-tight">
       <span className={`text-[11px] font-bold sm:text-xs ${dignityColor}`}>{p.id}</span>
-      <span className="text-[9px] text-slate-400 sm:text-[10px]">{fmtDeg(p.degInSign)}</span>
+      <span className="text-[9px] text-fg-muted sm:text-[10px]">{fmtDeg(p.degInSign)}</span>
       {flags.length > 0 && (
-        <span className="text-[9px] font-semibold text-amber-400">[{flags.join("·")}]</span>
+        <span className="text-[9px] font-semibold text-primary">[{flags.join("·")}]</span>
       )}
       {chalit && p.bhava !== p.house && (
-        <span className="rounded bg-fuchsia-900/60 px-0.5 text-[9px] font-semibold text-fuchsia-300">
+        <span className="rounded bg-accent-soft px-0.5 text-[9px] font-semibold text-accent">
           →B{p.bhava}
         </span>
       )}
@@ -60,24 +60,24 @@ export default function SouthIndianChart({ chart }: { chart: ChartData }) {
     cells[r][c] = (
       <div
         key={sign}
-        className={`relative flex min-h-[92px] flex-col overflow-hidden border border-indigo-700/50 p-1.5 transition sm:min-h-[104px] ${
-          isLagna ? "bg-amber-950/40 ring-1 ring-inset ring-amber-500/50" : "bg-indigo-950/40"
+        className={`relative flex min-h-[92px] flex-col overflow-hidden border border-line-strong p-1.5 transition sm:min-h-[104px] ${
+          isLagna ? "bg-primary-wash-2 ring-1 ring-inset ring-primary-ring" : "bg-surface"
         }`}
       >
         <div className="flex items-start justify-between">
-          <span className="text-[9px] uppercase tracking-wide text-slate-500 sm:text-[10px]">
+          <span className="text-[9px] uppercase tracking-wide text-fg-subtle sm:text-[10px]">
             {SIGNS[sign]}
           </span>
           <span
             className={`rounded px-1 text-[9px] font-bold sm:text-[10px] ${
-              isLagna ? "bg-amber-500/20 text-amber-300" : "bg-indigo-800/60 text-indigo-300"
+              isLagna ? "bg-primary-soft text-heading" : "bg-inset-3 text-planet"
             }`}
           >
             {houseNum}
           </span>
         </div>
         {isLagna && (
-          <span className="text-[10px] font-bold text-amber-400">
+          <span className="text-[10px] font-bold text-primary">
             Lagna {fmtDeg(chart.ascendant.degInSign)}
           </span>
         )}
@@ -91,7 +91,7 @@ export default function SouthIndianChart({ chart }: { chart: ChartData }) {
   }
 
   return (
-    <div className="grid grid-cols-4 overflow-hidden rounded-xl border border-indigo-700/50 shadow-2xl shadow-black/40">
+    <div className="grid grid-cols-4 overflow-hidden rounded-xl border border-line-strong shadow-2xl shadow-chart-shadow">
       {cells.map((row, r) =>
         row.map((cell, c) => {
           if (cell) return cell;
@@ -100,29 +100,29 @@ export default function SouthIndianChart({ chart }: { chart: ChartData }) {
             return (
               <div
                 key="centre"
-                className="col-span-2 row-span-2 flex flex-col items-center justify-center gap-1 border border-indigo-700/50 bg-gradient-to-br from-indigo-950 via-indigo-900/80 to-indigo-950 p-2 text-center"
+                className="col-span-2 row-span-2 flex flex-col items-center justify-center gap-1 border border-line-strong bg-gradient-to-br from-surface-solid via-inset-2 to-surface-solid p-2 text-center"
               >
-                <span className="font-serif text-sm font-bold tracking-wide text-amber-400 sm:text-base">
+                <span className="font-serif text-sm font-bold tracking-wide text-primary sm:text-base">
                   {chart.meta.name || "Rashi Chakra"}
                 </span>
-                <span className="text-[10px] text-slate-300 sm:text-xs">
+                <span className="text-[10px] text-fg sm:text-xs">
                   Lagna: {SIGNS[lagnaSign]} ({SIGNS_SANSKRIT[lagnaSign]})
                 </span>
                 {moon && (
                   <>
-                    <span className="text-[10px] text-slate-300 sm:text-xs">
+                    <span className="text-[10px] text-fg sm:text-xs">
                       Moon: {SIGNS[moon.sign]} · {NAKSHATRAS[moon.nakshatra]} p{moon.pada}
                     </span>
                   </>
                 )}
-                <span className="text-[10px] text-slate-400 sm:text-xs">
+                <span className="text-[10px] text-fg-muted sm:text-xs">
                   Asc Nak: {NAKSHATRAS[chart.ascendant.nakshatra]}
                 </span>
-                <span className="mt-1 rounded-full border border-amber-700/40 bg-amber-950/40 px-2 py-0.5 text-[9px] text-amber-300/90 sm:text-[10px]">
+                <span className="mt-1 rounded-full border border-primary-border-soft bg-primary-wash-2 px-2 py-0.5 text-[9px] text-heading-soft sm:text-[10px]">
                   {AYANAMSHA_LABELS[chart.meta.ayanamsha]} · {chart.meta.ayanamshaValue.toFixed(4)}°
                 </span>
                 {chalit && (
-                  <span className="text-[9px] text-fuchsia-300/90">
+                  <span className="text-[9px] text-accent">
                     Bhava Chalit (Sripati) — shifted planets marked →B
                   </span>
                 )}

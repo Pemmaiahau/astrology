@@ -11,12 +11,17 @@ import type {
   AyanamshaId,
   ChartData,
   ManualInputState,
+  NodeMode,
   PlanetId,
   PlanetPosition,
 } from "./types";
 
 /** Full ephemeris-driven chart from birth data. */
-export function computeAutoChart(input: AutoInputState, ayanamsha: AyanamshaId): ChartData | null {
+export function computeAutoChart(
+  input: AutoInputState,
+  ayanamsha: AyanamshaId,
+  nodeMode: NodeMode = "mean"
+): ChartData | null {
   if (!input.place || !input.dateISO || !input.time) return null;
   const { lat, lon, timezone } = input.place;
   const utc = localToUtc(timezone, input.dateISO, input.time);
@@ -29,7 +34,7 @@ export function computeAutoChart(input: AutoInputState, ayanamsha: AyanamshaId):
   const { madhya, sandhi } = sripatiHouses(ascSid, mcSid);
 
   const longitudes: Partial<Record<PlanetId, number>> = {};
-  for (const id of PLANETS) longitudes[id] = norm360(tropicalLongitude(id, utc) - ay);
+  for (const id of PLANETS) longitudes[id] = norm360(tropicalLongitude(id, utc, nodeMode) - ay);
 
   const sunLon = longitudes.Su!;
   const planets: PlanetPosition[] = PLANETS.map((id) => {
@@ -50,7 +55,7 @@ export function computeAutoChart(input: AutoInputState, ayanamsha: AyanamshaId):
       nakshatraRelation: nakRel.relation,
       retrograde: retro,
       combust: id !== "Su" && isCombust(id, lonSid, sunLon, retro),
-      speed: dailySpeed(id, utc),
+      speed: dailySpeed(id, utc, nodeMode),
       dignity: computeDignity(id, lonSid, longitudes),
     };
   });
@@ -79,6 +84,8 @@ export function computeAutoChart(input: AutoInputState, ayanamsha: AyanamshaId):
       ayanamshaValue: ay,
       timezone,
       localDateTime: `${input.dateISO} ${input.time}`,
+      nodeMode,
+      gender: input.gender,
     },
   };
 }
@@ -157,6 +164,7 @@ export function computeManualChart(input: ManualInputState, ayanamsha: Ayanamsha
     lat,
     lon,
     meta: {
+      name: input.name || undefined,
       place: input.anchor.place ? input.anchor.place.name : undefined,
       mode: "manual",
       ayanamsha,
@@ -164,6 +172,7 @@ export function computeManualChart(input: ManualInputState, ayanamsha: Ayanamsha
       timezone: input.anchor.place?.timezone,
       localDateTime:
         input.anchor.dateISO && input.anchor.time ? `${input.anchor.dateISO} ${input.anchor.time}` : undefined,
+      gender: input.gender,
     },
   };
 }

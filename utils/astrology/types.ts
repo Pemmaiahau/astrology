@@ -4,6 +4,15 @@ export type PlanetId = "Su" | "Mo" | "Ma" | "Me" | "Ju" | "Ve" | "Sa" | "Ra" | "
 
 export type AyanamshaId = "lahiri" | "pushya";
 
+/** Rahu/Ketu computation: mean node (classical convention, default) or true (osculating) node. */
+export type NodeMode = "mean" | "true";
+
+/**
+ * Optional; used only where classical rules differ by gender (marriage
+ * karakas, Kua number). When absent both readings are given.
+ */
+export type Gender = "female" | "male" | "other";
+
 /** Natural relationship between a planet and the lord of the nakshatra it occupies. */
 export type NakshatraRelation = "self" | "friend" | "neutral" | "enemy";
 
@@ -65,6 +74,9 @@ export interface ChartMeta {
   ayanamshaValue: number;
   timezone?: string;
   localDateTime?: string;
+  /** Rahu/Ketu node mode used for this chart; undefined = "mean" (default). */
+  nodeMode?: NodeMode;
+  gender?: Gender;
 }
 
 export interface ChartData {
@@ -143,6 +155,8 @@ export interface ManualInputState {
   ascDeg: number; // 0–30
   planets: ManualPlanetInput[];
   anchor: BirthAnchor;
+  name?: string;
+  gender?: Gender;
 }
 
 export interface AutoInputState {
@@ -150,6 +164,7 @@ export interface AutoInputState {
   dateISO: string;
   time: string;
   place: GeoPlace | null;
+  gender?: Gender;
 }
 
 export interface YogaFinding {

@@ -12,41 +12,56 @@ import { separation, signOf } from "./math";
 import type { Dignity, NakshatraRelation, PlanetId, PlanetPosition } from "./types";
 
 /**
- * Compound dignity: naisargika (natural) relationship combined with
- * tatkalika (temporal) friendship. Planets in the 2nd, 3rd, 4th, 10th,
- * 11th and 12th signs from a planet are its temporal friends.
+ * Naisargika (natural) relation of planet `a` toward planet `b`.
+ * NOTE: the classical friendship tables are asymmetric (the Moon calls
+ * Mercury a friend; Mercury calls the Moon an enemy) — always query
+ * directionally.
  */
-export function computeDignity(
-  id: PlanetId,
-  longitude: number,
-  allLongitudes: Partial<Record<PlanetId, number>>
-): Dignity {
-  const sign = signOf(longitude);
-  const deg = longitude % 30;
+export function naturalRelation(a: PlanetId, b: PlanetId): -1 | 0 | 1 {
+  if (NATURAL_FRIENDS[a].includes(b)) return 1;
+  if (NATURAL_ENEMIES[a].includes(b)) return -1;
+  return 0;
+}
 
+/**
+ * Tatkalika (temporal) friendship: a planet in the 2nd, 3rd, 4th, 10th,
+ * 11th or 12th sign from another is its temporal friend; everywhere else
+ * (including the same sign) a temporal enemy. Binary by rule — never neutral.
+ */
+export function temporalRelation(signOfPlanet: number, signOfOther: number): -1 | 1 {
+  const rel = ((signOfOther - signOfPlanet + 12) % 12) + 1;
+  return [2, 3, 4, 10, 11, 12].includes(rel) ? 1 : -1;
+}
+
+/**
+ * Compound (panchadha maitri) dignity of `id` placed in `sign`, given the
+ * rashi sign of every planet (for the temporal component). Longitude-free so
+ * that varga charts and Shadbala's Saptavargaja bala can score placements
+ * that have a sign but no meaningful degree. `degInSign` is only needed to
+ * resolve the moolatrikona degree band; when omitted the whole sign counts
+ * as moolatrikona for its MT lord (the standard sign-level convention).
+ */
+export function dignityInSign(
+  id: PlanetId,
+  sign: number,
+  degInSign: number | undefined,
+  allSigns: Partial<Record<PlanetId, number>>
+): Dignity {
   const ex = EXALTATION[id];
   if (ex && sign === ex.sign) return "exalted";
   if (ex && sign === (ex.sign + 6) % 12) return "debilitated";
 
   const mt = MOOLATRIKONA[id];
-  if (mt && sign === mt.sign && deg >= mt.from && deg < mt.to) return "moolatrikona";
+  if (mt && sign === mt.sign && (degInSign === undefined || (degInSign >= mt.from && degInSign < mt.to)))
+    return "moolatrikona";
   if (OWN_SIGNS[id].includes(sign)) return "own";
 
   const lord = SIGN_LORDS[sign];
   if (lord === id) return "own";
 
-  // Natural relation with the dispositor
-  let natural = 0; // -1 enemy, 0 neutral, +1 friend
-  if (NATURAL_FRIENDS[id].includes(lord)) natural = 1;
-  else if (NATURAL_ENEMIES[id].includes(lord)) natural = -1;
-
-  // Temporal relation: where does the dispositor sit relative to this planet?
-  const lordLon = allLongitudes[lord];
-  let temporal = 0;
-  if (lordLon !== undefined) {
-    const rel = ((signOf(lordLon) - sign + 12) % 12) + 1; // sign of lord counted from planet's sign
-    temporal = [2, 3, 4, 10, 11, 12].includes(rel) ? 1 : -1;
-  }
+  const natural = naturalRelation(id, lord);
+  const lordSign = allSigns[lord];
+  const temporal = lordSign !== undefined ? temporalRelation(sign, lordSign) : 0;
 
   const score = natural + temporal;
   if (score >= 2) return "greatFriend";
@@ -54,6 +69,24 @@ export function computeDignity(
   if (score === 0) return "neutral";
   if (score === -1) return "enemy";
   return "greatEnemy";
+}
+
+/**
+ * Compound dignity: naisargika (natural) relationship combined with
+ * tatkalika (temporal) friendship. Planets in the 2nd, 3rd, 4th, 10th,
+ * 11th and 12th signs from a planet are its temporal friends.
+ * Thin wrapper over `dignityInSign` for callers holding longitudes.
+ */
+export function computeDignity(
+  id: PlanetId,
+  longitude: number,
+  allLongitudes: Partial<Record<PlanetId, number>>
+): Dignity {
+  const allSigns: Partial<Record<PlanetId, number>> = {};
+  for (const [pid, lon] of Object.entries(allLongitudes)) {
+    if (lon !== undefined) allSigns[pid as PlanetId] = signOf(lon);
+  }
+  return dignityInSign(id, signOf(longitude), longitude % 30, allSigns);
 }
 
 /**
