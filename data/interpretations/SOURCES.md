@@ -49,6 +49,7 @@ Abbreviations: **BPHS** = Brihat Parashara Hora Shastra.
 | | Kua number (male 11−root, female root+4, 5→2/8) and direction sets | Eight Mansions (Feng Shui) convention (modern tradition, labelled) |
 | | Planet→colour, planet→direction (digpati), planet→day (vara lords), gemstones | BPHS graha descriptions + standard tradition; gemstones informational only |
 | `data/interpretations/personality.ts` | Lagna/Moon/Sun triple reading; Atmakaraka & Karakamsa; Navamsa lagna; Arudha vs Lagna | BPHS; Jaimini Upadesa Sutras |
+| `utils/astrology/ageBands.ts` | Age bands bounding the probable-window scans (marriage 22–45, career entry 22–30, career change 28–50, wealth 25–65, foreign 18–55) and the 0–1 `agePrior` weighting inside them | **Modern demographic convention — NOT classical.** No Parashari text fixes these ages; see the disagreement log below. Labelled as such in the module docstring and surfaced as a caveat on every banded card |
 
 ## Disagreement log — variants and the default chosen
 
@@ -69,6 +70,8 @@ Abbreviations: **BPHS** = Brihat Parashara Hora Shastra.
 | Ayana bala overflow | Moon's declination can exceed ±23.98° | Clamped to [0, 60] |
 | Abda/Masa lords | Kali-ahargana epoch conventions differ by a day between texts | JD 588466 epoch; treated as approximate (low-weight sub-bala) |
 | Kua year boundary | Solar-year (Feb 4) boundary for January births | Not applied; caveat shown instead |
+| Bounding the timing scans | (a) a rolling "now → now + 15 years" horizon; (b) age bands derived from when these events commonly occur; (c) no bound at all — the whole 120-year dasha cycle | **(b) age bands.** (a) was the previous implementation and is simply wrong for anyone not at the start of the relevant life stage: it showed a 52-year-old marriage windows at ages 52–67 and hid the 22–30 window entirely. (c) buries the reader in windows that no life stage makes plausible. The bands are a **modern demographic convention, not a shastric rule** — the chart supplies the timing, the band only supplies the plausibility, and the two are weighted separately (±15 of ~100) so a reader whose life ran on a different clock can discount the band without discarding the reading. `cautions.ts` is deliberately **unbanded**: health and adversity are age-independent, and an elapsed health window is not actionable |
+| Showing elapsed windows | Forward-only (only what is still ahead) vs past + future | Both, phase-labelled. A window that has passed is a check on the reading rather than a prediction, and the selection quota reserves half the slots for non-past windows so retrospect cannot crowd out what is actionable |
 
 ## Verified-against ledger
 
@@ -91,7 +94,18 @@ chart: 1990-01-24 12:30 IST, New Delhi (Lahiri).
   root-finder refactor; occupancy intervals contiguous; all-house criteria
   reproduce the full antardasha list (superset property).
 - **Sections**: every builder deterministic (double-run deep-equal); wealth
-  split sums to exactly 100; marriage output contains no "will marry" phrasing;
-  degradation paths (manual chart, no anchor, no gender, no name) run clean.
+  split sums to exactly 100; degradation paths (manual chart, no anchor, no
+  gender, no name) run clean. **Phrasing gate**: all six section builders plus
+  their timing windows are concatenated and asserted free of `"you will "`,
+  `"will definitely"`, `"is guaranteed"`, `"must marry"`, `"will get"` and
+  `"will marry"` — timing language stays probabilistic by construction.
+- **Age bands**: `agePrior` = 1 across the peak, 0 strictly outside the band,
+  0.15 at both edges, monotone on each ramp; `dateAtAge`/`ageAt` round-trip
+  exactly; marriage windows for the canonical chart all land inside ages 22–45;
+  phase labels correct against a fixed `now`; the selection quota always keeps
+  at least one non-past window when one exists; career output carries exactly
+  two group headings and is chronological within each; natives below and above
+  a band still receive it (all-future and all-past respectively); `cautions`
+  windows are never retrospective.
 - **Numerology**: Moolank/Bhagyank/Chaldean/Pythagorean/Kua hand-checks pass;
   Chaldean maps all 26 letters, none to 9.

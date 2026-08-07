@@ -1,3 +1,4 @@
+import { AGE_BANDS, agePriorFor, dateAtAge } from "@/utils/astrology/ageBands";
 import type { AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
 import { PLANET_NAMES, SIGN_LORDS } from "@/utils/astrology/constants";
 import { findActivationWindows } from "@/utils/astrology/scan";
@@ -5,7 +6,7 @@ import type { PlanetStrength } from "@/utils/astrology/strength";
 import { vargaPositionOf, type VargaSet } from "@/utils/astrology/varga";
 import type { AyanamshaId, ChartData, DashaPeriod, PlanetId, YogaFinding } from "@/utils/astrology/types";
 import type { Evidence, RankedItem, SectionReport, TimingWindow } from "./report";
-import { toTimingWindow, verdictOf } from "./report";
+import { plain, toTimingWindow, verdictOf } from "./report";
 import { ordinal } from "./synthesis";
 
 /**
@@ -29,11 +30,11 @@ interface StreamDef {
 }
 
 const STREAMS: StreamDef[] = [
-  { key: "salary", label: "Salaried employment", houses: [6, 10], karakas: ["Sa", "Su"], blurb: "structured service income" },
-  { key: "business", label: "Business & self-employment", houses: [7, 3], karakas: ["Me", "Ma"], blurb: "trade, enterprise, partnerships" },
-  { key: "passive", label: "Investments & assets", houses: [2, 4, 11], karakas: ["Ju", "Ve"], blurb: "savings growth, property, vehicles, rentals" },
-  { key: "speculative", label: "Speculation & windfalls", houses: [5, 8], karakas: ["Ra"], blurb: "markets, sudden gains, others' capital" },
-  { key: "foreign", label: "Foreign-linked income", houses: [12, 9], karakas: ["Ra", "Ke"], blurb: "abroad postings, exports, remote work for foreign clients" },
+  { key: "salary", label: "Salaried employment", houses: [6, 10], karakas: ["Sa", "Su"], blurb: "a wage, paid regularly, for work someone else organises" },
+  { key: "business", label: "Business & self-employment", houses: [7, 3], karakas: ["Me", "Ma"], blurb: "trade, your own practice, partnerships you have a stake in" },
+  { key: "passive", label: "Investments & assets", houses: [2, 4, 11], karakas: ["Ju", "Ve"], blurb: "savings that compound, property, vehicles, rent coming in" },
+  { key: "speculative", label: "Speculation & windfalls", houses: [5, 8], karakas: ["Ra"], blurb: "markets, sudden gains, money that belongs to other people first" },
+  { key: "foreign", label: "Foreign-linked income", houses: [12, 9], karakas: ["Ra", "Ke"], blurb: "postings abroad, exports, remote work for clients in another country" },
 ];
 
 export interface WealthReport extends SectionReport {
@@ -64,19 +65,28 @@ export function buildWealthReport(
       if (s) {
         const w = (s.score - 40) / 2; // strength above/below baseline
         score += w;
-        evidence.push({ text: `${ordinal(h)} lord ${PLANET_NAMES[lord]} scores ${s.score}/100`, weight: Math.round(w) });
+        evidence.push({
+          text: `${PLANET_NAMES[lord]} rules your ${ordinal(h)} house and scores ${s.score}/100 — this channel is as strong as the planet running it`,
+          weight: Math.round(w),
+        });
       }
       const occupants = chart.planets.filter((p) => p.house === h);
       for (const p of occupants) {
         score += 6;
-        evidence.push({ text: `${PLANET_NAMES[p.id]} occupies the ${ordinal(h)}`, weight: 6 });
+        evidence.push({
+          text: `${PLANET_NAMES[p.id]} sits in your ${ordinal(h)} house, which puts real activity into this channel rather than just potential`,
+          weight: 6,
+        });
       }
     }
     for (const k of def.karakas) {
       const s = strengths[k];
       if (s && s.score >= 60) {
         score += 5;
-        evidence.push({ text: `${PLANET_NAMES[k]}, a natural giver of this stream, is strong (${s.score}/100)`, weight: 5 });
+        evidence.push({
+          text: `${PLANET_NAMES[k]} is a natural giver of this kind of money and it is strong in your chart (${s.score}/100), so the channel has a willing planet behind it`,
+          weight: 5,
+        });
       }
     }
     return { def, score, evidence };
@@ -91,7 +101,11 @@ export function buildWealthReport(
       const row = rawScores.find((r) => r.def.key === t);
       if (row) {
         row.score += 8;
-        row.evidence.push({ text: `${y.name} strengthens this stream`, weight: 8, source: { work: "BPHS", ref: "Dhana Yoga chapter" } });
+        row.evidence.push({
+          text: `${y.name} forms in your chart, and it feeds this channel specifically — a wealth combination is worth more here than any single strong planet`,
+          weight: 8,
+          source: { work: "BPHS", ref: "Dhana Yoga chapter" },
+        });
       }
     }
   }
@@ -108,15 +122,17 @@ export function buildWealthReport(
     }
     const horaText =
       sunHora > moonHora
-        ? `In the D-2 Hora chart ${sunHora} of 7 planets sit in the Sun's hora: wealth here is predominantly self-earned — effort converts to money better than luck does.`
+        ? `In your ${plain("Hora")}, ${sunHora} of 7 planets fall on the Sun's side, which marks money as something you earn rather than receive. Effort converts to income more reliably for you than luck does — which is tiring, but it is also dependable.`
         : moonHora > sunHora
-          ? `In the D-2 Hora chart ${moonHora} of 7 planets sit in the Moon's hora: wealth flows more easily through liquidity, family support and accumulation than through raw pushing.`
-          : "The D-2 Hora chart splits evenly between the Sun's and Moon's horas — self-earning and accumulation are equally available channels.";
+          ? `In your ${plain("Hora")}, ${moonHora} of 7 planets fall on the Moon's side, which marks money that arrives through flow rather than force: savings, family support, things that accumulate while you are not watching. Pushing harder is not usually what moves the number for you.`
+          : `Your ${plain("Hora")} splits evenly between the Sun's and the Moon's sides — earning and accumulating are equally open to you, and the sensible plan uses both rather than betting on one.`;
     const salaryRow = rawScores.find((r) => r.def.key === (sunHora >= moonHora ? "salary" : "passive"))!;
     salaryRow.score += 4;
     salaryRow.evidence.push({ text: horaText, weight: 4, source: { work: "BPHS", ref: "Ch.6 (Hora varga)" } });
   } else {
-    caveats.push("D-2 Hora evidence unavailable for this chart.");
+    caveats.push(
+      "The D-2 Hora chart could not be built here, so the self-earned-versus-accumulated lean is missing from the reading below. The stream ranking itself is unaffected."
+    );
   }
 
   // ---- Normalize into ranked streams + a 100% split -------------------------
@@ -165,22 +181,23 @@ export function buildWealthReport(
   return {
     key: "wealth",
     title: "Sources of Income",
-    headline: `Your strongest earning channel: ${split[0].label.toLowerCase()} (~${split[0].percent}% of the chart's wealth signal).`,
+    headline: `Your money is most likely to come through ${split[0].label.toLowerCase()} — about ${split[0].percent}% of the wealth signal in your chart sits there.`,
     score: streams[0]?.score,
     verdict: streams[0]?.verdict as WealthReport["verdict"],
     confidence,
     blocks: [
       {
-        heading: "Income streams, ranked",
+        heading: "Where your money is most likely to come from",
         paragraphs: [
-          "Each stream is weighed from its houses' lords and occupants, its natural karakas, wealth yogas, and the D-2 Hora chart. The percentages describe the balance of promise between channels — not guaranteed amounts.",
+          "Each channel below is weighed from the planets that rule and occupy its houses, the planets that naturally stand for that kind of money, any wealth combinations in your chart, and the D-2 chart that splits earning from accumulating.",
+          "The percentages describe the balance of promise between channels, not amounts and not a forecast. Read them as where the chart leans: the channel at the top is the one that tends to reward attention, and the ones at the bottom are the ones that cost more than they return for you specifically.",
         ],
         items: streams,
       },
       {
-        heading: "The planets that pay",
+        heading: "The planets that pay you",
         paragraphs: [
-          `${payers.map((p) => PLANET_NAMES[p]).join(" and ")} rule your 2nd (savings) and 11th (income) — money questions in this chart ultimately route through ${payers.length === 1 ? "this planet" : "these planets"}. Their dasha periods are when earning capacity steps up or down; their condition (dignity, strength) is the honest ceiling on wealth accumulation.`,
+          `${payers.map((p) => PLANET_NAMES[p]).join(" and ")} rule your 2nd house of savings and your 11th of income, so money questions in your chart route through ${payers.length === 1 ? "that planet" : "those planets"} whatever else is happening. When ${payers.length === 1 ? "its main period runs" : "their main periods run"}, earning capacity tends to step up or down noticeably — and the condition ${payers.length === 1 ? "it is in" : "they are in"} is the honest ceiling on how much of it stays with you. That is worth knowing in advance, because it makes a lean year legible instead of frightening.`,
         ],
       },
     ],
@@ -192,7 +209,12 @@ export function buildWealthReport(
   };
 }
 
-/** Per-stream activation windows — expensive, computed on demand. */
+/**
+ * Per-stream activation windows — expensive, computed on demand. Scanned
+ * across the accumulation arc (ages 25–65) rather than a rolling 15 years, so
+ * the earning years you have already lived are shown alongside the ones ahead.
+ * `now` only labels each window past/current/future.
+ */
 export function wealthTimingWindows(
   chart: ChartData,
   dashaTree: DashaPeriod[] | null,
@@ -204,10 +226,19 @@ export function wealthTimingWindows(
   if (!dashaTree || !chart.birthUtc) return [];
   const def = STREAMS.find((d) => d.key === streamKey);
   if (!def) return [];
-  const horizon = new Date(now.getTime() + 15 * 365.25 * 86400000);
+  const birth = chart.birthUtc;
+  const band = AGE_BANDS.wealth;
   return findActivationWindows(
     chart, dashaTree, ayanamsha, av,
-    { houses: [...def.houses, 2, 11], karakas: def.karakas, maxWindows: 4 },
-    now, horizon
-  ).map((w) => toTimingWindow(w, `${PLANET_NAMES[w.dasha.maha]}–${PLANET_NAMES[w.dasha.antar]} period`));
+    {
+      houses: [...def.houses, 2, 11],
+      karakas: def.karakas,
+      maxWindows: 4,
+      agePriorAt: agePriorFor(birth, band),
+      relativeTo: now,
+    },
+    dateAtAge(birth, band.start), dateAtAge(birth, band.end)
+  ).map((w) =>
+    toTimingWindow(w, `${PLANET_NAMES[w.dasha.maha]}–${PLANET_NAMES[w.dasha.antar]} period`, birth)
+  );
 }

@@ -8,6 +8,7 @@
  */
 
 import * as Astronomy from "astronomy-engine";
+import { AGE_BANDS, ageAt, agePrior, dateAtAge, EDGE_PRIOR } from "../ageBands";
 import { computeAutoChart, computeManualChart } from "../chart";
 import { CHALDEAN_MAP, NAISARGIKA_BALA, PLANETS, signMobility } from "../constants";
 import { computeNumerology } from "../numerology";
@@ -25,12 +26,14 @@ import { dignityInSign, computeDignity, naturalRelation, temporalRelation } from
 import { computeVargaSet, vargaSign, VIMSHOPAKA_WEIGHTS } from "../varga";
 import { detectYogas } from "../yogas";
 import { allStrengths } from "../strength";
-import { buildCareerReport } from "../../../data/interpretations/career";
+import {
+  buildCareerReport, careerTimingWindows, CAREER_CHANGE_GROUP, CAREER_ENTRY_GROUP,
+} from "../../../data/interpretations/career";
 import { buildCautionsReport } from "../../../data/interpretations/cautions";
-import { buildForeignReport } from "../../../data/interpretations/foreign";
+import { buildForeignReport, foreignTimingWindows } from "../../../data/interpretations/foreign";
 import { buildMarriageReport, marriageTimingWindows } from "../../../data/interpretations/marriage";
 import { buildPersonalityProfile } from "../../../data/interpretations/personality";
-import { buildWealthReport } from "../../../data/interpretations/wealth";
+import { buildWealthReport, wealthTimingWindows } from "../../../data/interpretations/wealth";
 import type { AutoInputState, PlanetId } from "../types";
 
 let failures = 0;
@@ -473,7 +476,13 @@ function norm360Check(x: number): number {
     const w1 = findActivationWindows(chart, tree, "lahiri", null, marriageCriteria, from, to);
     const w2 = findActivationWindows(chart, tree, "lahiri", null, marriageCriteria, from, to);
     check("findActivationWindows is deterministic", JSON.stringify(w1) === JSON.stringify(w2));
-    check("Windows ranked by score descending", w1.every((w, i, a) => i === 0 || a[i - 1].score >= w.score));
+    // Selection ranks by score, but OUTPUT is chronological (a life story reads
+    // in order); the score survives on each window for callers that re-rank.
+    check(
+      "Windows returned in chronological order",
+      w1.every((w, i, a) => i === 0 || a[i - 1].start.getTime() <= w.start.getTime())
+    );
+    check("Every window carries a phase label", w1.every((w) => ["past", "current", "future"].includes(w.phase)));
     check("Window confidence within 5–95", w1.every((w) => w.confidence >= 5 && w.confidence <= 95));
     check("Every window carries reasons", w1.every((w) => w.reasons.length > 0));
     if (w1.length) {
@@ -620,8 +629,8 @@ function norm360Check(x: number): number {
     check("Marriage: no deterministic 'will marry' phrasing", !text.includes("will marry"));
     check("Marriage: Mangal Dosha assessed", typeof m.mangalDosha.present === "boolean");
     const windows = marriageTimingWindows(chart, tree, "lahiri", null, jaimini, fixedNow);
-    check("Marriage windows: at most 3, each with reasons + confidence 5–95",
-      windows.length <= 3 && windows.every((w) => w.reasons.length > 0 && w.confidence >= 5 && w.confidence <= 95),
+    check("Marriage windows: at most 4, each with reasons + confidence 5–95",
+      windows.length <= 4 && windows.every((w) => w.reasons.length > 0 && w.confidence >= 5 && w.confidence <= 95),
       `${windows.length} windows`);
     if (windows.length) {
       console.log(
@@ -703,6 +712,211 @@ function norm360Check(x: number): number {
     check("Lucky: jyotisha verdict has planets/numbers/colours",
       r1.jyotishaVerdict.planets.length > 0 && r1.jyotishaVerdict.numbers.length > 0 && r1.jyotishaVerdict.colours.length > 0);
     console.log(`  canonical lucky: planets=${r1.jyotishaVerdict.planets.join(",")} numbers=${r1.combined.numbers.join(",")} dirs=${r1.combined.directions.join("/")} disagreements=${r1.combined.disagreements.length}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5: age bands, banded timing windows, and the phrasing gate
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 5: age bands + banded windows ===");
+
+  // --- agePrior shape: plateau, ramps, hard zero outside ---------------------
+  {
+    const b = AGE_BANDS.marriage; // 22 / 24–32 / 45
+    check("agePrior = 1 inside the peak", agePrior(b, 24) === 1 && agePrior(b, 28) === 1 && agePrior(b, 32) === 1);
+    check("agePrior = 0 strictly outside the band", agePrior(b, 21.9) === 0 && agePrior(b, 45.1) === 0);
+    check(
+      "agePrior ≈ EDGE_PRIOR at both band edges",
+      approx(agePrior(b, b.start), EDGE_PRIOR, 1e-9) && approx(agePrior(b, b.end), EDGE_PRIOR, 1e-9),
+      `${agePrior(b, b.start).toFixed(3)} / ${agePrior(b, b.end).toFixed(3)}`
+    );
+
+    // Monotone rising on the opening ramp, monotone falling on the closing one.
+    let risingOk = true;
+    for (let a = b.start; a < b.peakStart; a += 0.1) {
+      if (agePrior(b, a + 0.1) < agePrior(b, a) - 1e-12) risingOk = false;
+    }
+    let fallingOk = true;
+    for (let a = b.peakEnd; a < b.end; a += 0.1) {
+      if (agePrior(b, a + 0.1) > agePrior(b, a) + 1e-12) fallingOk = false;
+    }
+    check("agePrior rises monotonically across the opening ramp", risingOk);
+    check("agePrior falls monotonically across the closing ramp", fallingOk);
+
+    // Every band is structurally sane.
+    check(
+      "All bands satisfy start ≤ peakStart ≤ peakEnd ≤ end",
+      Object.values(AGE_BANDS).every((x) => x.start <= x.peakStart && x.peakStart <= x.peakEnd && x.peakEnd <= x.end)
+    );
+  }
+
+  // --- ageAt / dateAtAge round-trip ------------------------------------------
+  {
+    const birth = chart.birthUtc!;
+    let maxErrDays = 0;
+    for (const a of [0, 1.5, 18, 22, 36.5, 45, 65, 99]) {
+      const back = ageAt(birth, dateAtAge(birth, a));
+      maxErrDays = Math.max(maxErrDays, Math.abs(back - a) * 365.2425);
+    }
+    check("dateAtAge/ageAt round-trip within 1 day", maxErrDays < 1, `max ${maxErrDays.toExponential(2)} d`);
+    check("ageAt is 0 at the birth instant", Math.abs(ageAt(birth, birth)) < 1e-12);
+  }
+
+  const tree5 = vimshottariTree(chart.planets.find((p) => p.id === "Mo")!.longitude, chart.birthUtc!);
+  const jaimini5 = computeJaimini(chart);
+  // Canonical chart is born 1990-01-24; at this "now" the native is ~36.5 —
+  // mid-band for marriage, so both the past and future paths are exercised.
+  const now5 = new Date(Date.UTC(2026, 7, 1));
+  const ageNow = ageAt(chart.birthUtc!, now5);
+  check("Canonical native is mid-marriage-band at the fixed 'now'", ageNow > 32 && ageNow < 42, ageNow.toFixed(2));
+
+  // --- Marriage windows sit inside the band, are phase-labelled, deterministic
+  {
+    const w = marriageTimingWindows(chart, tree5, "lahiri", null, jaimini5, now5);
+    const b = AGE_BANDS.marriage;
+    check(
+      "Marriage windows all fall inside ages 22–45",
+      w.length > 0 && w.every((x) => x.ageRange.from >= b.start - 1 && x.ageRange.to <= b.end + 1),
+      w.map((x) => `${x.ageRange.from}-${x.ageRange.to}`).join(" ")
+    );
+    check(
+      "Marriage window ageRange agrees with its dates",
+      w.every(
+        (x) =>
+          x.ageRange.from === Math.round(ageAt(chart.birthUtc!, x.start)) &&
+          x.ageRange.to === Math.round(ageAt(chart.birthUtc!, x.end))
+      )
+    );
+    // Phase labels against the fixed 'now'.
+    check(
+      "Phase labels are correct against the fixed 'now'",
+      w.every((x) =>
+        x.end <= now5 ? x.phase === "past" : x.start > now5 ? x.phase === "future" : x.phase === "current"
+      ),
+      w.map((x) => x.phase).join(",")
+    );
+    // The quota rule: past windows must not crowd out everything upcoming.
+    const anyUpcoming = w.some((x) => x.phase !== "past");
+    check("Quota rule: at least one non-past window survives selection", anyUpcoming,
+      `${w.filter((x) => x.phase === "past").length} past / ${w.filter((x) => x.phase !== "past").length} not-past`);
+    check("Marriage windows are chronological", w.every((x, i, a) => i === 0 || a[i - 1].start <= x.start));
+    // Determinism (mirrors the scan-level check).
+    const w2 = marriageTimingWindows(chart, tree5, "lahiri", null, jaimini5, now5);
+    check("Banded marriage windows are deterministic", JSON.stringify(w) === JSON.stringify(w2));
+    console.log(
+      "  marriage (banded):",
+      w.map((x) => `age${x.ageRange.from}-${x.ageRange.to}/${x.phase}/${x.grade}`).join(" | ")
+    );
+  }
+
+  // --- Career: exactly two groups, chronological within each -----------------
+  {
+    const c = careerTimingWindows(chart, tree5, "lahiri", null, jaimini5, now5);
+    const groups = [...new Set(c.map((w) => w.group))];
+    check(
+      "Career windows carry exactly the two expected groups",
+      groups.length === 2 && groups.includes(CAREER_ENTRY_GROUP) && groups.includes(CAREER_CHANGE_GROUP),
+      groups.join(" / ")
+    );
+    check(
+      "Career: entry group is emitted before the change group",
+      c.findIndex((w) => w.group === CAREER_CHANGE_GROUP) >
+        c.map((w) => w.group).lastIndexOf(CAREER_ENTRY_GROUP)
+    );
+    let chronoOk = true;
+    for (const g of groups) {
+      const items = c.filter((w) => w.group === g);
+      for (let i = 1; i < items.length; i++) if (items[i - 1].start > items[i].start) chronoOk = false;
+    }
+    check("Career: chronological within each group", chronoOk);
+    check(
+      "Career: entry windows inside 22–30, change windows inside 28–50",
+      c.every((w) =>
+        w.group === CAREER_ENTRY_GROUP
+          ? w.ageRange.from >= 21 && w.ageRange.to <= 31
+          : w.ageRange.from >= 27 && w.ageRange.to <= 51
+      ),
+      c.map((w) => `${w.ageRange.from}-${w.ageRange.to}`).join(" ")
+    );
+    console.log("  career (banded):", c.map((w) => `${w.ageRange.from}-${w.ageRange.to}/${w.phase}`).join(" | "));
+  }
+
+  // --- Wealth / foreign bands + cautions stays forward-only ------------------
+  {
+    const wl = wealthTimingWindows(chart, tree5, "lahiri", null, "salary", now5);
+    check(
+      "Wealth windows fall inside ages 25–65",
+      wl.every((w) => w.ageRange.from >= 24 && w.ageRange.to <= 66),
+      wl.map((w) => `${w.ageRange.from}-${w.ageRange.to}`).join(" ")
+    );
+    const fw = foreignTimingWindows(chart, tree5, "lahiri", null, now5);
+    check(
+      "Foreign windows fall inside ages 18–55",
+      fw.every((w) => w.ageRange.from >= 17 && w.ageRange.to <= 56),
+      fw.map((w) => `${w.ageRange.from}-${w.ageRange.to}`).join(" ")
+    );
+    const strengths5 = allStrengths(chart, null);
+    const car = buildCautionsReport(chart, strengths5, computeShadbala(chart), detectYogas(chart), tree5, now5);
+    check(
+      "Cautions windows are never retrospective (no band by design)",
+      car.adverseWindows.every((w) => w.phase !== "past" && w.end > now5),
+      `${car.adverseWindows.length} windows`
+    );
+    check(
+      "Cautions windows still carry ageRange",
+      car.adverseWindows.every((w) => Number.isFinite(w.ageRange.from) && Number.isFinite(w.ageRange.to))
+    );
+  }
+
+  // --- Too-young / too-old natives still get their band ----------------------
+  {
+    // Same placements, shifted birth years: a 12-year-old and a 70-year-old.
+    const young = computeAutoChart({ ...CANONICAL_INPUT, dateISO: "2014-01-24" }, "lahiri")!;
+    const old = computeAutoChart({ ...CANONICAL_INPUT, dateISO: "1956-01-24" }, "lahiri")!;
+    const youngTree = vimshottariTree(young.planets.find((p) => p.id === "Mo")!.longitude, young.birthUtc!);
+    const oldTree = vimshottariTree(old.planets.find((p) => p.id === "Mo")!.longitude, old.birthUtc!);
+    const yw = marriageTimingWindows(young, youngTree, "lahiri", null, computeJaimini(young), now5);
+    const ow = marriageTimingWindows(old, oldTree, "lahiri", null, computeJaimini(old), now5);
+    check(
+      "Native below the band still gets windows, all in the future",
+      yw.length > 0 && yw.every((w) => w.phase === "future" && w.ageRange.from >= 21),
+      `${yw.length} windows`
+    );
+    check(
+      "Native above the band still gets windows, all in the past",
+      ow.length > 0 && ow.every((w) => w.phase === "past" && w.ageRange.to <= 46),
+      `${ow.length} windows`
+    );
+  }
+
+  // --- Phrasing gate: no deterministic promises anywhere in any section ------
+  {
+    const vargas5 = computeVargaSet(chart);
+    const shadbala5 = computeShadbala(chart);
+    const yogas5 = detectYogas(chart);
+    const strengths5 = allStrengths(chart, null);
+    const numerology5 = computeNumerology("1990-01-24", "JOHN", "male");
+    const all = [
+      buildCareerReport(chart, vargas5, jaimini5, shadbala5, strengths5, yogas5),
+      buildWealthReport(chart, vargas5, strengths5, yogas5),
+      buildMarriageReport(chart, vargas5, jaimini5, strengths5, yogas5),
+      buildForeignReport(chart, vargas5, strengths5),
+      buildCautionsReport(chart, strengths5, shadbala5, yogas5, tree5, now5),
+      buildLuckyReport(chart, strengths5, shadbala5, numerology5),
+      // Timing prose is generated too, so it is gated alongside the reports.
+      marriageTimingWindows(chart, tree5, "lahiri", null, jaimini5, now5),
+      careerTimingWindows(chart, tree5, "lahiri", null, jaimini5, now5),
+      foreignTimingWindows(chart, tree5, "lahiri", null, now5),
+      wealthTimingWindows(chart, tree5, "lahiri", null, "salary", now5),
+    ];
+    const corpus = all.map((r) => JSON.stringify(r)).join(" ").toLowerCase();
+    const BANNED = ["you will ", "will definitely", "is guaranteed", "must marry", "will get", "will marry"];
+    for (const phrase of BANNED) {
+      const hit = corpus.includes(phrase);
+      check(`Phrasing gate: "${phrase.trim()}" appears nowhere in any section`, !hit,
+        hit ? corpus.slice(Math.max(0, corpus.indexOf(phrase) - 60), corpus.indexOf(phrase) + 60) : "");
+    }
   }
 }
 

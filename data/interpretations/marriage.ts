@@ -1,3 +1,4 @@
+import { AGE_BANDS, ageYearsAt, agePriorFor, dateAtAge } from "@/utils/astrology/ageBands";
 import { aspectsOnSign } from "@/utils/astrology/aspects";
 import type { AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
 import {
@@ -15,6 +16,7 @@ import type {
 } from "@/utils/astrology/types";
 import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import type { Evidence, SectionReport, TimingWindow } from "./report";
+import { plain, toTimingWindow } from "./report";
 import { ordinal } from "./synthesis";
 
 /**
@@ -63,7 +65,7 @@ export function checkMangalDosha(chart: ChartData): MangalDosha {
   const mars = chart.planets.find((p) => p.id === "Ma");
   const moon = chart.planets.find((p) => p.id === "Mo");
   if (!mars) {
-    return { present: false, fromLagna: false, fromMoon: false, cancellations: [], effective: false, text: "Mars is not placed in this chart, so Mangal Dosha cannot be assessed." };
+    return { present: false, fromLagna: false, fromMoon: false, cancellations: [], effective: false, text: "Mars is not placed in this chart, so there is nothing to assess Mangal Dosha against. Treat the question as unanswered here rather than answered in your favour." };
   }
   const DOSHA_HOUSES = [1, 4, 7, 8, 12];
   const fromLagna = DOSHA_HOUSES.includes(mars.house);
@@ -101,10 +103,10 @@ export function checkMangalDosha(chart: ChartData): MangalDosha {
     .join(" and ");
 
   const text = !present
-    ? "No Mangal Dosha: Mars avoids the 1st, 4th, 7th, 8th and 12th houses from both your Lagna and your Moon."
+    ? "You do not have Mangal Dosha. Mars stays clear of the 1st, 4th, 7th, 8th and 12th houses counted from both your rising sign and your Moon, which are the placements the matching tradition watches for. In practical terms, the question that worries so many families at the matching stage simply does not arise in your chart."
     : effective
-      ? `Mars occupies the ${ordinal(mars.house)} house — Mangal Dosha forms ${where}, with no standard cancellation applying. Tradition reads this as a hot-tempered start to partnership and recommends conscious patience in the early married years (and, in matching practice, a partner whose chart balances it). It softens naturally with maturity; it is a factor to work with, never a prohibition.`
-      : `Mars occupies the ${ordinal(mars.house)} house, which technically forms Mangal Dosha ${where} — but it is cancelled in your chart: ${cancellations.join("; ")}. In practice it behaves as ordinary Mars energy in partnership: directness, not affliction.`;
+      ? `Mars sits in your ${ordinal(mars.house)} house, so Mangal Dosha forms ${where}, and none of the standard cancellations applies. What tradition is describing is heat: you bring force and impatience into close partnership, and the early married years are where that shows — quick reactions, a low tolerance for being managed. It settles with maturity, and the practical work is learning to slow your first response down. This is a factor to work with, not a prohibition on marrying.`
+      : `Mars sits in your ${ordinal(mars.house)} house, which technically forms Mangal Dosha ${where} — but your chart cancels it: ${cancellations.join("; ")}. That means the heat is there without the affliction the tradition warns about. In daily life it reads as directness rather than damage: you say the difficult thing early, which is usually kinder than the alternative.`;
 
   return { present, fromLagna, fromMoon, cancellations, effective, text };
 }
@@ -140,7 +142,9 @@ export function buildMarriageReport(
   for (const p of seventhOccupants) {
     const benefic = ["Ju", "Ve", "Me", "Mo"].includes(p.id);
     (benefic ? harmonyFactors : delayFactors).push({
-      text: `${PLANET_NAMES[p.id]} occupies your 7th house — ${benefic ? "a natural benefic warming the partnership arena" : "a natural malefic that classically firms up (and can delay) partnership until maturity"}`,
+      text: benefic
+        ? `${PLANET_NAMES[p.id]} sits in your 7th house, the house of the person you live your life beside — a gentle planet in a tender place. Partnership tends to be somewhere you soften rather than somewhere you brace.`
+        : `${PLANET_NAMES[p.id]} sits in your 7th house, which classically firms partnership up and slows it down. In practice you take relationships seriously young and often arrive at the real one later, with a clearer idea of what you actually want.`,
       weight: benefic ? 6 : -5,
       source: { work: "BPHS / Phaladeepika", ref: "7th-house occupancy" },
     });
@@ -148,12 +152,12 @@ export function buildMarriageReport(
   if (seventhLord) {
     const s = strengths[seventhLordId];
     harmonyFactors.push({
-      text: `Your 7th lord ${PLANET_NAMES[seventhLordId]} sits in the ${ordinal(seventhLord.house)} house, ${DIGNITY_LABELS[seventhLord.dignity]}${s ? `, strength ${s.score}/100` : ""}`,
+      text: `Your 7th house is ruled by ${PLANET_NAMES[seventhLordId]}, and it sits in your ${ordinal(seventhLord.house)} house, ${DIGNITY_LABELS[seventhLord.dignity]}${s ? `, scoring ${s.score}/100 for strength` : ""}. That is where your partnership life gets carried out — ${ordinal(seventhLord.house)}-house matters and your marriage tend to move together.`,
       weight: s ? Math.round((s.score - 50) / 8) : 0,
     });
     if ([6, 8, 12].includes(seventhLord.house)) {
       delayFactors.push({
-        text: `The 7th lord in the ${ordinal(seventhLord.house)} (a difficult house) is a classical delay-and-friction marker for partnership`,
+        text: `Your 7th ruler sits in the ${ordinal(seventhLord.house)}, one of the harder houses — the classical marker for partnership that takes longer and costs more effort. Day to day it reads as relationships that need work to hold their shape, and as a marriage that improves once you stop expecting it to be effortless.`,
         weight: -5,
         source: { work: "Phaladeepika", ref: "7th lord in dusthana" },
       });
@@ -166,7 +170,7 @@ export function buildMarriageReport(
   if (!gender) {
     karakaPlanets.push("Ju");
     caveats.push(
-      "Gender was not provided, so both Venus and Jupiter are read as marriage karakas (classically Venus for a male chart, Venus + Jupiter for a female chart)."
+      "You did not give a gender, so both Venus and Jupiter are read as marriage significators here. Classically it is Venus for a male chart and Venus with Jupiter for a female one; reading both is the cautious choice rather than a guess."
     );
   }
   for (const kid of karakaPlanets) {
@@ -175,7 +179,11 @@ export function buildMarriageReport(
     const s = strengths[kid];
     const afflicted = k.combust || k.dignity === "debilitated" || (k.warWith && !k.warWinner);
     (afflicted ? delayFactors : harmonyFactors).push({
-      text: `${PLANET_NAMES[kid]}, marriage karaka, is ${DIGNITY_LABELS[k.dignity]} in your ${ordinal(k.house)} house${k.combust ? ", combust" : ""}${s ? ` (${s.score}/100)` : ""}`,
+      text: `${PLANET_NAMES[kid]} is your natural significator for marriage, and it stands ${DIGNITY_LABELS[k.dignity]} in your ${ordinal(k.house)} house${k.combust ? ", too close to the Sun to shine on its own" : ""}${s ? ` (${s.score}/100)` : ""}. ${
+        afflicted
+          ? "A significator under pressure usually shows up as a slower, more deliberate route into partnership — you tend to learn about love the long way, which is not the same as being denied it."
+          : "A significator in good condition shows up as ease in being close to someone: affection you can express, and a partnership that gets easier rather than heavier with time."
+      }`,
       weight: afflicted ? -4 : s ? Math.round((s.score - 45) / 8) : 2,
       source: { work: "BPHS", ref: "kalatra karaka" },
     });
@@ -187,9 +195,13 @@ export function buildMarriageReport(
     const ul = jaimini.upapada;
     const ulLord = SIGN_LORDS[ul];
     const ulLordPos = planetOf(ulLord);
-    upapadaText = `Your Upapada Lagna (the marriage pada) falls in ${SIGNS[ul]}; its lord ${PLANET_NAMES[ulLord]}${ulLordPos ? ` sits in your ${ordinal(ulLordPos.house)} house, ${DIGNITY_LABELS[ulLordPos.dignity]}` : " is unplaced"}. The Upapada describes the marriage as an institution in your life — its dignity speaks to the standing and durability of the union.`;
+    upapadaText = `Your ${plain("Upapada Lagna")} falls in ${SIGNS[ul]}, and ${PLANET_NAMES[ulLord]} rules it${ulLordPos ? `, sitting in your ${ordinal(ulLordPos.house)} house, ${DIGNITY_LABELS[ulLordPos.dignity]}` : ", though it is unplaced in this chart"}. This point describes marriage as a standing institution in your life rather than as romance — the household, the in-laws, the public fact of being married. Its condition is the best single indicator of how settled and respected that arrangement tends to feel from the inside.`;
     if (ulLordPos && ["exalted", "own", "moolatrikona", "greatFriend"].includes(ulLordPos.dignity)) {
-      harmonyFactors.push({ text: `The Upapada lord is well dignified — a classical marker of a stable, respected union`, weight: 5, source: { work: "Jaimini Upadesa Sutras", ref: "Upapada" } });
+      harmonyFactors.push({
+        text: "The ruler of your marriage pada is well placed, which classically marks a union with standing — one that holds up in front of family and over time. It usually shows as a marriage other people treat as solid, and that you can rely on when other parts of life wobble.",
+        weight: 5,
+        source: { work: "Jaimini Upadesa Sutras", ref: "Upapada" },
+      });
     }
   }
 
@@ -201,16 +213,20 @@ export function buildMarriageReport(
     const d9Seventh = (d9.ascendant + 6) % 12;
     const d9SeventhOcc = d9.positions.filter((p) => p.sign === d9Seventh && p.id !== "Ra" && p.id !== "Ke");
     const veD9 = vargaPositionOf(d9, "Ve");
-    navamsaText = `In the Navamsa (the marriage chart proper): the D-9 lagna is ${SIGNS[d9.ascendant]} (lord ${PLANET_NAMES[d9LagnaLord]}); the 7th of the Navamsa is ${SIGNS[d9Seventh]}${d9SeventhOcc.length ? `, occupied by ${d9SeventhOcc.map((p) => PLANET_NAMES[p.id]).join(", ")}` : ", unoccupied"}; Venus falls in ${veD9 ? SIGNS[veD9.sign] : "—"}${veD9 && veD9.vargottama ? " (Vargottama — its promises hold)" : ""}. The inner texture of married life reads from here more than from the birth chart's surface.`;
+    navamsaText = `Your ${plain("Navamsa")} is where married life is actually read, and it says this: the Navamsa rising sign is ${SIGNS[d9.ascendant]}, ruled by ${PLANET_NAMES[d9LagnaLord]}; its 7th house falls in ${SIGNS[d9Seventh]}${d9SeventhOcc.length ? `, with ${d9SeventhOcc.map((p) => PLANET_NAMES[p.id]).join(", ")} there` : ", with nothing in it"}; and Venus lands in ${veD9 ? SIGNS[veD9.sign] : "—"}${veD9 && veD9.vargottama ? `, ${plain("Vargottama")}, which means what it promises tends to hold` : ""}. Treat this as the private texture of the marriage — what the two of you are like at home on an ordinary Tuesday, rather than what the relationship looks like to everyone else.`;
     if (veD9 && ["exalted", "own"].includes(veD9.dignity)) {
-      harmonyFactors.push({ text: "Venus is dignified in the Navamsa — affection deepens rather than erodes with time", weight: 5, source: { work: "BPHS", ref: "Ch.6 (Navamsa)" } });
+      harmonyFactors.push({
+        text: "Venus is strong in your Navamsa, the chart that describes married life from the inside. Affection in your marriage tends to deepen with the years instead of wearing thin — the tenderness is still there after the novelty has gone.",
+        weight: 5,
+        source: { work: "BPHS", ref: "Ch.6 (Navamsa)" },
+      });
     }
   }
 
   // --- Darakaraka ---
   if (jaimini && dk) {
     harmonyFactors.push({
-      text: `${PLANET_NAMES[dk.id]} is your Darakaraka (spouse significator by degree), placed in your ${ordinal(dk.house)} house — the spouse carries ${PLANET_NAMES[dk.id]}'s signature`,
+      text: `${PLANET_NAMES[dk.id]} is your ${plain("Darakaraka")}, and it sits in your ${ordinal(dk.house)} house. The person you marry tends to carry that planet's signature — its temperament, its pace, its way of handling difficulty — closely enough that the description usually feels familiar once you meet them.`,
       weight: 2,
       source: { work: "Jaimini Upadesa Sutras", ref: "chara karakas" },
     });
@@ -221,7 +237,7 @@ export function buildMarriageReport(
   for (const a of seventhAspectors) {
     if (a === "Sa" || a === "Ra" || a === "Ke") {
       delayFactors.push({
-        text: `${PLANET_NAMES[a]} aspects your 7th house — classically a "later is better" influence on marriage timing`,
+        text: `${PLANET_NAMES[a]} casts its aspect on your 7th house, which the classics read as a "later is better" influence on marriage. In ordinary terms: early partnerships tend to teach rather than last, and the ones you choose after about thirty hold much better.`,
         weight: -3,
         source: { work: "Phaladeepika", ref: "malefic influence on the 7th" },
       });
@@ -231,7 +247,11 @@ export function buildMarriageReport(
   // --- Mangal Dosha ---
   const mangalDosha = checkMangalDosha(chart);
   if (mangalDosha.effective) {
-    delayFactors.push({ text: "Effective Mangal Dosha (see below)", weight: -4, source: { work: "matching tradition", ref: "Kuja Dosha" } });
+    delayFactors.push({
+      text: `An uncancelled ${plain("Mangal Dosha")} is present (the full reading is below). It points at heat in the early married years rather than at anything structural, and patience is the whole of the remedy.`,
+      weight: -4,
+      source: { work: "matching tradition", ref: "Kuja Dosha" },
+    });
   }
 
   // --- Spouse indications ---
@@ -239,29 +259,39 @@ export function buildMarriageReport(
   if (seventhLord) {
     const dir = PLANET_DIRECTION[seventhLordId];
     spouseIndications.push(
-      `The 7th lord ${PLANET_NAMES[seventhLordId]} suggests a partner carrying ${PLANET_NAMES[seventhLordId]}'s nature; ${dir ? `the classical direction indication is ${dir} of your birthplace (indicative only — direction rules are the softest technique in this list)` : "no direction indication applies"}.`
+      `Because ${PLANET_NAMES[seventhLordId]} rules your 7th house, the person you marry tends to carry that planet's nature — you are drawn to it, and you recognise it quickly. ${dir ? `Tradition also reads a direction from this, ${dir} of your birthplace, but hold that one loosely: direction rules are the softest technique on this page.` : "No direction indication follows from this placement, which is honest — the rule needs a planet that carries one."}`
     );
     if ([9, 12].includes(seventhLord.house) || seventhOccupants.some((p) => p.id === "Ra")) {
       spouseIndications.push(
-        "The 7th axis touches the 9th/12th houses or Rahu — a classical pointer toward a partner from a different region, community or country."
+        "Your marriage axis touches the 9th or 12th house, or Rahu sits on it — the classical pointer toward a partner from a different region, community or country. In everyday terms, the person who fits you is unlikely to come from the street you grew up on."
       );
     } else {
-      spouseIndications.push("No strong foreign markers on the 7th axis — the classical reading leans toward a partner from a familiar cultural circle.");
+      spouseIndications.push(
+        "There are no strong foreign markers on your marriage axis, which leans the reading toward a partner from a familiar cultural circle. That is a tendency in the chart, not a boundary on your life — plenty of these charts marry across every kind of distance."
+      );
     }
   }
   if (dk) {
-    spouseIndications.push(`As Darakaraka, ${PLANET_NAMES[dk.id]} colours the spouse's temperament: expect a strong ${PLANET_NAMES[dk.id]} signature in who you choose.`);
+    spouseIndications.push(
+      `${PLANET_NAMES[dk.id]}, as your spouse significator, colours their temperament more than anything else here. Look for a strong ${PLANET_NAMES[dk.id]} signature in whom you actually choose — it is usually more visible in how they behave under stress than in how they present at first.`
+    );
   }
 
   // --- Remedies (tradition, framed as such) ---
   const remedies: string[] = [];
   if (mangalDosha.effective) {
-    remedies.push("Tradition offers Mangal Dosha remedies (Mangal shanti, matching with a similar chart). Treat them as cultural practice; the practical remedy is patience and honest conflict habits early in the marriage.");
+    remedies.push(
+      "Tradition offers remedies for Mangal Dosha — Mangal shanti, matching with a chart that carries the same placement. Treat those as cultural practice rather than mechanism. The remedy that actually changes outcomes is patience in the first years and honest habits around conflict: saying the difficult thing early, and not letting a bad evening become a bad month."
+    );
   }
   if (delayFactors.length > harmonyFactors.length) {
-    remedies.push("Where Saturn or the nodes touch the 7th, tradition favours later marriage and deliberate courtship — time itself is the classical remedy for this pattern.");
+    remedies.push(
+      "Where Saturn or the lunar nodes touch the 7th house, the tradition is unanimous: marry later and court deliberately. Time itself is the classical remedy for this pattern, and it works because the pattern is about readiness rather than luck."
+    );
   }
-  remedies.push("Strengthening Venus the traditional way (Friday observances, white clothing, respect toward one's partner) is described in the standard literature; its real value is attention to the relationship itself.");
+  remedies.push(
+    "The standard literature recommends strengthening Venus in the traditional way — Friday observances, white clothing, courtesy toward your partner. The last of those is the one that carries the weight: attention paid to the relationship is what the practice is really training."
+  );
 
   // --- Score & confidence ---
   const harmonySum = harmonyFactors.reduce((s, e) => s + e.weight, 0);
@@ -272,31 +302,35 @@ export function buildMarriageReport(
     30,
     88
   );
-  if (!chart.birthUtc) caveats.push("Without a birth time, the timing windows below cannot be computed and house cusps are approximate.");
+  if (!chart.birthUtc)
+    caveats.push(
+      "Without a birth time the windows below cannot be computed at all, and the house boundaries are approximate — so read the placements here as indications rather than as measurements."
+    );
 
   return {
     key: "marriage",
     title: "Marriage — Timing & Married Life",
     headline:
       score >= 60
-        ? "The marriage houses are well supported — partnership is a strength of this chart, and the question is when, not whether."
+        ? "Your marriage houses are well supported — partnership is one of the stronger things in this chart, and the interesting question is when rather than whether."
         : score >= 45
-          ? "Marriage indications are mixed — supportive karakas balanced against some classical delay factors. The windows below matter more than averages."
-          : "The chart carries real delay-and-friction markers for partnership — which classically means later, more deliberate marriage, not absence of it.",
+          ? "Your marriage indications are mixed: warm significators on one side, some classical delay markers on the other. For a chart like this the windows matter far more than the average does."
+          : "Your chart carries real delay-and-friction markers around partnership. Classically that means marriage arrives later and more deliberately — it is a description of pace, not of absence.",
     score,
     confidence,
     blocks: [
       {
-        heading: "The marriage houses and karakas",
+        heading: "The marriage houses and significators",
         paragraphs: [
+          `Marriage is read from your 7th house and from the planets that naturally stand for partnership. Below are the two deeper views the tradition adds to that: the marriage pada, which describes the institution, and the Navamsa, which describes the daily life inside it.`,
           upapadaText,
           navamsaText,
         ].filter((x): x is string => Boolean(x)),
         reasons: [...harmonyFactors, ...delayFactors],
       },
       { heading: "Mangal Dosha", paragraphs: [mangalDosha.text] },
-      { heading: "Spouse indications", paragraphs: spouseIndications },
-      { heading: "Traditional remedies", paragraphs: remedies },
+      { heading: "What your partner tends to be like", paragraphs: spouseIndications },
+      { heading: "What tradition offers, and what actually helps", paragraphs: remedies },
     ],
     caveats,
     hasDasha: Boolean(chart.birthUtc),
@@ -309,9 +343,17 @@ export function buildMarriageReport(
 }
 
 // ---------------------------------------------------------------------------
-// Timing: top-3 year windows with Jupiter-transit month sub-windows
+// Timing: windows across the marriage age band, with Jupiter-transit sub-windows
 // ---------------------------------------------------------------------------
 
+/**
+ * Marriage windows are scanned across the *life stage* when marriage commonly
+ * happens (ages 22–45), not across the next 15 years from today. Windows that
+ * have already elapsed are returned too, marked `phase: "past"` — if the
+ * marriage happened, the chart says it most likely happened there, and that is
+ * a check on the reading rather than a prediction. `now` is used only to label
+ * each window past/current/future; it never bounds the scan.
+ */
 export function marriageTimingWindows(
   chart: ChartData,
   dashaTree: DashaPeriod[] | null,
@@ -321,9 +363,10 @@ export function marriageTimingWindows(
   now: Date
 ): TimingWindow[] {
   if (!dashaTree || !chart.birthUtc) return [];
+  const birth = chart.birthUtc;
   const lagna = chart.ascendant.sign;
   const gender = chart.meta.gender;
-  const horizon = new Date(now.getTime() + 15 * 365.25 * 86400000);
+  const band = AGE_BANDS.marriage;
 
   const karakas: PlanetId[] = ["Ve"];
   if (gender === "female" || !gender) karakas.push("Ju");
@@ -332,8 +375,15 @@ export function marriageTimingWindows(
   const extraSigns = jaimini ? [jaimini.upapada] : [];
   const windows = findActivationWindows(
     chart, dashaTree, ayanamsha, av,
-    { houses: [7, 2, 11], karakas, extraSigns, maxWindows: 3 },
-    now, horizon
+    {
+      houses: [7, 2, 11],
+      karakas,
+      extraSigns,
+      maxWindows: 4,
+      agePriorAt: agePriorFor(birth, band),
+      relativeTo: now,
+    },
+    dateAtAge(birth, band.start), dateAtAge(birth, band.end)
   );
 
   // Month-level sub-windows: Jupiter transiting the 7th (from Lagna and from
@@ -354,15 +404,15 @@ export function marriageTimingWindows(
         end: iv.end,
         grade: "moderate" as const,
         confidence: Math.min(w.confidence + 5, 90),
-        reasons: ["Jupiter's transit over a marriage point is the classical gochara trigger"],
+        reasons: [
+          "Jupiter passing over one of your marriage points is the classical trigger inside a window — the months where a period tends to actually deliver something",
+        ],
+        ageRange: { from: ageYearsAt(birth, iv.start), to: ageYearsAt(birth, iv.end) },
+        phase:
+          iv.end <= now ? ("past" as const) : iv.start > now ? ("future" as const) : ("current" as const),
       }));
     return {
-      label: `${PLANET_NAMES[w.dasha.maha]}–${PLANET_NAMES[w.dasha.antar]} period`,
-      start: w.start,
-      end: w.end,
-      grade: w.score >= 70 ? ("strong" as const) : w.score >= 50 ? ("moderate" as const) : ("weak" as const),
-      confidence: w.confidence,
-      reasons: w.reasons.map((r) => r.text),
+      ...toTimingWindow(w, `${PLANET_NAMES[w.dasha.maha]}–${PLANET_NAMES[w.dasha.antar]} period`, birth),
       subWindows,
     };
   });

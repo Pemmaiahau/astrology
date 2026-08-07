@@ -208,6 +208,17 @@ export interface ActivationCriteria {
   minBindus?: number;
   /** Maximum windows returned (default 8, mirroring the Life Areas horizon). */
   maxWindows?: number;
+  /**
+   * 0–1 prior for a window centred at instant `t`. Windows scoring 0 are
+   * dropped. Injected as a function so this module stays free of domain age
+   * tables — see `ageBands.ts` for the tables themselves.
+   */
+  agePriorAt?: (t: number) => number;
+  /**
+   * "Today", used only to phase-label windows — never to bound the scan.
+   * When absent, no window is treated as elapsed (everything reads "future").
+   */
+  relativeTo?: Date;
 }
 
 export interface WindowReason {
@@ -225,6 +236,10 @@ export interface ActivationWindow {
   dasha: { maha: PlanetId; antar: PlanetId };
   /** True when Saturn and Jupiter jointly influence a target sign throughout. */
   doubleTransit: boolean;
+  /** Relative to criteria.relativeTo; "current" = the instant falls inside the window. */
+  phase: "past" | "current" | "future";
+  /** The agePriorAt value at the window midpoint, when supplied. */
+  agePrior?: number;
   reasons: WindowReason[];
 }
 
@@ -258,8 +273,13 @@ function connectionReasons(
  *     (lordship / occupancy / karaka / aspect) is a candidate;
  *  2. candidates are refined by the Saturn+Jupiter double transit over the
  *     target signs (piecewise on ingress intervals — no daily sampling);
- *  3. Jupiter's Ashtakavarga bindus in its transited sign weight the result.
+ *  3. Jupiter's Ashtakavarga bindus in its transited sign weight the result;
+ *  4. an optional caller-supplied age prior nudges windows toward the years
+ *     the event commonly happens in, and drops those outside the band.
+ * The returned set is quota-balanced between elapsed and upcoming windows and
+ * ordered chronologically (each window still carries its own score).
  * Deterministic, and cheap: a 20-year span costs ~25 ingress bisections.
+ * Nothing here reads "now" — `[from, to]` may lie entirely in the past.
  */
 export function findActivationWindows(
   chart: ChartData,
@@ -356,7 +376,36 @@ export function findActivationWindows(
         }
       }
 
+      // Age prior: how commonly this kind of event happens at this stage of a
+      // life. Supplied by the caller (see `ageBands.ts`) so this module holds
+      // no domain tables of its own.
+      let agePrior: number | undefined;
+      if (criteria.agePriorAt) {
+        const prior = criteria.agePriorAt((start.getTime() + end.getTime()) / 2);
+        if (prior <= 0) continue; // outside the band entirely
+        agePrior = prior;
+        const weight = Math.round(30 * (prior - 0.5)); // −15 … +15
+        score += weight;
+        reasons.push({
+          text:
+            prior >= 0.85
+              ? "This falls in the years when this event most commonly occurs"
+              : prior < 0.4
+                ? "This sits at the edge of the usual age range for this event"
+                : "This falls within the usual age range for this event",
+          weight,
+        });
+      }
+
       score = Math.max(0, Math.min(100, Math.round(score)));
+      const ref = criteria.relativeTo?.getTime();
+      const phase: ActivationWindow["phase"] =
+        ref === undefined || start.getTime() > ref
+          ? "future"
+          : end.getTime() <= ref
+            ? "past"
+            : "current";
+
       windows.push({
         start,
         end,
@@ -364,13 +413,30 @@ export function findActivationWindows(
         confidence: Math.max(5, Math.min(95, score)),
         dasha: { maha: md.lord, antar: ad.lord },
         doubleTransit: hasDouble,
+        phase,
+        agePrior,
         reasons,
       });
     }
   }
 
+  // Selection is a quota, not a plain top-N: elapsed windows often outscore
+  // upcoming ones (that is the point of scanning backwards), and a pure
+  // score sort would let them crowd out everything the reader can still act
+  // on. Half the slots are reserved for non-past windows; whichever pool is
+  // short gives its slots back to the other.
   windows.sort((a, b) => b.score - a.score || a.start.getTime() - b.start.getTime());
-  return windows.slice(0, criteria.maxWindows ?? 8);
+  const max = criteria.maxWindows ?? 8;
+  const upcoming = windows.filter((w) => w.phase !== "past");
+  const past = windows.filter((w) => w.phase === "past");
+  const upTake = Math.min(Math.ceil(max / 2), upcoming.length);
+  const pastTake = Math.min(max - upTake, past.length);
+  const upExtra = Math.min(max - upTake - pastTake, upcoming.length - upTake);
+  const selected = [...upcoming.slice(0, upTake + upExtra), ...past.slice(0, pastTake)];
+
+  // Chronological output reads as a life story; the score is still carried
+  // on each window for callers that want to rank.
+  return selected.sort((a, b) => a.start.getTime() - b.start.getTime());
 }
 
 /** Start timestamps of level-`level` periods that begin strictly inside the window. */

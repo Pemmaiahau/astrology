@@ -1,3 +1,4 @@
+import { ageYearsAt } from "@/utils/astrology/ageBands";
 import { aspectedSigns } from "@/utils/astrology/aspects";
 import { ownedHouses } from "@/utils/astrology/yogas";
 import type { ChartData, PlanetId } from "@/utils/astrology/types";
@@ -44,6 +45,11 @@ export interface TimingWindow {
   /** 5–95. */
   confidence: number;
   reasons: string[];
+  /** Native's age at the window's start and end, rounded to whole years. */
+  ageRange: { from: number; to: number };
+  phase: "past" | "current" | "future";
+  /** Optional grouping heading, e.g. "Entry & establishment (22–30)". */
+  group?: string;
   /** Month-level refinements inside the window (e.g. Jupiter contacts). */
   subWindows?: TimingWindow[];
 }
@@ -111,8 +117,17 @@ export function themeConnection(
   return reasons.length ? reasons.join("; ") : null;
 }
 
-/** Convert a scan.ts ActivationWindow into the display TimingWindow shape. */
-export function toTimingWindow(w: ScanWindow, label: string): TimingWindow {
+/**
+ * Convert a scan.ts ActivationWindow into the display TimingWindow shape.
+ * `birthUtc` is what turns dates into ages — the reader's own life stage is
+ * the frame the windows are meant to be read in.
+ */
+export function toTimingWindow(
+  w: ScanWindow,
+  label: string,
+  birthUtc: Date,
+  group?: string
+): TimingWindow {
   return {
     label,
     start: w.start,
@@ -120,6 +135,9 @@ export function toTimingWindow(w: ScanWindow, label: string): TimingWindow {
     grade: w.score >= 70 ? "strong" : w.score >= 50 ? "moderate" : "weak",
     confidence: w.confidence,
     reasons: w.reasons.map((r) => r.text),
+    ageRange: { from: ageYearsAt(birthUtc, w.start), to: ageYearsAt(birthUtc, w.end) },
+    phase: w.phase,
+    ...(group ? { group } : {}),
   };
 }
 

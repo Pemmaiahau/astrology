@@ -4,6 +4,8 @@ import { Briefcase } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
 import { buildCareerReport, careerTimingWindows } from "@/data/interpretations/career";
+import { ageAt } from "@/utils/astrology/ageBands";
+import BandNote from "./BandNote";
 import RankedList from "./RankedList";
 import SectionCard, { Section } from "./SectionCard";
 import TimingWindows from "./TimingWindows";
@@ -29,6 +31,8 @@ export default function CareerCard() {
     [chart, showTiming, dashaTree, ayanamsha, ashtakavarga, jaimini, now]
   );
 
+  const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
+
   if (!chart || !report) return null;
 
   return (
@@ -53,13 +57,18 @@ export default function CareerCard() {
       ))}
 
       <Section title="Best periods for career moves">
+        <BandNote
+          bands={["careerEntry", "careerChange"]}
+          age={age}
+          lead="Two different questions, so two sets of windows: the years a working life usually gets established (ages 22–30), and the years careers most often change, rise or go independent (ages 28–50). Ones that have already passed are marked — if the move happened, it most likely happened there."
+        />
         {showTiming ? (
           timing && timing.length ? (
-            <TimingWindows windows={timing} title="Probable activation windows (next 15 years)" />
+            <TimingWindows windows={timing} title="Windows by career stage" />
           ) : (
             <p className="text-xs text-fg-muted">
               {report.hasDasha
-                ? "No strongly connected dasha windows in the next 15 years — career moves will ride on transits rather than dasha support."
+                ? "No strongly connected period surfaces in either career band — which reads as career moves riding on transits rather than on main-period support."
                 : "Timing needs a birth time and place."}
             </p>
           )

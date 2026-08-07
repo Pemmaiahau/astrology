@@ -4,6 +4,8 @@ import { Plane } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
 import { buildForeignReport, foreignTimingWindows } from "@/data/interpretations/foreign";
+import { ageAt } from "@/utils/astrology/ageBands";
+import BandNote from "./BandNote";
 import RankedList from "./RankedList";
 import SectionCard, { Section } from "./SectionCard";
 import TimingWindows from "./TimingWindows";
@@ -25,6 +27,8 @@ export default function ForeignCard() {
         : null,
     [chart, showTiming, dashaTree, ayanamsha, ashtakavarga, now]
   );
+
+  const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
 
@@ -49,13 +53,18 @@ export default function ForeignCard() {
       ))}
 
       <Section title="When foreign doors open">
+        <BandNote
+          bands={["foreign"]}
+          age={age}
+          lead="Windows across the years when people most often move abroad — study migration early, work migration later (ages 18–55). Ones that have already passed are marked — if a move happened, it most likely happened there."
+        />
         {showTiming ? (
           timing && timing.length ? (
-            <TimingWindows windows={timing} title="Probable activation windows (next 15 years)" />
+            <TimingWindows windows={timing} title="Windows across ages 18–55" />
           ) : (
             <p className="text-xs text-fg-muted">
               {report.hasDasha
-                ? "No strongly connected dasha windows in the next 15 years."
+                ? "No strongly connected period surfaces anywhere in the 18–55 band — foreign themes in this chart are likely to come through opportunity and transit rather than a main period."
                 : "Timing needs a birth time and place."}
             </p>
           )

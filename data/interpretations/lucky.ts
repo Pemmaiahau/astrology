@@ -133,7 +133,9 @@ export function buildLuckyReport(
       numerologyVerdict.directions = KUA_DIRECTIONS[numerology.kua].slice(0, 2);
     }
   } else {
-    caveats.push("Numerology needs a birth date — only the Jyotisha verdict is shown.");
+    caveats.push(
+      "Numerology needs a birth date, which is missing here, so only the chart-based verdict is shown below. Nothing has been guessed to fill the gap."
+    );
   }
 
   // ---- Combine: intersection first, disagreements surfaced -----------------
@@ -143,7 +145,7 @@ export function buildLuckyReport(
     const both = a.filter((x) => b.includes(x));
     if (both.length) return [...both, ...a.filter((x) => !both.includes(x)), ...b.filter((x) => !a.includes(x) && !both.includes(x))].slice(0, 4);
     disagreements.push(
-      `${label}: Jyotisha favours ${a.slice(0, 2).join(", ")} while numerology favours ${b.slice(0, 2).join(", ")} — no overlap. When systems disagree, this app ranks the Jyotisha (birth-chart) verdict first because it is computed from your full chart rather than the calendar date alone; both are listed so you can choose.`
+      `${label}: your chart favours ${a.slice(0, 2).join(", ")} while numerology favours ${b.slice(0, 2).join(", ")}, and the two do not overlap at all. Rather than average them into something neither system said, both are shown. Where they disagree this page puts the chart-based answer first, because it is derived from your whole birth chart rather than from the calendar date alone — but the choice is yours to make.`
     );
     return [...a.slice(0, 2), ...b.slice(0, 2)];
   };
@@ -156,25 +158,26 @@ export function buildLuckyReport(
     disagreements,
   };
 
-  const gemstoneNote = `Classical gemstone associations for your auspicious planets: ${good
+  const gemstoneNote = `Tradition attaches a stone to each of the planets working in your favour: ${good
     .map((p) => `${PLANET_NAMES[p]} — ${PLANET_GEMSTONES[p]}`)
-    .join("; ")}. Listed as classical information only: consult a qualified astrologer before wearing any gemstone, since a wrongly chosen stone is traditionally held to amplify the wrong planet.`;
+    .join("; ")}. This is listed as classical information rather than as a recommendation. If you are considering wearing one, take it to a qualified astrologer first — the tradition holds that a wrongly chosen stone amplifies the wrong planet, which is the opposite of what you were after.`;
 
   const confidence = Math.max(35, Math.min(80, 55 + (shadbala ? 8 : 0) + (numerology ? 5 : -5) + (numerology?.namank ? 4 : 0)));
 
   return {
     key: "lucky",
     title: "Lucky Number, Colour & Direction",
-    headline: `Your auspicious planets are ${good.map((p) => PLANET_NAMES[p]).join(", ")} — numbers ${combined.numbers.slice(0, 3).join(", ")}, ${combined.colours[0] ?? "—"}, facing ${combined.directions[0] ?? "—"}.`,
+    headline: `The planets working in your favour are ${good.map((p) => PLANET_NAMES[p]).join(", ")} — which gives you numbers ${combined.numbers.slice(0, 3).join(", ")}, the colour ${combined.colours[0] ?? "—"}, and ${combined.directions[0] ?? "—"} to face.`,
     confidence,
     blocks: [
       {
-        heading: "How this was derived",
+        heading: "Where these come from",
         paragraphs: [
-          `Jyotisha side: your Lagna lord (${PLANET_NAMES[lagnaLord]}), ${roles.yogakaraka ? `yogakaraka (${PLANET_NAMES[roles.yogakaraka]}), ` : ""}Moon-nakshatra lord${nakLord ? ` (${PLANET_NAMES[nakLord]})` : ""} and strongest functional benefic${strongestBenefic ? ` (${PLANET_NAMES[strongestBenefic]})` : ""} are the planets that work FOR this chart — their numbers, colours, days and directions are yours.`,
+          `From your chart: the ruler of your rising sign (${PLANET_NAMES[lagnaLord]})${roles.yogakaraka ? `, your yogakaraka (${PLANET_NAMES[roles.yogakaraka]})` : ""}, the ruler of your Moon's nakshatra${nakLord ? ` (${PLANET_NAMES[nakLord]})` : ""} and your strongest supportive planet${strongestBenefic ? ` (${PLANET_NAMES[strongestBenefic]})` : ""} are the ones working in your favour. Their numbers, colours, days and directions are what this section calls yours.`,
           numerology
-            ? `Numerology side: birth-date numbers Moolank ${numerology.moolank} and Bhagyank ${numerology.bhagyank}${numerology.namank ? `, name number ${numerology.namank} (${numerology.namankSystem})` : ""}${numerology.kua ? `, Kua ${numerology.kua}` : ""} — each ruled by its classical planet.`
-            : "Numerology side: unavailable without a birth date.",
+            ? `From your birth date: Moolank ${numerology.moolank} and Bhagyank ${numerology.bhagyank}${numerology.namank ? `, and a name number of ${numerology.namank} on the ${numerology.namankSystem} system` : ""}${numerology.kua ? `, with a Kua number of ${numerology.kua}` : ""} — each of which tradition assigns to a planet.`
+            : "From your birth date: nothing, because no date was available — the numerology half of this reading is simply absent.",
+          "Treat all of this the way tradition actually intends it: as a set of preferences that tilt the odds slightly and cost nothing to follow, not as rules that decide outcomes. Wearing your colour to an interview is worth about as much as the confidence it gives you, which is not nothing.",
         ],
       },
     ],

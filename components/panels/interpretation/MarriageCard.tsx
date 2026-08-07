@@ -4,6 +4,8 @@ import { HeartHandshake } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
 import { buildMarriageReport, marriageTimingWindows } from "@/data/interpretations/marriage";
+import { ageAt } from "@/utils/astrology/ageBands";
+import BandNote from "./BandNote";
 import SectionCard, { Section } from "./SectionCard";
 import TimingWindows from "./TimingWindows";
 import WhyList from "./WhyList";
@@ -26,6 +28,8 @@ export default function MarriageCard() {
         : null,
     [chart, showTiming, dashaTree, ayanamsha, ashtakavarga, jaimini, now]
   );
+
+  const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
 
@@ -52,17 +56,22 @@ export default function MarriageCard() {
 
       <Section title="Most probable marriage windows">
         <p className="mb-2 text-[11px] leading-relaxed text-fg-subtle">
-          These are windows of raised probability, never fixed dates: dasha periods whose lords rule
-          your marriage houses, sharpened by Jupiter's transits and the Saturn+Jupiter double
-          transit.
+          These are windows of raised probability, never fixed dates: main and sub-periods whose
+          lords rule your marriage houses, sharpened by Jupiter's transits and the Saturn+Jupiter
+          double transit.
         </p>
+        <BandNote
+          bands={["marriage"]}
+          age={age}
+          lead="Windows across the years when marriage most commonly happens (ages 22–45). Ones that have already passed are marked — if the event happened, it most likely happened there."
+        />
         {showTiming ? (
           timing && timing.length ? (
-            <TimingWindows windows={timing} title="Top windows (next 15 years)" />
+            <TimingWindows windows={timing} title="Windows across ages 22–45" />
           ) : (
             <p className="text-xs text-fg-muted">
               {report.hasDasha
-                ? "No marriage-connected dasha window rises above threshold in the next 15 years — Jupiter transits over your 7th house become the primary trigger to watch."
+                ? "No marriage-connected period rises above the threshold anywhere in the 22–45 band — which usually means Jupiter's transits over your 7th house, rather than a main period, are the trigger to watch."
                 : "Timing needs a birth time and place."}
             </p>
           )

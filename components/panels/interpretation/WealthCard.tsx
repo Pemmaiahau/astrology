@@ -4,6 +4,8 @@ import { Coins } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
 import { buildWealthReport, wealthTimingWindows } from "@/data/interpretations/wealth";
+import { ageAt } from "@/utils/astrology/ageBands";
+import BandNote from "./BandNote";
 import RankedList from "./RankedList";
 import SectionCard, { Section } from "./SectionCard";
 import TimingWindows from "./TimingWindows";
@@ -25,6 +27,8 @@ export default function WealthCard() {
         : null,
     [chart, timingKey, dashaTree, ayanamsha, ashtakavarga, now]
   );
+
+  const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
 
@@ -66,6 +70,11 @@ export default function WealthCard() {
       ))}
 
       <Section title="When each stream activates">
+        <BandNote
+          bands={["wealth"]}
+          age={age}
+          lead="Windows across the years when earning and accumulation usually build (ages 25–65). Ones that have already passed are marked — if the stream opened up, it most likely opened there."
+        />
         <div className="mb-2 flex flex-wrap gap-1.5">
           {report.split.map((s) => (
             <button
@@ -84,11 +93,11 @@ export default function WealthCard() {
         </div>
         {timingKey &&
           (timing && timing.length ? (
-            <TimingWindows windows={timing} title="Probable activation windows (next 15 years)" />
+            <TimingWindows windows={timing} title="Windows across ages 25–65" />
           ) : (
             <p className="text-xs text-fg-muted">
               {report.hasDasha
-                ? "No strongly connected dasha windows for this stream in the next 15 years."
+                ? "No strongly connected period surfaces for this stream anywhere in the 25–65 band — this channel is likely to run steadily rather than in bursts."
                 : "Timing needs a birth time and place."}
             </p>
           ))}
