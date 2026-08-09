@@ -40,8 +40,23 @@ export function localToUtc(timeZone: string, dateISO: string, time: string): Dat
   return guess;
 }
 
+/**
+ * Signed UTC offset of a zone at an instant, in minutes. Exposed because
+ * rectification has to *judge* the offset it was given — a pre-1955 Indian LMT
+ * offset or a DST transition inside the search window destroys a rectification
+ * more thoroughly than any astrological error.
+ */
+export function tzOffsetMinutes(timeZone: string, utcDate: Date): number {
+  // `tzOffsetMs` rebuilds the zoned time from formatted parts at SECOND
+  // resolution, so any milliseconds on `utcDate` survive as noise in the
+  // difference. Rounding to the whole minute removes it — and every real zone
+  // offset, including the pre-1906 LMT ones (Asia/Calcutta +05:53), is a whole
+  // number of minutes anyway.
+  return Math.round(tzOffsetMs(timeZone, utcDate) / 60000);
+}
+
 export function utcOffsetLabel(timeZone: string, utcDate: Date): string {
-  const off = tzOffsetMs(timeZone, utcDate) / 60000;
+  const off = tzOffsetMinutes(timeZone, utcDate);
   const sign = off >= 0 ? "+" : "-";
   const abs = Math.abs(off);
   return `UTC${sign}${String(Math.floor(abs / 60)).padStart(2, "0")}:${String(abs % 60).padStart(2, "0")}`;

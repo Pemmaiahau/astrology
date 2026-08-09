@@ -10,6 +10,7 @@ import {
   Moon,
   Settings2,
   Sparkles,
+  Target,
   TrendingUp,
 } from "lucide-react";
 import { ChartProvider, useChart } from "@/components/context/ChartContext";
@@ -24,6 +25,7 @@ import InterpretationPanel from "@/components/panels/interpretation/Interpretati
 import LifeAreasPanel from "@/components/panels/LifeAreasPanel";
 import PanchangPanel from "@/components/panels/PanchangPanel";
 import PredictionPanel from "@/components/panels/PredictionPanel";
+import RectificationPanel from "@/components/panels/rectification/RectificationPanel";
 import Disclaimer from "@/components/ui/Disclaimer";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { AYANAMSHA_LABELS } from "@/utils/astrology/ayanamsha";
@@ -36,6 +38,7 @@ const TABS = [
   { key: "predict", label: "Predictions", icon: TrendingUp },
   { key: "panchang", label: "Panchang", icon: CalendarDays },
   { key: "ashtaka", label: "Ashtakavarga", icon: Grid3x3 },
+  { key: "rectify", label: "Rectify Time", icon: Target },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -205,6 +208,7 @@ function Workspace() {
             {tab === "predict" && <PredictionPanel />}
             {tab === "panchang" && <PanchangPanel />}
             {tab === "ashtaka" && <AshtakavargaTable />}
+            {tab === "rectify" && <RectificationPanel />}
           </>
         ) : (
           <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-line bg-surface-soft p-8 text-center">

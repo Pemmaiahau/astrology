@@ -22,6 +22,17 @@ import {
   findActivationWindows, occupancyIntervals, periodsOverlapping, signChangeEvents,
 } from "../scan";
 import { computeBhavaBala, computeShadbala, sputaDrishti } from "../shadbala";
+import { EVENT_RULES, resolveHouse } from "../rectification/eventRules";
+import { planetSignification, dashaShiftDaysPerMinute } from "../rectification/dashaFitness";
+import {
+  rectify, shiftLocalCivil, timezoneWarnings, validateRectifyRequest,
+} from "../rectification/rectify";
+import {
+  aggregate, eventSampleInstants, scoreEvent, MIN_MARGIN, MIN_Z,
+} from "../rectification/score";
+import { transitSnapshot, VEDHA_TABLE } from "../rectification/transitFitness";
+import type { LifeEvent, RectifyBirth } from "../rectification/types";
+import { NAKSHATRA_LORDS } from "../constants";
 import { dignityInSign, computeDignity, naturalRelation, temporalRelation } from "../states";
 import { computeVargaSet, vargaSign, VIMSHOPAKA_WEIGHTS } from "../varga";
 import { detectYogas } from "../yogas";
@@ -34,7 +45,7 @@ import { buildForeignReport, foreignTimingWindows } from "../../../data/interpre
 import { buildMarriageReport, marriageTimingWindows } from "../../../data/interpretations/marriage";
 import { buildPersonalityProfile } from "../../../data/interpretations/personality";
 import { buildWealthReport, wealthTimingWindows } from "../../../data/interpretations/wealth";
-import type { AutoInputState, PlanetId } from "../types";
+import type { AutoInputState, AyanamshaId, PlanetId } from "../types";
 
 let failures = 0;
 
@@ -918,6 +929,388 @@ function norm360Check(x: number): number {
         hit ? corpus.slice(Math.max(0, corpus.indexOf(phrase) - 60), corpus.indexOf(phrase) + 60) : "");
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+console.log("\n=== Phase 6: birth time rectification ===");
+// ---------------------------------------------------------------------------
+{
+  const BIRTH: RectifyBirth = {
+    dateISO: "1988-06-14",
+    time: "04:35",
+    timezone: "Asia/Kolkata",
+    lat: 18.9388,
+    lon: 72.8354,
+    placeName: "Mumbai",
+    gender: "female",
+    nodeMode: "mean",
+  };
+  const chartAt = (offsetMin: number, ay: AyanamshaId) => {
+    const local = shiftLocalCivil(BIRTH.dateISO, BIRTH.time, offsetMin);
+    return computeAutoChart(
+      {
+        name: "",
+        dateISO: local.dateISO,
+        time: local.time,
+        place: { name: "Mumbai", lat: BIRTH.lat, lon: BIRTH.lon, timezone: BIRTH.timezone },
+      },
+      ay,
+      "mean"
+    )!;
+  };
+
+  // --- (a) Dasha-boundary displacement per minute of birth time -------------
+  // The brief's figure is Δfrac = moonSpeed/1440 ÷ (360/27) ≈ 0.0686%/min at
+  // the MEAN lunar speed of 13.18°/day. The real Moon here moves ~13.0°/day, so
+  // the check is against the speed-derived value, with the textbook figure as
+  // the sanity band.
+  {
+    const c0 = chartAt(0, "lahiri");
+    const c1 = chartAt(1, "lahiri");
+    const m0 = c0.planets.find((p) => p.id === "Mo")!;
+    const m1 = c1.planets.find((p) => p.id === "Mo")!.longitude;
+    const nakSpan = 360 / 27;
+    const fracDelta = ((m1 % nakSpan) - (m0.longitude % nakSpan)) / nakSpan;
+    const predicted = Math.abs(m0.speed) / 1440 / nakSpan;
+    check(
+      "Nakshatra elapsed fraction shifts by the speed-derived amount per minute",
+      approx(fracDelta, predicted, 1e-6),
+      `measured ${(fracDelta * 100).toFixed(5)}%/min, predicted ${(predicted * 100).toFixed(5)}%/min`
+    );
+    check(
+      "…and that lands in the 0.06–0.07%/min band the ~0.0686% textbook figure implies",
+      fracDelta > 0.0006 && fracDelta < 0.0007,
+      `${(fracDelta * 100).toFixed(5)}%/min`
+    );
+
+    // The tree is a RIGID TRANSLATION: its origin is birthUtc − frac × years of
+    // the opening lord and every period after that has a fixed duration, so a
+    // boundary 40 years out moves exactly as far as one 2 years out. This is a
+    // correction to the "0.0686% of the elapsed offset" reading — the shift is
+    // uniform in absolute time, not proportional.
+    const t0 = vimshottariTree(m0.longitude, c0.birthUtc!);
+    const t1 = vimshottariTree(m1, c1.birthUtc!);
+    const shifts = t0.map(
+      (p, i) =>
+        (t1[i].start.getTime() - c1.birthUtc!.getTime() - (p.start.getTime() - c0.birthUtc!.getTime())) /
+        86400000
+    );
+    const uniform = shifts.every((s) => approx(s, shifts[0], 1e-6));
+    check(
+      "Every Mahadasha boundary shifts by the SAME absolute amount per minute (rigid translation)",
+      uniform,
+      `${shifts.map((s) => s.toFixed(3)).join(", ")} days`
+    );
+    const predictedShift = dashaShiftDaysPerMinute(Math.abs(m0.speed), NAKSHATRA_LORDS[m0.nakshatra]);
+    check(
+      "dashaShiftDaysPerMinute predicts the measured displacement",
+      approx(Math.abs(shifts[0]), predictedShift, 0.01),
+      `measured ${Math.abs(shifts[0]).toFixed(3)} d, predicted ${predictedShift.toFixed(3)} d`
+    );
+  }
+
+  // --- (b) D-60 Lagna amsha cadence ----------------------------------------
+  {
+    const asc = (m: number) => chartAt(m, "lahiri").ascendant.longitude;
+    const speed = asc(1) - asc(0); // degrees per minute
+    let changes = 0;
+    let prev = Math.floor(asc(-15) * 2); // 0.5° shashtiamsa index
+    for (let m = -14; m <= 15; m++) {
+      const cur = Math.floor(asc(m) * 2);
+      if (cur !== prev) changes++;
+      prev = cur;
+    }
+    const cadence = 30 / changes;
+    check(
+      "D-60 Lagna amsha changes on roughly a 2-minute cadence across the window",
+      cadence > 1 && cadence < 3,
+      `${changes} changes in 30 min → every ${cadence.toFixed(2)} min (Lagna speed ${speed.toFixed(3)}°/min)`
+    );
+    check(
+      "…and that cadence equals one shashtiamsa (0.5°) divided by the measured Lagna speed",
+      approx(cadence, 0.5 / speed, 0.25),
+      `${cadence.toFixed(2)} vs ${(0.5 / speed).toFixed(2)} min`
+    );
+    // The rashi Lagna, by contrast, does not change sign at all here.
+    const signs = new Set<number>();
+    for (let m = -15; m <= 15; m++) signs.add(chartAt(m, "lahiri").ascendant.sign);
+    check(
+      "Rashi Lagna sign is unchanged across ±15 min, so D-1 is the weak discriminator",
+      signs.size === 1,
+      `${signs.size} distinct Ascendant sign(s)`
+    );
+  }
+
+  // --- (c) Pushya is exactly Lahiri + 1.122° in sidereal longitude ----------
+  {
+    const l = chartAt(0, "lahiri");
+    const p = chartAt(0, "pushya");
+    let allExact = true;
+    for (const q of l.planets) {
+      const other = p.planets.find((x) => x.id === q.id)!;
+      if (!approx(((other.longitude - q.longitude + 540) % 360) - 180, 1.122, 1e-9)) allExact = false;
+    }
+    check("Every Pushya sidereal longitude is exactly Lahiri + 1.122°", allExact);
+    check(
+      "…which is 2.244 shashtiamsas, so D-60 is not comparable across ayanamshas",
+      approx(1.122 / 0.5, 2.244, 1e-9),
+      `${(1.122 / 0.5).toFixed(3)} amsas`
+    );
+    check(
+      "Ayanamsha difference is 8.415% of a nakshatra",
+      approx((1.122 / (360 / 27)) * 100, 8.415, 0.001)
+    );
+  }
+
+  // --- Bhavat Bhavam resolution --------------------------------------------
+  {
+    check("6th from the 7th resolves to the 12th", resolveHouse({ house: 6, from: 7 }) === 12);
+    check("12th from the 7th resolves to the 6th", resolveHouse({ house: 12, from: 7 }) === 6);
+    check("8th from the 9th resolves to the 4th", resolveHouse({ house: 8, from: 9 }) === 4);
+    check("8th from the 4th resolves to the 11th", resolveHouse({ house: 8, from: 4 }) === 11);
+    check("A bare house resolves to itself", resolveHouse({ house: 10 }) === 10);
+  }
+
+  // --- Vedha table integrity ------------------------------------------------
+  {
+    let sane = true;
+    for (const [graha, table] of Object.entries(VEDHA_TABLE)) {
+      for (const [good, vedha] of Object.entries(table)) {
+        if (Number(good) < 1 || Number(good) > 12 || vedha < 1 || vedha > 12) sane = false;
+        if (Number(good) === vedha) sane = false; // a house cannot obstruct itself
+      }
+      void graha;
+    }
+    check("Vedha table houses are all 1–12 and never self-obstructing", sane);
+    check("Saturn and Mars share the 3/6/11 gochara set",
+      JSON.stringify(VEDHA_TABLE.Sa) === JSON.stringify(VEDHA_TABLE.Ma));
+    check("Jupiter's 5th-from-Moon transit is obstructed from the 4th", VEDHA_TABLE.Ju[5] === 4);
+  }
+
+  // --- Aggregation is a weighted MEAN, not a sum ---------------------------
+  {
+    const mk = (score: number, weight: number) =>
+      ({ score, weight, eventId: `x${score}` }) as unknown as Parameters<typeof aggregate>[0][number];
+    const two = aggregate([mk(0.6, 1), mk(0.6, 1)]);
+    const four = aggregate([mk(0.6, 1), mk(0.6, 1), mk(0.6, 1), mk(0.6, 1)]);
+    check("More events do not inflate the score (weighted mean, not sum)", approx(two, four, 1e-12), `${two} vs ${four}`);
+    check("A half-weight event pulls the mean halfway", approx(aggregate([mk(1, 1), mk(0, 1)]), 0.5, 1e-12));
+  }
+
+  // --- Precision-interval sampling -----------------------------------------
+  {
+    const ex = eventSampleInstants({ id: "a", type: "marriage", dateISO: "2014-11-28", precision: "exact", reliability: "certain" });
+    const mo = eventSampleInstants({ id: "b", type: "marriage", dateISO: "2014-11-01", precision: "month", reliability: "certain" });
+    const yr = eventSampleInstants({ id: "c", type: "marriage", dateISO: "2014-01-01", precision: "year", reliability: "certain" });
+    check("Exact precision samples one instant", ex.length === 1);
+    check("Month precision integrates over four days inside the month", mo.length === 4 && mo.every((d) => d.getUTCMonth() === 10));
+    check("Year precision integrates over all twelve months", yr.length === 12 && new Set(yr.map((d) => d.getUTCMonth())).size === 12);
+  }
+
+  // --- Validation ----------------------------------------------------------
+  {
+    const bad = validateRectifyRequest({ birth: { dateISO: "1988-06-14", time: "04:35", timezone: "Asia/Kolkata", lat: 18.9, lon: 72.8 }, events: [] });
+    check("Fewer than 5 events is rejected", !bad.ok && bad.errors.some((e) => e.includes("At least")));
+    const badTz = validateRectifyRequest({ birth: { dateISO: "1988-06-14", time: "04:35", timezone: "Mars/Olympus", lat: 18.9, lon: 72.8 }, events: [] });
+    check("An unknown IANA zone is rejected", !badTz.ok);
+  }
+
+  // --- The worked example ---------------------------------------------------
+  const EVENTS: LifeEvent[] = [
+    { id: "e1", type: "higherEducation", dateISO: "2006-07-01", precision: "month", reliability: "certain" },
+    { id: "e2", type: "careerStart", dateISO: "2010-08-16", precision: "exact", reliability: "certain" },
+    { id: "e3", type: "marriage", dateISO: "2014-11-28", precision: "exact", reliability: "certain" },
+    { id: "e4", type: "foreignTravel", dateISO: "2016-03-01", precision: "month", reliability: "probable" },
+    { id: "e5", type: "childbirth", dateISO: "2018-02-09", precision: "exact", reliability: "certain" },
+    { id: "e6", type: "property", dateISO: "2020-01-01", precision: "year", reliability: "probable" },
+    { id: "e7", type: "fatherDeath", dateISO: "2022-09-04", precision: "exact", reliability: "certain" },
+  ];
+  const worked = rectify({ birth: BIRTH, events: EVENTS });
+
+  check(
+    "A dual sweep computes 2 × 31 candidates",
+    worked.lahiri.candidates.length === 31 && worked.pushya.candidates.length === 31
+  );
+  check(
+    "The sweep stays well inside the 3-second budget",
+    worked.elapsedMs < 3000,
+    `${worked.elapsedMs} ms`
+  );
+  check(
+    "Both ayanamshas are run independently and neither is averaged away",
+    worked.lahiri.ayanamsha === "lahiri" && worked.pushya.ayanamsha === "pushya"
+  );
+  check(
+    "Determinism: the same request twice gives the same winning minute",
+    rectify({ birth: BIRTH, events: EVENTS }).lahiri.best.offsetMin === worked.lahiri.best.offsetMin
+  );
+  check(
+    "Every candidate reports a tied interval containing its best minute",
+    worked.lahiri.interval.startOffsetMin <= worked.lahiri.best.offsetMin &&
+      worked.lahiri.best.offsetMin <= worked.lahiri.interval.endOffsetMin
+  );
+  check(
+    "Every event score carries a human-readable classical reason",
+    worked.lahiri.best.events.every((e) => e.summary.length > 20 && e.dasha.reasons.length > 0)
+  );
+  check(
+    "Rahu/Ketu delegation fires: a nodal dasha lord can still signify",
+    (() => {
+      const chart = chartAt(0, "lahiri");
+      const direct = planetSignification(chart, "Ra", EVENT_RULES.foreignTravel, "female");
+      return direct.claims.some((c) => c.includes("acts for") || c.includes("karaka"));
+    })()
+  );
+
+  // --- (d) NULL RESULT: nonsense events must not produce a verdict ----------
+  // The winner of 31 candidates is the maximum of 31 draws and stands ~1.9σ
+  // above the median BY CONSTRUCTION. The thresholds in score.ts are calibrated
+  // against exactly this, so a random event set must come back indeterminate
+  // and its winner must sit near the middle of the distribution.
+  {
+    const TYPES = ["marriage", "childbirth", "careerStart", "promotion", "jobLoss", "illness", "foreignTravel", "property"] as const;
+    let seed = 4242;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+    let determinate = 0;
+    let sweeps = 0;
+    const zs: number[] = [];
+    for (let trial = 0; trial < 4; trial++) {
+      const noise: LifeEvent[] = Array.from({ length: 7 }, (_, i) => ({
+        id: `n${trial}-${i}`,
+        type: TYPES[Math.floor(rnd() * TYPES.length)],
+        dateISO: `${2005 + Math.floor(rnd() * 18)}-${String(1 + Math.floor(rnd() * 12)).padStart(2, "0")}-${String(1 + Math.floor(rnd() * 27)).padStart(2, "0")}`,
+        precision: "exact",
+        reliability: "certain",
+      }));
+      const nr = rectify({ birth: BIRTH, events: noise });
+      for (const res of [nr.lahiri, nr.pushya]) {
+        sweeps++;
+        zs.push(res.stats.zScore);
+        if (res.verdict === "determinate") determinate++;
+        // The winner must not be far from the middle of its own distribution.
+        const spread = Math.max(...res.candidates.map((c) => c.score)) - Math.min(...res.candidates.map((c) => c.score));
+        if (spread > 0) {
+          const rel = (res.best.score - res.stats.median) / spread;
+          if (rel > 0.75) determinate++; // counts as a false peak too
+        }
+      }
+    }
+    check(
+      "Null result: randomly generated events never yield a determinate verdict",
+      determinate === 0,
+      `${determinate} false positives in ${sweeps} null sweeps, z = ${zs.map((z) => z.toFixed(2)).join(", ")}`
+    );
+    // The lesson the calibration taught: individual null z-scores routinely
+    // exceed 2 — the winner is the maximum of 31 draws — so z ALONE must never
+    // be the test. Assert the effect is real (so nobody "simplifies" the
+    // verdict back down to a bare z threshold) and that the joint test holds
+    // regardless.
+    const nullMedian = [...zs].sort((a, b) => a - b)[Math.floor(zs.length / 2)];
+    check(
+      "Null z-scores sit high by construction (max-of-31 effect), so z alone is not evidence",
+      nullMedian > 1.2 && nullMedian < 2.6 && Math.max(...zs) > MIN_Z - 0.5,
+      `median null z ${nullMedian.toFixed(2)}, max ${Math.max(...zs).toFixed(2)}, threshold ${MIN_Z} — the margin test is what excludes these`
+    );
+  }
+
+  // --- Positive control: events planted for a known minute are recovered ----
+  {
+    const TRUE_OFFSET = 7;
+    const truth = chartAt(TRUE_OFFSET, "lahiri");
+    const tTree = vimshottariTree(truth.planets.find((p) => p.id === "Mo")!.longitude, truth.birthUtc!);
+    const tVargas = computeVargaSet(truth);
+    const planted: LifeEvent[] = [];
+    for (const type of ["marriage", "childbirth", "careerStart", "foreignTravel", "property", "windfall", "illness"] as const) {
+      let bestDate = "";
+      let bestScore = -1;
+      for (let y = 2006; y <= 2024; y++) {
+        for (let m = 1; m <= 12; m++) {
+          const dateISO = `${y}-${String(m).padStart(2, "0")}-15`;
+          const ev: LifeEvent = { id: "x", type, dateISO, precision: "exact", reliability: "certain" };
+          const snaps = eventSampleInstants(ev).map((t) => transitSnapshot("lahiri", t, "mean"));
+          const s = scoreEvent(truth, tTree, tVargas, ev, "female", snaps).score;
+          if (s > bestScore) {
+            bestScore = s;
+            bestDate = dateISO;
+          }
+        }
+      }
+      planted.push({ id: `p-${type}`, type, dateISO: bestDate, precision: "exact", reliability: "certain" });
+    }
+    const pr = rectify({ birth: BIRTH, events: planted });
+    check(
+      "Positive control: events planted from a +7-minute chart recover that minute under Lahiri",
+      Math.abs(pr.lahiri.best.offsetMin - TRUE_OFFSET) <= 1,
+      `recovered ${pr.lahiri.best.offsetMin}m, z ${pr.lahiri.stats.zScore.toFixed(2)}, margin ${pr.lahiri.stats.margin.toFixed(4)}, ${pr.lahiri.verdict}`
+    );
+    check(
+      "…and clears the null-calibrated thresholds that random events do not",
+      pr.lahiri.stats.zScore >= MIN_Z && pr.lahiri.stats.margin >= MIN_MARGIN,
+      `z ${pr.lahiri.stats.zScore.toFixed(2)} ≥ ${MIN_Z}, margin ${pr.lahiri.stats.margin.toFixed(4)} ≥ ${MIN_MARGIN}`
+    );
+  }
+
+  // --- Timezone guards ------------------------------------------------------
+  {
+    // Bombay 1940: India used +05:30 by then, but 1942–45 had a war-time
+    // +06:30. A 1942 birth must trip the historical-offset warning.
+    const wartime = timezoneWarnings({ ...BIRTH, dateISO: "1943-06-14" }, 15, 1);
+    check(
+      "A 1943 Indian birth trips a timezone warning (war-time +06:30)",
+      wartime.length > 0,
+      wartime[0]?.slice(0, 80) ?? "none"
+    );
+    // A DST transition inside the window must be detected as non-uniform steps.
+    const dstEdge = timezoneWarnings(
+      { ...BIRTH, dateISO: "2021-03-14", time: "02:00", timezone: "America/New_York", lat: 40.7, lon: -74.0 },
+      15,
+      1
+    );
+    check(
+      "A clock change inside the search window is detected",
+      dstEdge.some((w) => w.includes("clock change")),
+      dstEdge.map((w) => w.slice(0, 50)).join(" | ") || "none"
+    );
+    check("A clean modern record produces no timezone warnings", timezoneWarnings(BIRTH, 15, 1).length === 0);
+  }
+
+  // --- Reconciliation is never a blend --------------------------------------
+  {
+    const rec = worked.reconciliation;
+    check(
+      "Reconciliation reports a divergence and a tier, never a merged time",
+      typeof rec.divergenceMin === "number" &&
+        ["High", "Moderate", "Low"].includes(rec.tier) &&
+        !("blended" in rec) &&
+        !("consensus" in rec)
+    );
+    check(
+      "Reconciliation states the D-60 incomparability across ayanamshas",
+      rec.notes.some((n) => n.includes("2.24 shashtiamsas"))
+    );
+    check(
+      "Reconciliation splits every event between the two systems",
+      rec.eventSplit.length === EVENTS.length
+    );
+    check(
+      "Confidence tier follows the divergence",
+      (rec.divergenceMin <= 2 && rec.tier === "High") ||
+        (rec.divergenceMin > 2 && rec.divergenceMin <= 5 && rec.tier === "Moderate") ||
+        (rec.divergenceMin > 5 && rec.tier === "Low"),
+      `${rec.divergenceMin} min → ${rec.tier}`
+    );
+  }
+
+  console.log(
+    `  worked example (Lahiri): best ${worked.lahiri.best.localTime} (${worked.lahiri.best.offsetMin >= 0 ? "+" : ""}${worked.lahiri.best.offsetMin}m), ` +
+      `interval ${worked.lahiri.interval.startLocal}–${worked.lahiri.interval.endLocal}, ` +
+      `z ${worked.lahiri.stats.zScore.toFixed(2)}, margin ${worked.lahiri.stats.margin.toFixed(4)} → ${worked.lahiri.verdict}`
+  );
+  console.log(
+    `  worked example (Pushya): best ${worked.pushya.best.localTime} (${worked.pushya.best.offsetMin >= 0 ? "+" : ""}${worked.pushya.best.offsetMin}m), ` +
+      `z ${worked.pushya.stats.zScore.toFixed(2)}, margin ${worked.pushya.stats.margin.toFixed(4)} → ${worked.pushya.verdict}; ` +
+      `divergence ${worked.reconciliation.divergenceMin} min → ${worked.reconciliation.tier}`
+  );
 }
 
 // ---------------------------------------------------------------------------

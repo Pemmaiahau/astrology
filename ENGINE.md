@@ -488,6 +488,7 @@ These were deliberate, verified choices — see also the `aipems-astrology` memo
 | New prediction *kind* (marriage timing, Saturn return) | new file in `data/interpretations/` |
 | **Change an age band** (when marriage/career/wealth/foreign windows are scanned) | `utils/astrology/ageBands.ts` (`AGE_BANDS`) — see §21.5 |
 | New computed panel/feature in the UI | add util → wire in `ChartContext.tsx` → consume in a new/existing panel |
+| **Rectify a birth time from life events** | `utils/astrology/rectification/*` + `data/rectification/eventRules.ts` — see §22 |
 | True (not mean) Rahu/Ketu node | `utils/astrology/ephemeris.ts` (`meanLunarNode` sibling) |
 | Ashtakavarga refinements (Kaksha, Shodhya Pinda, Prastarashtakavarga) | `utils/astrology/ashtakavarga.ts`, layered on existing `bav`/`sav` |
 
@@ -568,3 +569,74 @@ Inputs: optional **gender** (`AutoInput` + `ManualInput`, "Prefer not to say" de
 The six scored-section builders (`marriage`, `career`, `wealth`, `foreign`, `cautions`, `lucky`) were rewritten for a warmer register. The rules, if you are editing these files: **second person, present tense** ("your 7th house is ruled by Venus", not "the 7th lord is Venus"); **factor → meaning → daily life** — every analytical sentence earns a companion sentence saying what it looks like in someone's week; **plain English for technique** ("main period / sub-period", "the aspect Saturn casts on your 7th"), with `plain()` still glossing first mentions of glossary terms and **no new Sanskrit beyond `report.ts`'s `GLOSSARY`**; **no new determinism** — windows, not dates, and never "you will"; **difficult readings close constructively** (the `Caution` type already makes a caution without a counter-measure unrepresentable — extend that habit: no paragraph ends on a bare negative); **≤ 4 sentences per paragraph**; no fatalism, fear-selling, or medical/legal instruction.
 
 This was a **language pass only** — the 108 curated `planetInHouse.ts` entries, `aspectTexts.ts` and all numeric scoring were untouched, and every score, confidence, evidence weight and wealth split percentage was verified byte-identical against the previous commit. The harness enforces the voice with a **phrasing gate** over all six reports plus their timing windows (§21.4 checks list).
+
+---
+
+## 22. Birth Time Rectification (Janma Samaya Shodhana)
+
+Every feature above answers "given this chart, what does it say?" This one runs the inference backwards: **given these dated life events, which birth minute best explains them?** It sweeps candidate minutes around a recorded time and scores each one, twice — once under Lahiri and once under Pushya, fully independently.
+
+```
+utils/astrology/rectification/
+  types.ts           LifeEvent/EventType/Precision/Reliability, CandidateScore,
+                     EventScore, RectificationResult, DualAyanamshaResult,
+                     TECHNIQUE_SENSITIVITY (robust vs ayanamsha-sensitive)
+  eventRules.ts      re-export seam over data/rectification/eventRules.ts
+  dashaFitness.ts    §3a signification + boundary proximity
+  transitFitness.ts  Gochara incl. the vedha table and the double transit
+  vargaFitness.ts    divisional confirmation, D-60 weighted heaviest
+  score.ts           aggregation, null-calibrated thresholds, leave-one-out
+  rectify.ts         orchestrator: sweep → both ayanamshas → reconcile
+data/rectification/eventRules.ts   the declarative event → bhava/karaka/varga table
+app/api/rectify/route.ts           POST entry point (Node runtime, manual validation)
+components/panels/rectification/   Panel, EventForm, CandidateTable,
+                                   EventBreakdown, AyanamshaCompare, Disclaimer
+```
+
+`RECTIFY_WINDOW_MIN = 15` and `RECTIFY_STEP_MIN = 1` → 31 candidates per ayanamsha, 62 charts, ~150 ms. Both are exported constants, so widening the window is a one-line change.
+
+### 22.1 What actually discriminates inside ±15 minutes
+
+This is the part that is counter-intuitive, and every design decision below follows from it. All figures are **measured by the harness**, not quoted from a textbook:
+
+- **The rashi Lagna moves 0.26–0.30°/min** (latitude- and sign-dependent; the often-quoted "1° per 4 minutes" is the equatorial average and understates it). Across the whole 30-minute window it advances ~8–9°, so **the Ascendant sign usually does not change at all** and D-1 house placement is a *weak* discriminator. The exception is a record sitting on a **Lagna sandhi**, which `crossChecks` detects and flags as a **high-leverage window**.
+- **Sripati bhava cusps do move.** On the canonical chart four planets change `bhava` across ±15 min while *none* change `house`. Signification therefore scores occupancy by **both** `house` and `bhava`, and rewards agreement — this is where the D-1 evidence actually lives.
+- **The vargas are the high-resolution sieve.** Lagna amsha cadence = amsha arc ÷ measured Lagna speed: D-7 ~14 min, D-9 ~11 min, D-10 ~10 min, **D-60 ~1.9 min**. The Shashtiamsa is the only ~2-minute signal in the window and Parashara treats it as the deciding varga for the whole life, so it carries `D60_WEIGHT = 0.4` of the varga component and is reported on its own line.
+- **The Vimshottari tree is a *rigid translation*.** `vimshottariTree` anchors its origin at `birthUtc − frac × DASHA_YEARS[firstLord]` and then walks fixed durations, so shifting the birth minute moves **every boundary in the 120-year cycle by the same absolute amount** — 1.735 days/min for a 7-year opening lord, ~4.8 for a 20-year one. It is *not* proportional to a boundary's elapsed offset. Consequence: Maha and Antar boundaries are effectively frozen, while a Pratyantardasha as short as nine days is wholly replaceable inside the window. Boundary distance is therefore scored in **absolute days** (`dashaShiftDaysPerMinute` reports the per-chart figure to the UI).
+- **Transits barely depend on the candidate at all** — a snapshot is a function of (event instant, ayanamsha), entering the candidate only via the natal Moon and Lagna *signs*, which rarely move. So one snapshot set is computed per (ayanamsha, event sample) and reused across all 31 candidates. Transit fitness is an ayanamsha-robust check that the event was correctly *classified*, not a discriminator of the minute, and it is weighted accordingly.
+- **Pushya = Lahiri − 1.122°**, so Pushya sidereal longitudes are exactly 1.122° higher — 8.415% of a nakshatra and **2.244 shashtiamsas**. The Moon can therefore fall in a different nakshatra under the two systems, giving a completely different Vimshottari sequence; that case is surfaced as a hard warning. It also means **D-60 agreement between the two ayanamshas is never corroboration**, which `VARGA_SENSITIVITY_NOTE` states in the output.
+
+### 22.2 The scoring model, and why the thresholds are what they are
+
+Per event: `0.45 × dasha + 0.30 × transit + 0.25 × varga`, integrated across the event's precision interval (exact → 1 instant, month → 4, year → 12) and weighted by precision (1.0/0.8/0.5) × reliability (1.0/0.75/0.4). Candidate score is the **weighted mean**, never a sum, so more events cannot inflate it.
+
+The anti-overfitting layer is the point of the module:
+
+- **The winner of 31 candidates is the maximum of 31 draws and sits ~1.9σ above the median by construction.** Measured over 80 null sweeps driven by randomly generated events: z median 1.86, p95 2.66; margin median 0.0071, p95 0.0184. A naive "z > 1" rule would call essentially all noise significant.
+- The verdict is a **joint test** — `MIN_Z = 2.4` **and** `MIN_MARGIN = 0.020` — which measures a **5.0% false-positive rate** against that null. Anything failing it is reported as *"indeterminate at this resolution"* rather than given a minute.
+- **Margin is measured against the best candidate outside the tied interval**, because two adjacent tied minutes are one peak, not two hypotheses.
+- **Leave-one-event-out** re-picks the winner with each event withheld; any change makes the result *unstable* and names the event it hinges on.
+- The answer is reported as an **interval** with the point estimate inside it, plus degrees of freedom (events, effective weighted events, candidates, 1 free parameter) and an **edge warning** when the optimum sits on the window boundary.
+
+The harness carries both a **null check** (random events never come back determinate) and a **positive control** (events generated from a known +7-minute chart recover that minute at z 2.54 / margin 0.0238).
+
+### 22.3 Extension points
+
+| Feature request | Primary file(s) |
+|---|---|
+| Add/change an event type, its bhavas, karakas or varga | `data/rectification/eventRules.ts` (`EVENT_RULES`) — nothing else knows about event types |
+| Widen the search window or change the step | `RECTIFY_WINDOW_MIN` / `RECTIFY_STEP_MIN` in `rectify.ts` |
+| Retune dasha level weights (MD/AD/PD) or signification modes | `dashaFitness.ts` (`DASHA_LEVEL_WEIGHTS`, `SIGNIFICATION_WEIGHTS`) |
+| Change the gochara vedha table or the double-transit weight | `transitFitness.ts` (`VEDHA_TABLE`, `TRANSIT_WEIGHTS`) |
+| Reweight the vargas, or change the D-60 emphasis | `vargaFitness.ts` (`D60_WEIGHT`, `vargaPlan`) |
+| Move the determinate/indeterminate bar | `score.ts` (`MIN_Z`, `MIN_MARGIN`) — **re-run the null calibration if you do**; the current pair is measured, not chosen |
+| Add a cross-check on the winner (reported, not scored) | `rectify.ts` (`crossChecks`) |
+| Programmatic/batch use outside the browser | `POST /api/rectify` |
+
+### 22.4 Deliberate scope boundaries
+
+- **This is interpretive, not deterministic**, and the UI says so in a non-dismissible notice. A rectified time is one plausible reconciliation of the supplied events under the stated rules and one ayanamsha.
+- **The two ayanamsha columns are never averaged, blended, or chosen between.** Their divergence in minutes *is* the confidence tier (≤2 High, ≤5 Moderate, >5 Low).
+- The **Varshaphala cross-check is a Muntha anchor only** — one sign per completed year plus the solar-return instant. The full Tajika procedure (five year-lord candidates, sahams, mudda dasha) is not implemented, and the output says so.
+- Timezone handling is the highest-risk input: `timezoneWarnings` flags LMT-era records (offsets that are not whole quarter-hours), a clock change inside the search window (civil minutes stop being uniform UTC minutes), a transition within 24 hours, and a historical offset differing from the zone's modern one. This exposed and fixed a latent sub-second rounding bug in `utcOffsetLabel`.
+- The panel computes **in-process like every other panel**; `app/api/rectify` exists as the programmatic entry point, not as the UI's data path (62 charts cost ~150 ms — a round trip buys nothing).

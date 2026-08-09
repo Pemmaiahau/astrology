@@ -50,6 +50,17 @@ Abbreviations: **BPHS** = Brihat Parashara Hora Shastra.
 | | Planet→colour, planet→direction (digpati), planet→day (vara lords), gemstones | BPHS graha descriptions + standard tradition; gemstones informational only |
 | `data/interpretations/personality.ts` | Lagna/Moon/Sun triple reading; Atmakaraka & Karakamsa; Navamsa lagna; Arudha vs Lagna | BPHS; Jaimini Upadesa Sutras |
 | `utils/astrology/ageBands.ts` | Age bands bounding the probable-window scans (marriage 22–45, career entry 22–30, career change 28–50, wealth 25–65, foreign 18–55) and the 0–1 `agePrior` weighting inside them | **Modern demographic convention — NOT classical.** No Parashari text fixes these ages; see the disagreement log below. Labelled as such in the module docstring and surfaced as a caveat on every banded card |
+| `data/rectification/eventRules.ts` | Event → bhava mapping (marriage 7th, childbirth 5th, career 10th, father 9th, mother 4th, …); supporting and negating bhavas; Bhavat Bhavam derivations ("the 6th and 12th from the 7th" for separation, "the 8th from the 9th" for the father's maraka) | BPHS bhava-phala chapters; Bhavat Bhavam is a standard Parashari device |
+| | Naisargika karakas per event (Venus marriage — with Jupiter added for a woman's chart; Jupiter progeny; Sun father; Moon mother; Mars land/surgery; Saturn longevity/labour; Rahu the foreign; Ketu severance) | BPHS Karakadhyaya; Phaladeepika ch. 19–20 |
+| | Which varga each event is read in (D-9 marriage, D-7 progeny, D-10 career, D-4 property, D-24 learning, D-20 initiation, D-30 misfortune, D-60 throughout) | BPHS, Shodasavarga adhyaya (varga significations) |
+| `utils/astrology/rectification/dashaFitness.ts` | A dasha lord gives the results of the bhavas it owns, occupies and aspects; of the bhava owned/occupied by its nakshatra dispositor; and of its naisargika karaka role. An event fires when the Maha, Antar and Pratyantar lords jointly signify | BPHS, Dasha-phala adhyayas (ch. 46–52 in the Santhanam numbering); Phaladeepika ch. 19–20; Jataka Parijata |
+| | Rahu and Ketu, owning no sign, act for their dispositor and for planets conjoining them | BPHS (nodal delegation rule) |
+| | Results arrive with the onset of the period that carries them (opening-stretch bonus) | Phaladeepika ch. 19 |
+| `utils/astrology/rectification/transitFitness.ts` | Transits judged **from the natal Moon first, from the Lagna second** | BPHS Gochara adhyaya; Phaladeepika ch. 26 |
+| | Gochara **vedha** table — the auspicious transit house per graha and the house whose occupation cancels it; Sun↔Saturn and Moon↔Mercury exempt from mutual vedha | Phaladeepika ch. 26; the same table appears in the BPHS Gochara chapter |
+| | Sade Sati (Saturn 12th/1st/2nd from the Moon); Kantaka/Ashtama Shani (4th/8th/10th) | BPHS Gochara adhyaya |
+| | Saturn+Jupiter double transit as the strongest event gate | **Modern applied-Parashari synthesis** (shared with `jaimini.ts`), labelled in code |
+| `utils/astrology/rectification/score.ts` | Component weights, precision/reliability multipliers, and the determinate/indeterminate thresholds | **Engineering, not shastra.** The thresholds are calibrated against a measured null (see the disagreement log and the ledger) |
 
 ## Disagreement log — variants and the default chosen
 
@@ -72,6 +83,12 @@ Abbreviations: **BPHS** = Brihat Parashara Hora Shastra.
 | Kua year boundary | Solar-year (Feb 4) boundary for January births | Not applied; caveat shown instead |
 | Bounding the timing scans | (a) a rolling "now → now + 15 years" horizon; (b) age bands derived from when these events commonly occur; (c) no bound at all — the whole 120-year dasha cycle | **(b) age bands.** (a) was the previous implementation and is simply wrong for anyone not at the start of the relevant life stage: it showed a 52-year-old marriage windows at ages 52–67 and hid the 22–30 window entirely. (c) buries the reader in windows that no life stage makes plausible. The bands are a **modern demographic convention, not a shastric rule** — the chart supplies the timing, the band only supplies the plausibility, and the two are weighted separately (±15 of ~100) so a reader whose life ran on a different clock can discount the band without discarding the reading. `cautions.ts` is deliberately **unbanded**: health and adversity are age-independent, and an elapsed health window is not actionable |
 | Showing elapsed windows | Forward-only (only what is still ahead) vs past + future | Both, phase-labelled. A window that has passed is a check on the reading rather than a prediction, and the selection quota reserves half the slots for non-past windows so retrospect cannot crowd out what is actionable |
+| Rectification search space | (a) sweep the Lagna sign boundaries only; (b) a fixed ±N-minute window at 1-minute steps; (c) optimise continuously | **(b)**, ±15 min / 1 min, both bounds exposed as `RECTIFY_WINDOW_MIN` / `RECTIFY_STEP_MIN`. (a) assumes the record is wrong by up to two hours, which is a different problem; (c) invents precision the evidence cannot support — the D-60 amsha, the sharpest signal available, only changes every ~2 minutes, so sub-minute steps would return noise |
+| Which evidence discriminates inside ±15 min | Rashi (D-1) house placement, as most rectification tools assume | **The vargas, chiefly D-60.** Measured on the canonical charts, the rashi Lagna moves 0.26–0.30°/min, so its *sign* does not change inside the window at all unless the record sits on a sandhi — D-1 house placement is near-constant and contributes almost nothing. The D-60 Lagna amsha changes every ~1.7–1.9 min and is weighted heaviest; the Sripati **bhava** (not the whole-sign house) does move, so occupancy is scored on both and rewarded when they agree |
+| Vimshottari displacement per minute | "≈0.0686% of each boundary's elapsed offset", i.e. proportional — a 40-year boundary moving ~10 days while a 2-year one barely moves | **Uniform in absolute time.** `vimshottariTree` places its origin at `birthUtc − frac × DASHA_YEARS[firstLord]` and then walks *fixed* durations, so the whole 120-year tree is a rigid translation: every boundary moves by `Δfrac × DASHA_YEARS[openingLord]`, measured at 1.73 days/minute for a Ketu- or Mars-opening chart and ~4.8 for a Venus-opening one. Harness-checked. The practical conclusion is unchanged — Maha/Antar boundaries are unmoved at that scale while a nine-day Pratyantardasha is wholly replaceable — but boundary distance is therefore scored in **absolute days**, not as a fraction of the offset |
+| Verdict threshold | A raw score cut-off, or "z > 1 over the median candidate" | **A null-calibrated joint test (z ≥ 2.4 AND margin ≥ 0.020).** The winner of a 31-candidate sweep is the maximum of 31 draws and sits ~1.9σ above the median *by construction*: 80 null sweeps driven by randomly generated events gave median z 1.86, p95 2.66, and a "z > 1" rule would have called essentially all of it significant. The pair chosen gives a measured 5.0% false-positive rate against that null, while a positive control — events generated from a known +7-minute chart — recovers the minute and passes at z 2.54 / margin 0.0238 |
+| Margin denominator | Best vs runner-up minute | Best vs the best candidate **outside the tied interval**. Two adjacent minutes with identical scores are one peak, not two hypotheses; measuring them against each other reports a margin of zero for a perfectly clean result |
+| Combining Lahiri and Pushya | Average them, or pick the higher-scoring school | **Neither, ever.** Both pipelines run fully independently and are reported side by side; their divergence in minutes is the confidence tier. Where the natal Moon changes nakshatra between them the two systems run different Vimshottari sequences entirely and are answering different questions, which is surfaced as a hard warning rather than reconciled. D-60 agreement across the two is explicitly *not* corroboration: 1.122° is 2.244 shashtiamsas |
 
 ## Verified-against ledger
 
@@ -109,3 +126,21 @@ chart: 1990-01-24 12:30 IST, New Delhi (Lahiri).
   windows are never retrospective.
 - **Numerology**: Moolank/Bhagyank/Chaldean/Pythagorean/Kua hand-checks pass;
   Chaldean maps all 26 letters, none to 9.
+- **Rectification**: the nakshatra fraction shifts by exactly `moonSpeed/1440 ÷
+  13°20'` per minute (0.0678%/min measured, inside the 0.06–0.07% band the
+  textbook 0.0686% figure implies); all nine Mahadasha boundaries shift by the
+  *same* 1.735 days per minute, matching `dashaShiftDaysPerMinute`; the D-60
+  Lagna amsha changes every 1.88 min = 0.5° ÷ the measured Lagna speed, while
+  the rashi Lagna sign never changes across the window; every Pushya sidereal
+  longitude is exactly Lahiri + 1.122° = 2.244 shashtiamsas = 8.415% of a
+  nakshatra; Bhavat Bhavam resolutions hand-checked; the vedha table is
+  well-formed and never self-obstructing; aggregation is a weighted mean, so
+  adding events cannot inflate a score; month precision integrates 4 instants
+  and year precision 12. **Null check**: randomly generated event sets never
+  produce a determinate verdict, and their z-scores are asserted to sit high
+  anyway — so the joint test, not z alone, is what excludes them. **Positive
+  control**: events planted from a known +7-minute chart recover that minute
+  and clear both thresholds. Timezone guards trip on a 1943 Indian birth
+  (war-time +06:30) and on a clock change inside the search window, and stay
+  silent on a clean modern record. A full dual-ayanamsha sweep (62 charts)
+  runs in ~150 ms.
