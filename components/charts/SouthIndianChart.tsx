@@ -123,7 +123,9 @@ export default function SouthIndianChart({ chart }: { chart: ChartData }) {
                 </span>
                 {chalit && (
                   <span className="text-[9px] text-accent">
-                    Bhava Chalit (Sripati) — shifted planets marked →B
+                    {chart.meta.bhavaMethod === "equal"
+                      ? "Equal houses — Sripati quadrants are degenerate for this chart"
+                      : "Bhava Chalit (Sripati) — shifted planets marked →B"}
                   </span>
                 )}
               </div>

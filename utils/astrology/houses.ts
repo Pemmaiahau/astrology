@@ -1,4 +1,28 @@
 import { inArc, norm360 } from "./math";
+import type { BhavaMethod } from "./types";
+
+export interface HouseFrame {
+  /** Bhava madhya (house middles), 12 sidereal longitudes. */
+  madhya: number[];
+  /** Bhava sandhi (house boundaries); bhava i+1 spans sandhi[i-1]..sandhi[i]. */
+  sandhi: number[];
+  /** Which construction produced this frame. */
+  method: BhavaMethod;
+}
+
+/**
+ * Equal houses: 30° per bhava measured from the Ascendant, madhya on the Asc
+ * degree and sandhi 15° either side. The fallback frame for charts whose
+ * quadrant geometry cannot support a trisection (see `sripatiHouses`).
+ */
+export function equalHouses(ascSidereal: number): HouseFrame {
+  const asc = norm360(ascSidereal);
+  return {
+    madhya: Array.from({ length: 12 }, (_, i) => norm360(asc + i * 30)),
+    sandhi: Array.from({ length: 12 }, (_, i) => norm360(asc + 15 + i * 30)),
+    method: "equal",
+  };
+}
 
 /**
  * Sripati Bhava Chalit.
@@ -7,12 +31,28 @@ import { inArc, norm360 } from "./math";
  * 2. In the Sripati convention those cusps are treated as bhava madhya
  *    (house middles); the house boundaries (sandhi) are the midpoints
  *    between consecutive madhyas.
+ *
+ * The trisection assumes the four angles fall in zodiacal order
+ * Asc → IC → Dsc → MC. Because Dsc = Asc+180 and IC = MC+180, all four
+ * quadrant arcs are fixed by the first one: arc(Asc→IC) = arc(Dsc→MC) = q and
+ * arc(IC→Dsc) = arc(MC→Asc) = 180 − q. So the single test `0 < q < 180`
+ * decides whether a valid quadrant frame exists at all.
+ *
+ * It fails in two real cases: above the polar circle (measured at 89.9°N,
+ * q = 350° — trisecting it gave 117°-wide bhavas and left 8 of the 12
+ * unreachable by `bhavaOf`), and in manual mode when a hand-picked Lagna sits
+ * far from the Ascendant the supplied MC actually belongs to. Both used to
+ * emit a silently wrong frame; both now fall back to `equalHouses` and report
+ * `method: "equal"` so the caller can say so.
  */
-export function sripatiHouses(ascSidereal: number, mcSidereal: number): { madhya: number[]; sandhi: number[] } {
+export function sripatiHouses(ascSidereal: number, mcSidereal: number): HouseFrame {
   const asc = norm360(ascSidereal);
   const mc = norm360(mcSidereal);
   const ic = norm360(mc + 180);
   const dsc = norm360(asc + 180);
+
+  const quadrant = norm360(ic - asc);
+  if (!(quadrant > 0 && quadrant < 180)) return equalHouses(asc);
 
   const madhya = new Array<number>(12);
   madhya[0] = asc; // bhava 1
@@ -47,7 +87,7 @@ export function sripatiHouses(ascSidereal: number, mcSidereal: number): { madhya
     const b = madhya[(i + 1) % 12];
     sandhi[i] = norm360(a + norm360(b - a) / 2);
   }
-  return { madhya, sandhi };
+  return { madhya, sandhi, method: "sripati" };
 }
 
 /** Bhava number 1–12 for a sidereal longitude given sandhi boundaries. */

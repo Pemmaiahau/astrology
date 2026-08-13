@@ -20,7 +20,7 @@ export function currentTransits(chart: ChartData, ayanamsha: AyanamshaId, now: D
       longitude: lon,
       sign,
       degInSign: degInSign(lon),
-      retrograde: isRetrograde(id, now),
+      retrograde: isRetrograde(id, now, nodeMode),
       houseFromMoon: ((sign - moonSign + 12) % 12) + 1,
       houseFromLagna: ((sign - lagnaSign + 12) % 12) + 1,
     };

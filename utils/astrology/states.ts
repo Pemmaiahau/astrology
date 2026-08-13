@@ -6,9 +6,10 @@ import {
   NATURAL_ENEMIES,
   NATURAL_FRIENDS,
   OWN_SIGNS,
+  PLANETS,
   SIGN_LORDS,
 } from "./constants";
-import { separation, signOf } from "./math";
+import { angleDiff, separation, signOf } from "./math";
 import type { Dignity, NakshatraRelation, PlanetId, PlanetPosition } from "./types";
 
 /**
@@ -117,23 +118,45 @@ export function isCombust(id: PlanetId, longitude: number, sunLongitude: number,
 /**
  * Graha Yuddha: two of the five tara grahas (Mars, Mercury, Jupiter,
  * Venus, Saturn) within 1° of each other. By the common convention the
- * planet with the lower longitude wins the war.
+ * graha with the lower longitude — the one behind in zodiacal order — wins.
+ *
+ * The comparison must be made on the **longitude**, not the degree-in-sign.
+ * A war straddling a sign boundary (Mars 29°42' Aries vs Venus 0°12' Taurus,
+ * 30' apart) puts the *higher* degInSign on the graha that is actually
+ * behind, so a degInSign comparison hands the war to the wrong planet — and
+ * `computeShadbala` then transfers the full virupa difference in the wrong
+ * direction. Within a single sign the two orderings are identical, so this
+ * only changes cross-boundary wars.
+ *
+ * `PlanetPosition` records one opponent per graha. When three or more fall
+ * inside 1°, each records its **nearest** opponent — stable and meaningful,
+ * rather than whichever pair the loop happened to visit last.
  */
 export function applyGrahaYuddha(planets: PlanetPosition[]): void {
   const taras: PlanetId[] = ["Ma", "Me", "Ju", "Ve", "Sa"];
   const combatants = planets.filter((p) => taras.includes(p.id));
-  for (let i = 0; i < combatants.length; i++) {
-    for (let j = i + 1; j < combatants.length; j++) {
-      const a = combatants[i];
-      const b = combatants[j];
-      if (separation(a.longitude, b.longitude) <= 1) {
-        const aWins = a.degInSign <= b.degInSign;
-        a.warWith = b.id;
-        b.warWith = a.id;
-        a.warWinner = aWins;
-        b.warWinner = !aWins;
+  for (const p of combatants) {
+    p.warWith = undefined;
+    p.warWinner = undefined;
+  }
+  for (const a of combatants) {
+    let nearest: PlanetPosition | undefined;
+    let nearestSep = Infinity;
+    for (const b of combatants) {
+      if (b.id === a.id) continue;
+      const sep = separation(a.longitude, b.longitude);
+      if (sep <= 1 && sep < nearestSep) {
+        nearest = b;
+        nearestSep = sep;
       }
     }
+    if (!nearest) continue;
+    // angleDiff < 0 ⇒ `a` lies behind its opponent in zodiacal order ⇒ `a` wins.
+    // Exactly-coincident longitudes are broken by natural planet order so the
+    // pair never comes back with two losers.
+    const d = angleDiff(a.longitude, nearest.longitude);
+    a.warWith = nearest.id;
+    a.warWinner = d < 0 || (d === 0 && PLANETS.indexOf(a.id) < PLANETS.indexOf(nearest.id));
   }
 }
 

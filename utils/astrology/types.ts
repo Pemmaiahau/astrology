@@ -16,6 +16,13 @@ export type Gender = "female" | "male" | "other";
 /** Natural relationship between a planet and the lord of the nakshatra it occupies. */
 export type NakshatraRelation = "self" | "friend" | "neutral" | "enemy";
 
+/**
+ * Which construction produced a chart's bhava frame. `"sripati"` is the
+ * normal Porphyry-trisected result; `"equal"` means the quadrant geometry was
+ * degenerate (see `sripatiHouses`) and the equal-house fallback was used.
+ */
+export type BhavaMethod = "sripati" | "equal";
+
 export type Dignity =
   | "exalted"
   | "moolatrikona"
@@ -76,6 +83,8 @@ export interface ChartMeta {
   localDateTime?: string;
   /** Rahu/Ketu node mode used for this chart; undefined = "mean" (default). */
   nodeMode?: NodeMode;
+  /** How `cusps`/`sandhis` were built; undefined when no bhava frame exists. */
+  bhavaMethod?: BhavaMethod;
   gender?: Gender;
 }
 

@@ -77,9 +77,20 @@ export function dailySpeed(id: PlanetId, date: Date, nodeMode: NodeMode = "mean"
   return d / (2 * h);
 }
 
-export function isRetrograde(id: PlanetId, date: Date): boolean {
-  if (id === "Su" || id === "Mo" || id === "Ra" || id === "Ke") return false;
-  return dailySpeed(id, date) < 0;
+/**
+ * Retrograde (vakri) motion at an instant.
+ *
+ * The Sun and Moon never retrograde. **The lunar nodes always do** — the mean
+ * node regresses continuously at ≈ −0.053°/day, which is exactly why Jyotisha
+ * treats Rahu and Ketu as permanently vakri; reporting them as direct was
+ * wrong on both the astronomy and the convention. The true (osculating) node
+ * additionally turns direct for short stretches, a real distinction the mean
+ * node cannot show, so the answer is read from the speed rather than
+ * hard-coded — and `nodeMode` has to reach `dailySpeed` for that to work.
+ */
+export function isRetrograde(id: PlanetId, date: Date, nodeMode: NodeMode = "mean"): boolean {
+  if (id === "Su" || id === "Mo") return false;
+  return dailySpeed(id, date, nodeMode) < 0;
 }
 
 /** Mean obliquity of the ecliptic in degrees. */

@@ -47,11 +47,22 @@ export function houseFromSign(sign: number, lagnaSign: number): number {
   return ((sign - lagnaSign + 12) % 12) + 1;
 }
 
-/** Format 14.372° → 14°22' */
+/**
+ * Format 14.372° → 14°22'.
+ *
+ * Arcminutes are **truncated, not rounded**. Every caller passes a
+ * degree-in-sign, and rounding carried 29°59.5'+ up to an impossible `30°00'`
+ * inside a sign. Truncation also keeps the printed value consistent with
+ * `signOf`/`nakshatraOf`/`padaOf`, which all floor — so the displayed degree
+ * can never contradict the sign, nakshatra and pada shown beside it.
+ */
 export function fmtDeg(deg: number): string {
   const d = Math.floor(deg);
-  const m = Math.round((deg - d) * 60);
-  if (m === 60) return `${d + 1}°00'`;
+  // Truncating raw binary fractions loses a whole arcminute on values that are
+  // mathematically exact (5.05° − 5 is 0.04999…, which floors to 2' not 3'),
+  // so absorb representation error first — then clamp, because the epsilon
+  // must never be what carries a 59.9999…' value up to an impossible 60'.
+  const m = Math.min(59, Math.floor((deg - d) * 60 + 1e-9));
   return `${d}°${String(m).padStart(2, "0")}'`;
 }
 

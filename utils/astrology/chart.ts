@@ -9,6 +9,7 @@ import { localToUtc } from "./time";
 import type {
   AutoInputState,
   AyanamshaId,
+  BhavaMethod,
   ChartData,
   ManualInputState,
   NodeMode,
@@ -31,7 +32,7 @@ export function computeAutoChart(
   const ascSid = norm360(ascTrop - ay);
   const mcSid = norm360(mcTrop - ay);
   const lagnaSign = signOf(ascSid);
-  const { madhya, sandhi } = sripatiHouses(ascSid, mcSid);
+  const { madhya, sandhi, method: bhavaMethod } = sripatiHouses(ascSid, mcSid);
 
   const longitudes: Partial<Record<PlanetId, number>> = {};
   for (const id of PLANETS) longitudes[id] = norm360(tropicalLongitude(id, utc, nodeMode) - ay);
@@ -39,7 +40,7 @@ export function computeAutoChart(
   const sunLon = longitudes.Su!;
   const planets: PlanetPosition[] = PLANETS.map((id) => {
     const lonSid = longitudes[id]!;
-    const retro = isRetrograde(id, utc);
+    const retro = isRetrograde(id, utc, nodeMode);
     const nak = nakshatraOf(lonSid);
     const nakRel = nakshatraRelation(id, nak);
     return {
@@ -85,6 +86,7 @@ export function computeAutoChart(
       timezone,
       localDateTime: `${input.dateISO} ${input.time}`,
       nodeMode,
+      bhavaMethod,
       gender: input.gender,
     },
   };
@@ -101,6 +103,7 @@ export function computeManualChart(input: ManualInputState, ayanamsha: Ayanamsha
   let sandhi: number[] | undefined;
   let lat: number | undefined;
   let lon: number | undefined;
+  let bhavaMethod: BhavaMethod | undefined;
   let ay = getAyanamsha(ayanamsha, new Date());
 
   if (input.anchor.place && input.anchor.dateISO && input.anchor.time) {
@@ -112,9 +115,13 @@ export function computeManualChart(input: ManualInputState, ayanamsha: Ayanamsha
     // Respect the user's manual Lagna: keep their ascendant, but use the
     // computed MC to build Sripati cusps around it.
     mcSid = norm360(angles.mc - ay);
+    // A hand-picked Lagna far from the Ascendant this MC belongs to makes the
+    // quadrants un-trisectable; `sripatiHouses` detects that and returns the
+    // equal-house frame instead, flagged via `method`.
     const houses = sripatiHouses(ascSid, mcSid);
     madhya = houses.madhya;
     sandhi = houses.sandhi;
+    bhavaMethod = houses.method;
   }
 
   const longitudes: Partial<Record<PlanetId, number>> = {};
@@ -126,7 +133,10 @@ export function computeManualChart(input: ManualInputState, ayanamsha: Ayanamsha
   const sunLon = longitudes.Su ?? 0;
   const planets: PlanetPosition[] = input.planets.map((mp) => {
     const lonSid = longitudes[mp.id]!;
-    const retro = mp.id === "Ra" || mp.id === "Ke" ? false : mp.retro;
+    // The nodes are always vakri; manual mode has no ephemeris to read it from,
+    // so the classical convention is applied directly rather than trusting the
+    // (absent) retro checkbox.
+    const retro = mp.id === "Ra" || mp.id === "Ke" ? true : mp.retro;
     const nak = nakshatraOf(lonSid);
     const nakRel = nakshatraRelation(mp.id, nak);
     return {
@@ -172,6 +182,7 @@ export function computeManualChart(input: ManualInputState, ayanamsha: Ayanamsha
       timezone: input.anchor.place?.timezone,
       localDateTime:
         input.anchor.dateISO && input.anchor.time ? `${input.anchor.dateISO} ${input.anchor.time}` : undefined,
+      bhavaMethod,
       gender: input.gender,
     },
   };

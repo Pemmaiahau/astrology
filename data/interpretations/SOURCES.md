@@ -78,6 +78,9 @@ Abbreviations: **BPHS** = Brihat Parashara Hora Shastra.
 | Mangal Dosha | House sets ±2nd, also from Venus; cancellation lists vary widely | 1/4/7/8/12 from Lagna + Moon; conservative cancellations (dignified Mars, Jupiter link, house-sign exemptions) |
 | Badhaka | Standard scheme vs lagna-specific exceptions | Standard movable/fixed/dual scheme |
 | Rahu/Ketu | Mean node (classical convention) vs true node | Mean by default; true node available as a toggle |
+| Rahu/Ketu retrogression | Report the nodes as direct, or as vakri | **Vakri**, read from the computed speed rather than asserted. The mean node regresses continuously (≈ −0.053°/day), which is why the tradition calls the nodes permanently retrograde; the true node briefly turns direct, and reading it from the speed is the only way that distinction survives the mean/true toggle |
+| Graha Yuddha tie-break | Lower degree-in-sign vs lower sidereal longitude vs the northern/brighter graha | **Lower sidereal longitude** — the graha behind in zodiacal order. Identical to degree-in-sign inside a single sign; the two diverge only across a sign boundary, where degree-in-sign gives the wrong answer outright. The northern/brighter variant needs ecliptic latitude and is not implemented |
+| Bhava frame when quadrants degenerate | Trisect anyway, or fall back | **Equal houses from the Ascendant**, flagged as `bhavaMethod: "equal"`. Trisecting a quadrant arc wider than 180° (polar latitudes; manual Lagna far from the real Ascendant) produces overlapping sandhi arcs and leaves whole bhavas unreachable |
 | Ayana bala overflow | Moon's declination can exceed ±23.98° | Clamped to [0, 60] |
 | Abda/Masa lords | Kali-ahargana epoch conventions differ by a day between texts | JD 588466 epoch; treated as approximate (low-weight sub-bala) |
 | Kua year boundary | Solar-year (Feb 4) boundary for January births | Not applied; caveat shown instead |

@@ -89,7 +89,10 @@ export function signChangeEvents(
         HOUR
       );
       const cdate = new Date(cross);
-      events.push({ id, date: cdate, fromSign: sPrev, toSign: sCur, retrograde: isRetrograde(id, cdate) });
+      events.push({
+        id, date: cdate, fromSign: sPrev, toSign: sCur,
+        retrograde: isRetrograde(id, cdate, nodeMode),
+      });
     }
     sPrev = sCur;
     tPrev = tc;

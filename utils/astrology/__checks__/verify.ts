@@ -14,8 +14,12 @@ import { CHALDEAN_MAP, NAISARGIKA_BALA, PLANETS, signMobility } from "../constan
 import { computeNumerology } from "../numerology";
 import { buildLuckyReport } from "../../../data/interpretations/lucky";
 import {
-  declination, meanLunarNode, nextSunrise, sunriseFor, sunsetFor, trueLunarNode,
+  declination, isRetrograde, meanLunarNode, nextSunrise, sunriseFor, sunsetFor, trueLunarNode,
 } from "../ephemeris";
+import { tropicalAscMc } from "../ascendant";
+import { bhavaOf, sripatiHouses } from "../houses";
+import { degInSign, fmtDeg } from "../math";
+import { applyGrahaYuddha } from "../states";
 import { vimshottariTree } from "../dasha";
 import { arudhaSign, computeJaimini, doubleTransitOnSign } from "../jaimini";
 import {
@@ -45,7 +49,7 @@ import { buildForeignReport, foreignTimingWindows } from "../../../data/interpre
 import { buildMarriageReport, marriageTimingWindows } from "../../../data/interpretations/marriage";
 import { buildPersonalityProfile } from "../../../data/interpretations/personality";
 import { buildWealthReport, wealthTimingWindows } from "../../../data/interpretations/wealth";
-import type { AutoInputState, AyanamshaId, PlanetId } from "../types";
+import type { AutoInputState, AyanamshaId, PlanetId, PlanetPosition } from "../types";
 
 let failures = 0;
 
@@ -1311,6 +1315,218 @@ console.log("\n=== Phase 6: birth time rectification ===");
       `z ${worked.pushya.stats.zScore.toFixed(2)}, margin ${worked.pushya.stats.margin.toFixed(4)} → ${worked.pushya.verdict}; ` +
       `divergence ${worked.reconciliation.divergenceMin} min → ${worked.reconciliation.tier}`
   );
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7: defect regressions (graha yuddha, nodal vakri, house degeneracy,
+// degree formatting). Each check below pins a bug that was live in the engine.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 7: defect regressions ===");
+
+  const stub = (id: PlanetId, longitude: number): PlanetPosition => ({
+    id,
+    longitude,
+    sign: Math.floor(longitude / 30),
+    degInSign: longitude % 30,
+    house: 1, bhava: 1, nakshatra: 0, pada: 1,
+    nakshatraLord: "Ke", nakshatraRelation: "neutral",
+    retrograde: false, combust: false, speed: 1, dignity: "neutral",
+  });
+
+  // --- Graha Yuddha decided on longitude, not degree-in-sign ---------------
+  {
+    // Mars 29°42' Aries vs Venus 0°12' Taurus: 30' apart across the boundary.
+    // Mars is behind in zodiacal order and must win; comparing degInSign
+    // (29.70 vs 0.20) used to hand the war to Venus.
+    const ma = stub("Ma", 29.7);
+    const ve = stub("Ve", 30.2);
+    applyGrahaYuddha([ma, ve]);
+    check(
+      "Graha yuddha across a sign boundary: the lower longitude wins",
+      ma.warWith === "Ve" && ma.warWinner === true && ve.warWith === "Ma" && ve.warWinner === false,
+      `Ma ${ma.warWinner ? "won" : "lost"} / Ve ${ve.warWinner ? "won" : "lost"}`
+    );
+  }
+  {
+    // Within one sign the old and new orderings agree — no chart may change.
+    const me = stub("Me", 12.1);
+    const ju = stub("Ju", 12.8);
+    applyGrahaYuddha([me, ju]);
+    check(
+      "Graha yuddha inside one sign is unchanged (lower degree still wins)",
+      me.warWinner === true && ju.warWinner === false
+    );
+  }
+  {
+    // Beyond 1° there is no war at all.
+    const ma = stub("Ma", 10);
+    const sa = stub("Sa", 11.5);
+    applyGrahaYuddha([ma, sa]);
+    check("Grahas more than 1° apart are not at war", !ma.warWith && !sa.warWith);
+  }
+  {
+    // Three grahas inside 1°: each must record its NEAREST opponent, and the
+    // record must not depend on loop order.
+    const ma = stub("Ma", 100.0);
+    const ve = stub("Ve", 100.3);
+    const sa = stub("Sa", 100.9);
+    applyGrahaYuddha([ma, ve, sa]);
+    check(
+      "Three-way war: every graha records its nearest opponent",
+      ma.warWith === "Ve" && ve.warWith === "Ma" && sa.warWith === "Ve",
+      `Ma→${ma.warWith} Ve→${ve.warWith} Sa→${sa.warWith}`
+    );
+    check(
+      "Three-way war: winners follow zodiacal order",
+      ma.warWinner === true && ve.warWinner === false && sa.warWinner === false
+    );
+    const reversed = [stub("Sa", 100.9), stub("Ve", 100.3), stub("Ma", 100.0)];
+    applyGrahaYuddha(reversed);
+    const byId = new Map(reversed.map((p) => [p.id, p]));
+    check(
+      "Three-way war is independent of input order",
+      byId.get("Ma")!.warWith === "Ve" && byId.get("Sa")!.warWith === "Ve" &&
+        byId.get("Ma")!.warWinner === true
+    );
+  }
+  {
+    // Every graha in a war must have an opponent that agrees it is at war,
+    // and no pair may come back with two winners or two losers.
+    const group = [stub("Ma", 200.1), stub("Me", 200.4), stub("Ju", 200.6), stub("Ve", 249)];
+    applyGrahaYuddha(group);
+    const map = new Map(group.map((p) => [p.id, p]));
+    let consistent = true;
+    for (const p of group) {
+      if (!p.warWith) continue;
+      const foe = map.get(p.warWith);
+      if (!foe) { consistent = false; continue; }
+      // Reciprocity is not required (nearest-opponent is directional), but the
+      // verdict between any two named combatants must be antisymmetric.
+      if (foe.warWith === p.id && foe.warWinner === p.warWinner) consistent = false;
+    }
+    check("No war pair reports two winners or two losers", consistent);
+    check("A graha 48° away is left out of the war", !map.get("Ve")!.warWith);
+  }
+
+  // --- Nodes are always vakri ----------------------------------------------
+  {
+    const d = new Date(Date.UTC(2024, 5, 15));
+    check("Mean Rahu is retrograde", isRetrograde("Ra", d, "mean"));
+    check("Mean Ketu is retrograde", isRetrograde("Ke", d, "mean"));
+    check("The Sun is never retrograde", !isRetrograde("Su", d));
+    check("The Moon is never retrograde", !isRetrograde("Mo", d));
+    check(
+      "Canonical chart marks Rahu and Ketu retrograde",
+      chart.planets.find((p) => p.id === "Ra")!.retrograde &&
+        chart.planets.find((p) => p.id === "Ke")!.retrograde
+    );
+    // Mean node regresses every single day; the true node does not.
+    let meanAlwaysRetro = true;
+    let trueEverDirect = false;
+    for (let i = 0; i < 400; i++) {
+      const t = new Date(Date.UTC(2023, 0, 1) + i * 86400000);
+      if (!isRetrograde("Ra", t, "mean")) meanAlwaysRetro = false;
+      if (!isRetrograde("Ra", t, "true")) trueEverDirect = true;
+    }
+    check("Mean node never turns direct across 400 days", meanAlwaysRetro);
+    check(
+      "True node does turn direct — the distinction the hard-coded false erased",
+      trueEverDirect
+    );
+    // nodeMode must actually reach dailySpeed through isRetrograde.
+    const trueNodeChart = computeAutoChart(CANONICAL_INPUT, "lahiri", "true");
+    check(
+      "True-node chart reports node retrogression from its own speed",
+      !!trueNodeChart &&
+        trueNodeChart.planets.find((p) => p.id === "Ra")!.retrograde ===
+          isRetrograde("Ra", trueNodeChart.birthUtc!, "true")
+    );
+  }
+
+  // --- House-frame degeneracy ----------------------------------------------
+  {
+    const coversAllTwelve = (sandhi: number[]): boolean => {
+      const seen = new Set<number>();
+      for (let x = 0; x < 3600; x++) seen.add(bhavaOf(x / 10, sandhi));
+      return seen.size === 12;
+    };
+
+    const delhi = tropicalAscMc(new Date("1985-06-15T04:30:00Z"), 28.6139, 77.209);
+    const normal = sripatiHouses(delhi.asc, delhi.mc);
+    check("Temperate latitude still uses Sripati", normal.method === "sripati");
+    check("Sripati frame reaches all 12 bhavas", coversAllTwelve(normal.sandhi));
+
+    // 89.9°N in June: quadrant arc is 350°, which used to be trisected into
+    // 117°-wide bhavas leaving 8 of the 12 unreachable.
+    const polar = tropicalAscMc(new Date("1985-06-15T04:30:00Z"), 89.9, 20);
+    const polarFrame = sripatiHouses(polar.asc, polar.mc);
+    check("Degenerate polar quadrants fall back to equal houses", polarFrame.method === "equal");
+    check("Equal-house fallback reaches all 12 bhavas", coversAllTwelve(polarFrame.sandhi));
+    check(
+      "Equal-house bhavas are exactly 30° wide",
+      polarFrame.madhya.every((m, i) =>
+        approx(norm360Check(polarFrame.madhya[(i + 1) % 12] - m), 30, 1e-9)
+      )
+    );
+    check(
+      "Equal-house bhava 1 is centred on the Ascendant",
+      approx(polarFrame.madhya[0], norm360Check(polar.asc), 1e-9)
+    );
+
+    // Manual mode: a Lagna chosen 150° from the Ascendant the MC belongs to.
+    const manualFrame = sripatiHouses(norm360Check(delhi.asc + 150), delhi.mc);
+    check(
+      "Manual Lagna far from the real Ascendant also degrades safely",
+      manualFrame.method === "equal" && coversAllTwelve(manualFrame.sandhi)
+    );
+
+    // Sweep: no latitude may produce an unreachable bhava in either branch.
+    let allLatitudesCovered = true;
+    let degenerateSeen = 0;
+    for (const lat of [-89, -78, -66, -45, 0, 23.5, 45, 66, 78, 89]) {
+      for (const iso of ["1985-06-15T04:30:00Z", "1985-12-15T22:10:00Z"]) {
+        const { asc, mc } = tropicalAscMc(new Date(iso), lat, 20);
+        const frame = sripatiHouses(asc, mc);
+        if (frame.method === "equal") degenerateSeen++;
+        if (!coversAllTwelve(frame.sandhi)) allLatitudesCovered = false;
+      }
+    }
+    check(
+      "Every bhava is reachable at every latitude sampled",
+      allLatitudesCovered,
+      `${degenerateSeen} of 20 frames used the equal-house fallback`
+    );
+    check("The canonical chart records its bhava method", chart.meta.bhavaMethod === "sripati");
+  }
+
+  // --- Degree formatting ---------------------------------------------------
+  {
+    check("fmtDeg truncates: 14.372° → 14°22'", fmtDeg(14.372) === "14°22'");
+    check("fmtDeg(0) is 0°00'", fmtDeg(0) === "0°00'");
+    // 5.05 − 5 is 0.04999… in binary: a naive floor loses the whole arcminute.
+    check("fmtDeg absorbs binary representation error", fmtDeg(5.05) === "5°03'", fmtDeg(5.05));
+    check("fmtDeg pads single-digit minutes", fmtDeg(7 + 4 / 60) === "7°04'", fmtDeg(7 + 4 / 60));
+    check(
+      "…and the epsilon never carries a value up to 60'",
+      fmtDeg(29.999999999) === "29°59'",
+      fmtDeg(29.999999999)
+    );
+    check(
+      "fmtDeg never prints an impossible 30°00' inside a sign",
+      fmtDeg(29.9917) === "29°59'",
+      fmtDeg(29.9917)
+    );
+    // The printed degree must agree with the sign/nakshatra/pada beside it.
+    let displayAgrees = true;
+    for (let i = 0; i < 20000; i++) {
+      const lon = (i * 360) / 20000;
+      const printed = Number(fmtDeg(degInSign(lon)).split("°")[0]);
+      if (printed !== Math.floor(degInSign(lon))) displayAgrees = false;
+      if (printed >= 30) displayAgrees = false;
+    }
+    check("Printed degree always matches floor(degInSign) over 20 000 samples", displayAgrees);
+  }
 }
 
 // ---------------------------------------------------------------------------
