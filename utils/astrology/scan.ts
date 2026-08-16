@@ -1,7 +1,7 @@
 import { aspectedSigns } from "./aspects";
 import type { AshtakavargaResult } from "./ashtakavarga";
 import { getAyanamsha } from "./ayanamsha";
-import { isRetrograde, tropicalLongitude } from "./ephemeris";
+import { dailySpeed, isRetrograde, tropicalLongitude } from "./ephemeris";
 import { doubleTransitOnSign } from "./jaimini";
 import { angleDiff, norm360, signOf } from "./math";
 import { ownedHouses } from "./yogas";
@@ -130,6 +130,59 @@ export function occupancyIntervals(
   }
   intervals.push({ sign: curSign, start: curStart, end });
   return intervals;
+}
+
+/**
+ * Retrograde stretches for a body over [from, to] — station points found by
+ * bisecting the sign change of `dailySpeed`. Same piecewise contract as
+ * `occupancyIntervals`: intervals are clipped to the window, so a stretch that
+ * straddles either edge is returned truncated rather than dropped.
+ *
+ * `ayanamsha` is accepted for call-site symmetry with the rest of this module
+ * and is deliberately unused: retrogradation is a fact about apparent motion,
+ * and subtracting a (slowly varying) ayanamsha cannot change the sign of the
+ * daily speed. Keeping the parameter means callers do not have to remember
+ * which scan functions need it.
+ *
+ * The Sun and Moon never retrograde and Rahu/Ketu always do (mean node), so
+ * this is only interesting for Me/Ve/Ma/Ju/Sa; `stepDays` of 2 is safe for
+ * all five — none of them stations twice inside two days.
+ */
+export function retrogradeIntervals(
+  id: PlanetId,
+  ayanamsha: AyanamshaId,
+  from: Date,
+  to: Date,
+  stepDays = 2,
+  nodeMode: NodeMode = "mean"
+): { start: Date; end: Date }[] {
+  void ayanamsha;
+  const out: { start: Date; end: Date }[] = [];
+  const endMs = to.getTime();
+  if (endMs <= from.getTime()) return out;
+  const step = stepDays * DAY;
+  const retroAt = (t: number): boolean => dailySpeed(id, new Date(t), nodeMode) < 0;
+
+  let tPrev = from.getTime();
+  let rPrev = retroAt(tPrev);
+  let openStart: Date | null = rPrev ? from : null;
+
+  while (tPrev < endMs) {
+    const tc = Math.min(tPrev + step, endMs);
+    const rCur = retroAt(tc);
+    if (rCur !== rPrev) {
+      const cross = refineCrossing(rPrev, (t) => retroAt(t), tPrev, tc, HOUR);
+      if (rCur) openStart = new Date(cross);
+      else if (openStart) {
+        out.push({ start: openStart, end: new Date(cross) });
+        openStart = null;
+      }
+    }
+    rPrev = rCur;
+    tPrev = tc;
+  }
+  if (openStart) out.push({ start: openStart, end: to });
+  return out;
 }
 
 /**

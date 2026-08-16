@@ -166,6 +166,24 @@ const GLOSSARY: Record<string, string> = {
   "Mangal Dosha": "the Mars placement traditionally checked before marriage",
   "gochara": "transit",
   "Vargottama": "the same sign in both D-1 and D-9 — a mark of stability",
+  // Added for the Speculation and Intimacy sections. Same rule as above: a
+  // Sanskrit term is only used in prose if it is glossed here on first mention.
+  "purva punya": "the merit carried in from before this life — the 5th house's other name",
+  "Vipareeta Raja Yoga": "the reversal combination — a difficult-house lord hidden in a difficult house, which turns adversity to advantage",
+  "Sarvashtakavarga": "the points table that scores every sign for transit support",
+  "Sade Sati": "the seven-and-a-half-year Saturn passage over the signs around your Moon",
+  "Trimsamsa": "the D-30 divisional chart, read for vulnerability",
+  "Shodasamsa": "the D-16 divisional chart of comforts and sensual pleasure",
+  "Saptamsa": "the D-7 divisional chart of children and lineage",
+  "Ishta phala": "the benefic yield a planet gives from its strength",
+  "Kashta phala": "the cost that comes attached to that yield",
+  "parivartana": "an exchange of signs between two planets",
+  "Neechabhanga": "the cancellation of a planet's debilitation",
+  "Gandanta": "a knot at the junction of a water and a fire sign",
+  "kama trikona": "the desire trine — houses 3, 7 and 11",
+  "shayana sukha": "the pleasures of the bed — the 12th house's classical remit",
+  "Yoni kuta": "the animal-temperament limb of traditional compatibility matching",
+  "gana": "the Deva, Manushya or Rakshasa temperament class of a nakshatra",
 };
 
 export function plain(term: string): string {

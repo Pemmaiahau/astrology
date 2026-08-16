@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BookOpen,
   CalendarDays,
   Compass,
+  Dices,
+  Flame,
   Grid3x3,
   Hourglass,
   Moon,
@@ -21,17 +23,19 @@ import AutoInput from "@/components/inputs/AutoInput";
 import ManualInput from "@/components/inputs/ManualInput";
 import DashaPanel from "@/components/panels/DashaPanel";
 import FunctionalLords from "@/components/panels/FunctionalLords";
+import IntimacyPanel from "@/components/panels/IntimacyPanel";
 import InterpretationPanel from "@/components/panels/interpretation/InterpretationPanel";
 import LifeAreasPanel from "@/components/panels/LifeAreasPanel";
 import PanchangPanel from "@/components/panels/PanchangPanel";
 import PredictionPanel from "@/components/panels/PredictionPanel";
 import RectificationPanel from "@/components/panels/rectification/RectificationPanel";
+import SpeculationPanel from "@/components/panels/SpeculationPanel";
 import Disclaimer from "@/components/ui/Disclaimer";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { AYANAMSHA_LABELS } from "@/utils/astrology/ayanamsha";
 import type { AyanamshaId, NodeMode } from "@/utils/astrology/types";
 
-const TABS = [
+const BASE_TABS = [
   { key: "interpret", label: "Interpretation", icon: BookOpen },
   { key: "life", label: "Life Areas", icon: Compass },
   { key: "dasha", label: "Dasha", icon: Hourglass },
@@ -41,7 +45,17 @@ const TABS = [
   { key: "rectify", label: "Rectify Time", icon: Target },
 ] as const;
 
-type TabKey = (typeof TABS)[number]["key"];
+/**
+ * Shown only when `chart.meta.gender === "other"`. The gate is silent by
+ * design: nothing in the input forms advertises it, and neither panel's copy
+ * refers to the selection that revealed it.
+ */
+const GENDER_TABS = [
+  { key: "speculation", label: "Speculation", icon: Dices },
+  { key: "intimacy", label: "Intimacy", icon: Flame },
+] as const;
+
+type TabKey = (typeof BASE_TABS)[number]["key"] | (typeof GENDER_TABS)[number]["key"];
 
 function Header() {
   const { ayanamsha, setAyanamsha, chartStyle, setChartStyle, chart, nodeMode, setNodeMode } =
@@ -167,6 +181,16 @@ function Workspace() {
   const { chart } = useChart();
   const [tab, setTab] = useState<TabKey>("interpret");
 
+  const tabs = useMemo(
+    () => (chart?.meta.gender === "other" ? [...BASE_TABS, ...GENDER_TABS] : [...BASE_TABS]),
+    [chart]
+  );
+
+  // Derived, not stored: recasting the chart with a different gender falls
+  // back to Interpretation on the same render, with no effect, no loop and no
+  // flash of an unavailable panel.
+  const activeTab: TabKey = tabs.some((t) => t.key === tab) ? tab : "interpret";
+
   return (
     <main className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 py-5 lg:grid-cols-[minmax(380px,460px)_1fr]">
       {/* Left column: inputs + chart */}
@@ -187,12 +211,12 @@ function Workspace() {
         {chart ? (
           <>
             <div className="mb-4 flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1">
-              {TABS.map(({ key, label, icon: Icon }) => (
+              {tabs.map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
                   onClick={() => setTab(key)}
                   className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                    tab === key
+                    activeTab === key
                       ? "bg-primary-soft text-heading ring-1 ring-inset ring-primary-ring"
                       : "text-fg-muted hover:bg-inset hover:text-fg-2"
                   }`}
@@ -202,13 +226,15 @@ function Workspace() {
                 </button>
               ))}
             </div>
-            {tab === "interpret" && <InterpretationPanel />}
-            {tab === "life" && <LifeAreasPanel />}
-            {tab === "dasha" && <DashaPanel />}
-            {tab === "predict" && <PredictionPanel />}
-            {tab === "panchang" && <PanchangPanel />}
-            {tab === "ashtaka" && <AshtakavargaTable />}
-            {tab === "rectify" && <RectificationPanel />}
+            {activeTab === "interpret" && <InterpretationPanel />}
+            {activeTab === "life" && <LifeAreasPanel />}
+            {activeTab === "dasha" && <DashaPanel />}
+            {activeTab === "predict" && <PredictionPanel />}
+            {activeTab === "panchang" && <PanchangPanel />}
+            {activeTab === "ashtaka" && <AshtakavargaTable />}
+            {activeTab === "rectify" && <RectificationPanel />}
+            {activeTab === "speculation" && <SpeculationPanel />}
+            {activeTab === "intimacy" && <IntimacyPanel />}
           </>
         ) : (
           <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-line bg-surface-soft p-8 text-center">

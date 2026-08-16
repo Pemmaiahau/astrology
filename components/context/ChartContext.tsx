@@ -53,6 +53,11 @@ interface ChartContextValue {
   setPredictionYear: (y: number) => void;
   predictionWindow: "calendar" | "solar";
   setPredictionWindow: (w: "calendar" | "solar") => void;
+  /** Year selector for the Speculation tab; kept here so it survives tab switches. */
+  speculationYear: number;
+  setSpeculationYear: (y: number) => void;
+  speculationWindow: "calendar" | "solar";
+  setSpeculationWindow: (w: "calendar" | "solar") => void;
   commitAuto: (d: AutoInputState) => void;
   commitManual: (d: ManualInputState) => void;
   chart: ChartData | null;
@@ -88,6 +93,11 @@ export function ChartProvider({ children }: { children: ReactNode }) {
   const [now] = useState(() => new Date());
   const [predictionYear, setPredictionYear] = useState(() => new Date().getFullYear());
   const [predictionWindow, setPredictionWindow] = useState<"calendar" | "solar">("calendar");
+  // The Speculation tab carries its own year selector, independent of the
+  // Predictions one — the two answer different questions and a reader
+  // comparing them should not have them move together.
+  const [speculationYear, setSpeculationYear] = useState(() => new Date().getFullYear());
+  const [speculationWindow, setSpeculationWindow] = useState<"calendar" | "solar">("calendar");
 
   const chart = useMemo<ChartData | null>(() => {
     if (!committed) return null;
@@ -191,6 +201,10 @@ export function ChartProvider({ children }: { children: ReactNode }) {
       setPredictionYear,
       predictionWindow,
       setPredictionWindow,
+      speculationYear,
+      setSpeculationYear,
+      speculationWindow,
+      setSpeculationWindow,
       commitAuto: (d) => setCommitted({ kind: "auto", data: d }),
       commitManual: (d) => setCommitted({ kind: "manual", data: d }),
       chart,
@@ -212,6 +226,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
     }),
     [
       mode, ayanamsha, nodeMode, chartStyle, predictionYear, predictionWindow,
+      speculationYear, speculationWindow,
       chart, dashaTree, activeDasha, transits, sadeSati, panchang, ashtakavarga,
       yogas, strengths, houseReadings, personality, vargas, jaimini, shadbala,
       bhavaBala, now,
