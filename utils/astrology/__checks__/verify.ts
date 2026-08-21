@@ -10,7 +10,7 @@
 import * as Astronomy from "astronomy-engine";
 import { AGE_BANDS, ageAt, agePrior, dateAtAge, EDGE_PRIOR } from "../ageBands";
 import { computeAutoChart, computeManualChart } from "../chart";
-import { CHALDEAN_MAP, NAISARGIKA_BALA, PLANETS, signMobility } from "../constants";
+import { CHALDEAN_MAP, NAISARGIKA_BALA, PLANET_NAMES, PLANETS, signMobility } from "../constants";
 import { computeNumerology } from "../numerology";
 import { buildLuckyReport } from "../../../data/interpretations/lucky";
 import {
@@ -35,6 +35,15 @@ import {
   aggregate, eventSampleInstants, scoreEvent, MIN_MARGIN, MIN_Z,
 } from "../rectification/score";
 import { transitSnapshot, VEDHA_TABLE } from "../rectification/transitFitness";
+import { currentPhase, currentSadeSati, sadeSatiPeriods, SADE_SATI_HOUSE } from "../sadeSati";
+import { computeSudarshana, unanimouslyStrained, unanimouslySupported } from "../sudarshana";
+import { explain, placementFacts, type Because } from "../../../data/interpretations/explain";
+import { PLANET_IN_HOUSE } from "../../../data/interpretations/planetInHouse";
+import {
+  DIGNITY_PLAIN, HOUSE_GOVERNS, HOUSE_TITLES, PLANET_SIGNIFIES,
+} from "../../../data/interpretations/significations";
+import { completedYears, munthaAt, munthaAtAge } from "../varshaphala";
+import { currentTransits, sadeSatiPhase } from "../transits";
 import type { LifeEvent, RectifyBirth } from "../rectification/types";
 import { NAKSHATRA_LORDS } from "../constants";
 import { dignityInSign, computeDignity, naturalRelation, temporalRelation } from "../states";
@@ -519,10 +528,13 @@ function norm360Check(x: number): number {
 {
   console.log("\n=== Phase 3.0: yoga detectors ===");
 
-  const fixture = (placements: Partial<Record<PlanetId, { house: number; deg?: number }>>) =>
+  const fixture = (
+    placements: Partial<Record<PlanetId, { house: number; deg?: number }>>,
+    lagnaSign = 0 // Aries unless a check needs different lordships
+  ) =>
     computeManualChart(
       {
-        lagnaSign: 0, // Aries lagna
+        lagnaSign,
         ascDeg: 10,
         planets: PLANETS.map((id) => ({
           id,
@@ -585,6 +597,109 @@ function norm360Check(x: number): number {
     });
     const keys = detectYogas(d).map((y) => y.key);
     check("Fixture D: Dhana yoga (2nd+11th lords conjoined)", keys.includes("dhana-2-11"), keys.join(","));
+  }
+
+  // Fixtures E-H: the lunar-support family (Sunapha / Anapha / Durudhara /
+  // Kemadruma). Aries lagna, Moon in the 4th, so the 2nd from the Moon is the
+  // 5th house and the 12th from the Moon is the 3rd.
+  {
+    const LUNAR = ["sunapha", "anapha", "durudhara", "kemadruma"];
+    const lunarKeys = (c: ReturnType<typeof fixture>): string[] =>
+      detectYogas(c).map((y) => y.key).filter((k) => LUNAR.includes(k));
+
+    // E: both flanks tenanted -> Durudhara.
+    const e = fixture({
+      Mo: { house: 4 }, Me: { house: 3 }, Ve: { house: 5 },
+      Su: { house: 1 }, Ma: { house: 7 }, Ju: { house: 9 }, Sa: { house: 11 },
+      Ra: { house: 10 }, Ke: { house: 4 },
+    });
+    check("Fixture E: Durudhara detected (both flanks of the Moon tenanted)",
+      lunarKeys(e).includes("durudhara"), lunarKeys(e).join(",") || "(none)");
+
+    // F: only the 2nd from the Moon -> Sunapha.
+    const f = fixture({
+      Mo: { house: 4 }, Ve: { house: 5 },
+      Su: { house: 1 }, Ma: { house: 7 }, Me: { house: 6 }, Ju: { house: 9 },
+      Sa: { house: 11 }, Ra: { house: 10 }, Ke: { house: 4 },
+    });
+    check("Fixture F: Sunapha detected (2nd from the Moon only)",
+      lunarKeys(f).includes("sunapha"), lunarKeys(f).join(",") || "(none)");
+
+    // G: only the 12th from the Moon -> Anapha.
+    const g = fixture({
+      Mo: { house: 4 }, Me: { house: 3 },
+      Su: { house: 1 }, Ma: { house: 7 }, Ve: { house: 6 }, Ju: { house: 9 },
+      Sa: { house: 11 }, Ra: { house: 10 }, Ke: { house: 4 },
+    });
+    check("Fixture G: Anapha detected (12th from the Moon only)",
+      lunarKeys(g).includes("anapha"), lunarKeys(g).join(",") || "(none)");
+
+    // H: both flanks hold ONLY the Sun and a node, which the rule excludes.
+    // The classical outcome is Kemadruma, not Sunapha/Anapha.
+    const h = fixture({
+      Mo: { house: 4 }, Su: { house: 5 }, Ra: { house: 3 },
+      Ma: { house: 7 }, Me: { house: 6 }, Ve: { house: 6 }, Ju: { house: 9 },
+      Sa: { house: 11 }, Ke: { house: 9 },
+    });
+    check("Fixture H: the Sun and the nodes do not count as lunar support",
+      lunarKeys(h).includes("kemadruma"), lunarKeys(h).join(",") || "(none)");
+
+    for (const [label, c] of [["E", e], ["F", f], ["G", g], ["H", h]] as const) {
+      check(`Fixture ${label}: exactly one lunar-support yoga fires`,
+        lunarKeys(c).length === 1, lunarKeys(c).join(",") || "(none)");
+    }
+  }
+
+  // Fixtures I-L: Parivartana grades and per-pair emission.
+  {
+    const parivartanas = (c: ReturnType<typeof fixture>) =>
+      detectYogas(c).filter((y) => y.key.startsWith("parivartana-"));
+
+    // I: Maha — Venus (2nd+7th) and the Moon (4th) exchange; no dusthana, no 3rd.
+    const i = fixture({
+      Ve: { house: 4 }, Mo: { house: 2 },
+      Su: { house: 1 }, Ma: { house: 7 }, Me: { house: 6 }, Ju: { house: 9 },
+      Sa: { house: 11 }, Ra: { house: 10 }, Ke: { house: 4 },
+    });
+    const iy = parivartanas(i);
+    check("Fixture I: Maha Parivartana (Ve 2nd/7th <-> Mo 4th)",
+      iy.some((y) => y.name.includes("Maha")), iy.map((y) => y.name).join(",") || "(none)");
+
+    // J: Dainya — Mercury (3rd+6th) and Jupiter (9th+12th) exchange; dusthanas present.
+    const j = fixture({
+      Me: { house: 9 }, Ju: { house: 3 },
+      Su: { house: 1 }, Mo: { house: 5 }, Ma: { house: 7 }, Ve: { house: 2 },
+      Sa: { house: 11 }, Ra: { house: 10 }, Ke: { house: 4 },
+    });
+    const jy = parivartanas(j);
+    check("Fixture J: Dainya Parivartana (a dusthana lord is in the exchange)",
+      jy.some((y) => y.name.includes("Dainya")), jy.map((y) => y.name).join(",") || "(none)");
+
+    // K: Khala — needs a 3rd lord owning no dusthana, which Aries cannot give
+    // (its 3rd lord Mercury also owns the 6th). Taurus lagna: the Moon owns
+    // only the 3rd, the Sun only the 4th.
+    const k = fixture({
+      Mo: { house: 4 }, Su: { house: 3 },
+      Ma: { house: 7 }, Me: { house: 2 }, Ju: { house: 11 }, Ve: { house: 1 },
+      Sa: { house: 10 }, Ra: { house: 9 }, Ke: { house: 3 },
+    }, 1);
+    const ky = parivartanas(k);
+    check("Fixture K: Khala Parivartana (3rd lord in the exchange, no dusthana)",
+      ky.some((y) => y.name.includes("Khala")), ky.map((y) => y.name).join(",") || "(none)");
+
+    // L: dual rulership must not multiply the finding. Jupiter owns the 9th and
+    // 12th, Saturn the 10th and 11th, so four house-pairs describe ONE exchange.
+    const l = fixture({
+      Ju: { house: 10 }, Sa: { house: 9 },
+      Su: { house: 1 }, Mo: { house: 5 }, Ma: { house: 7 }, Me: { house: 6 },
+      Ve: { house: 2 }, Ra: { house: 3 }, Ke: { house: 9 },
+    });
+    const ly = parivartanas(l);
+    check("Fixture L: one Parivartana finding per planet pair, not per house pair",
+      ly.length === 1, `${ly.length} finding(s): ${ly.map((y) => y.key).join(",") || "(none)"}`);
+    check("Fixture L: the finding names every house both lords own",
+      Boolean(ly[0] && ["9th", "12th", "10th", "11th"].every((h) => ly[0].description.includes(h))),
+      ly[0]?.description.slice(0, 120));
   }
 
   // Canonical chart: keys unique, detector total is stable and non-crashing
@@ -1315,6 +1430,306 @@ console.log("\n=== Phase 6: birth time rectification ===");
       `z ${worked.pushya.stats.zScore.toFixed(2)}, margin ${worked.pushya.stats.margin.toFixed(4)} → ${worked.pushya.verdict}; ` +
       `divergence ${worked.reconciliation.divergenceMin} min → ${worked.reconciliation.tier}`
   );
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6.5: Sade Sati passages. The dated module folds Saturn's ingresses
+// into passages; the pre-existing transits.ts answers the same question from a
+// single snapshot. Checking them against each other is the point.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 6.5: Sade Sati passages ===");
+
+  const moonSign = chart.planets.find((p) => p.id === "Mo")!.sign;
+  const at = new Date("2026-06-15T00:00:00.000Z");
+  const periods = sadeSatiPeriods(chart, "lahiri", at);
+  const years = (a: Date, b: Date): number => (b.getTime() - a.getTime()) / (365.2425 * 86400000);
+
+  check("Sade Sati: passages found for the canonical chart", periods.length > 0, `${periods.length} passages`);
+
+  check(
+    "Sade Sati: every phase sign is the 12th/1st/2nd from the natal Moon",
+    periods.every((p) =>
+      p.phases.every((ph) => ((ph.sign - moonSign + 12) % 12) + 1 === SADE_SATI_HOUSE[ph.phase])
+    )
+  );
+
+  let ordered = true;
+  for (let i = 1; i < periods.length; i++) {
+    if (periods[i].start.getTime() < periods[i - 1].end.getTime()) ordered = false;
+  }
+  check("Sade Sati: passages are ordered and non-overlapping", ordered);
+
+  // A whole passage runs ~7.5 years; retrograde re-entry stretches the outer
+  // bounds toward 8.5. Clipped passages are partial by construction.
+  const whole = periods.filter((p) => !p.clippedStart && !p.clippedEnd);
+  const spans = whole.map((p) => years(p.start, p.end));
+  check(
+    "Sade Sati: complete passages last 7-9 years",
+    spans.length > 0 && spans.every((y) => y >= 7 && y <= 9),
+    spans.map((y) => y.toFixed(1)).join(", ")
+  );
+
+  // A retrograde excursion out of the closing sign must not surface as its own
+  // passage — the defect the stitching step exists to prevent.
+  check(
+    "Sade Sati: no passage is a stray retrograde fragment",
+    periods.every((p) => years(p.start, p.end) > 1),
+    periods.map((p) => years(p.start, p.end).toFixed(1)).join(", ")
+  );
+
+  // Consecutive passages are one Saturn cycle apart (~29.5 years). Measured
+  // start-to-start, and only where the earlier passage has a real start: the
+  // first passage is clipped at birth for anyone born mid-Sade-Sati, so its
+  // "start" is the birth date and the gap from it is not a cycle.
+  const gaps: number[] = [];
+  for (let i = 1; i < periods.length; i++) {
+    if (periods[i - 1].clippedStart) continue;
+    gaps.push(years(periods[i - 1].start, periods[i].start));
+  }
+  check(
+    "Sade Sati: consecutive passages are one Saturn cycle apart",
+    gaps.length > 0 && gaps.every((g) => g >= 25 && g <= 34),
+    gaps.map((g) => g.toFixed(1)).join(", ")
+  );
+
+  // Cross-validation. The two modules reach the answer by different routes —
+  // ingress folding versus one transit sample — so agreement is evidence.
+  for (const when of [at, new Date("2019-01-01T00:00:00.000Z"), new Date("2031-01-01T00:00:00.000Z")]) {
+    const running = currentSadeSati(sadeSatiPeriods(chart, "lahiri", when));
+    const dated = running ? currentPhase(running, when)?.phase ?? null : null;
+    const snapshot = sadeSatiPhase(currentTransits(chart, "lahiri", when));
+    check(
+      `Sade Sati: dated phase agrees with the transit snapshot at ${when.toISOString().slice(0, 10)}`,
+      dated === snapshot,
+      `dated=${dated} snapshot=${snapshot}`
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6.6: Muntha (Tajika annual point) and the natal Sudarshana Chakra.
+// Both were previously unreachable from the app; these pin their arithmetic.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 6.6: Muntha and Sudarshana Chakra ===");
+
+  // --- Muntha: starts on the Lagna at birth, advances one house per year.
+  const m0 = munthaAtAge(chart, 0);
+  check("Muntha: sits on the Lagna at birth", m0.house === 1 && m0.sign === chart.ascendant.sign,
+    `house ${m0.house}, sign ${m0.sign}`);
+
+  check("Muntha: advances exactly one house per completed year",
+    [0, 1, 2, 5, 11].every((age) => munthaAtAge(chart, age).house === age + 1));
+
+  check("Muntha: wraps to the Lagna after twelve years",
+    munthaAtAge(chart, 12).house === 1 && munthaAtAge(chart, 25).house === 2,
+    `age12=${munthaAtAge(chart, 12).house} age25=${munthaAtAge(chart, 25).house}`);
+
+  check("Muntha: the sign is the house counted from the Lagna",
+    [0, 3, 7, 11, 20].every((age) => {
+      const m = munthaAtAge(chart, age);
+      return m.sign === (chart.ascendant.sign + m.house - 1) % 12;
+    }));
+
+  // A year is only completed on the birthday — one day short must not advance.
+  if (chart.birthUtc) {
+    const dayBefore30 = new Date(chart.birthUtc.getTime() + 30 * 365.2425 * 86400000 - 86400000);
+    const dayAfter30 = new Date(chart.birthUtc.getTime() + 30 * 365.2425 * 86400000 + 86400000);
+    check("Muntha: does not advance until the year completes",
+      completedYears(chart.birthUtc, dayBefore30) === 29 &&
+        completedYears(chart.birthUtc, dayAfter30) === 30,
+      `${completedYears(chart.birthUtc, dayBefore30)} -> ${completedYears(chart.birthUtc, dayAfter30)}`);
+    check("Muntha: resolves at an instant", munthaAt(chart, dayAfter30)?.age === 30);
+  }
+
+  // --- Sudarshana Chakra.
+  const chakra = computeSudarshana(chart);
+  check("Sudarshana: twelve houses returned", chakra.length === 12);
+  check("Sudarshana: three frames per house (Lagna, Moon, Sun)",
+    chakra.every((h) => h.frames.length === 3));
+
+  const moonSign = chart.planets.find((p) => p.id === "Mo")!.sign;
+  const sunSign = chart.planets.find((p) => p.id === "Su")!.sign;
+  check("Sudarshana: each frame counts from its own anchor",
+    chakra.every((h) => {
+      const [l, m, s] = h.frames;
+      return (
+        l.sign === (chart.ascendant.sign + h.house - 1) % 12 &&
+        m.sign === (moonSign + h.house - 1) % 12 &&
+        s.sign === (sunSign + h.house - 1) % 12
+      );
+    }));
+
+  // The 1st house from each frame is the anchor's own sign, by definition.
+  check("Sudarshana: the 1st house of each frame is the anchor sign",
+    chakra[0].frames[0].sign === chart.ascendant.sign &&
+      chakra[0].frames[1].sign === moonSign &&
+      chakra[0].frames[2].sign === sunSign);
+
+  check("Sudarshana: supported + strained never exceeds the frame count",
+    chakra.every((h) => h.supported + h.strained <= h.frames.length));
+
+  check("Sudarshana: unanimous means every frame leans the same way",
+    chakra.every((h) => h.unanimous === (h.supported === h.frames.length || h.strained === h.frames.length)));
+
+  // A house cannot be unanimously supported and unanimously strained at once.
+  const both = unanimouslySupported(chakra).filter((h) => unanimouslyStrained(chakra).includes(h));
+  check("Sudarshana: no house is both unanimously supported and strained", both.length === 0);
+
+  // Occupancy is not an aspect — the engine's standing convention.
+  check("Sudarshana: a planet never aspects the sign it occupies",
+    chakra.every((h) => h.frames.every((f) => f.occupants.every((o) => !f.aspecting.includes(o)))));
+
+  console.log(
+    `  chakra: ${unanimouslySupported(chakra).map((h) => h.house).join(",") || "none"} unanimously supported; ` +
+      `${unanimouslyStrained(chakra).map((h) => h.house).join(",") || "none"} unanimously strained`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6.7: the explain() reasoning renderer. Pins the four-link chain and
+// the voice rules from REDESIGN.md 3b.1, so the language contract is checked
+// mechanically rather than by eye.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 6.7: reasoning renderer ===");
+
+  // --- Reference tables must be complete: a hole here silently produces
+  // "undefined" in the middle of a sentence a reader is shown.
+  check("significations: every planet has a signification",
+    PLANETS.every((id) => Boolean(PLANET_SIGNIFIES[id]?.phrase && PLANET_SIGNIFIES[id]?.short)));
+  check("significations: all twelve houses are covered",
+    Array.from({ length: 12 }, (_, i) => i + 1).every(
+      (h) => Boolean(HOUSE_GOVERNS[h]?.phrase && HOUSE_GOVERNS[h]?.short && HOUSE_TITLES[h])
+    ));
+
+  const DIGNITIES = [
+    "exalted", "moolatrikona", "own", "greatFriend", "friend",
+    "neutral", "enemy", "greatEnemy", "debilitated",
+  ] as const;
+  check("significations: every dignity has a plain-English form",
+    DIGNITIES.every((d) => Boolean(DIGNITY_PLAIN[d]?.phrase && DIGNITY_PLAIN[d]?.band)));
+
+  // --- Exercise every branch of the Because union across every planet/house.
+  const samples: Because[] = [];
+  for (const id of PLANETS) {
+    for (let h = 1; h <= 12; h++) {
+      samples.push({ via: "occupancy", planet: id, house: h });
+      samples.push({ via: "lordship", planet: id, houses: [h] });
+      samples.push({ via: "aspect", planet: id, house: h, offset: 7 });
+      samples.push({ via: "transit", planet: id, house: h, from: "moon" });
+      samples.push({ via: "lordFrom", planet: id, house: h, from: "sun" });
+    }
+    samples.push({ via: "karaka", planet: id, theme: "marriage" });
+    samples.push({ via: "strength", planet: id, score: 46 });
+    samples.push({ via: "ashtakavarga", planet: id, sign: 3, bindus: 5 });
+    samples.push({ via: "varga", planet: id, varga: "D9", house: 7 });
+    samples.push({ via: "yoga", yoga: "Raja Yoga", planets: [id] });
+    for (const d of DIGNITIES) samples.push({ via: "dignity", planet: id, dignity: d });
+  }
+  for (const level of [1, 2, 3] as const) samples.push({ via: "dasha", level, lord: "Sa" });
+
+  const rendered = samples.map((b) => explain(b, chart));
+  check(`explain: renders all ${samples.length} Because variants without throwing`, rendered.length === samples.length);
+
+  check("explain: never emits 'undefined' or 'NaN'",
+    rendered.every((t) => !t.includes("undefined") && !t.includes("NaN")),
+    rendered.find((t) => t.includes("undefined") || t.includes("NaN"))?.slice(0, 90));
+
+  check("explain: every rendering is a complete sentence",
+    rendered.every((t) => t.length > 0 && /^[A-Z]/.test(t) && /[.!?]$/.test(t)),
+    rendered.find((t) => !/^[A-Z]/.test(t) || !/[.!?]$/.test(t))?.slice(0, 90));
+
+  check("explain: no double spaces or stray double stops",
+    rendered.every((t) => !t.includes("  ") && !t.includes("..") && !t.includes(" .")),
+    rendered.find((t) => t.includes("  ") || t.includes("..") || t.includes(" ."))?.slice(0, 90));
+
+  // --- Voice rule V6: conditional, agency-preserving language. The ban covers
+  // claims about the person; it does not cover ephemeris statements, and this
+  // renderer makes none.
+  const FATALISTIC = /\b(will definitely|must|never|always|destined|fated|guaranteed|cannot escape)\b/i;
+  // Measured on the generated chain only — see the curated-backlog check below.
+  const generated = samples.filter((b) => b.via !== "occupancy").map((b) => explain(b, chart));
+  check("explain: generated reasoning has no fatalistic absolutes (voice rule V6)",
+    generated.every((t) => !FATALISTIC.test(t)),
+    generated.find((t) => FATALISTIC.test(t))?.slice(0, 110));
+
+  // --- Voice rule V3: no untranslated jargon in the plain rendering. These are
+  // the terms the redesign says must never reach a default-depth reader.
+  const JARGON = /\b(dusthana|kendra|trikona|drishti|graha|bhava|moolatrikona|karaka|maraka|vakri|neecha|dispositor|Adhi Shatru)\b/;
+  const plainGenerated = samples
+    .filter((b) => b.via !== "occupancy")
+    .map((b) => explain(b, chart, "plain"));
+  check("explain: generated reasoning uses no untranslated Sanskrit (voice rule V3)",
+    plainGenerated.every((t) => !JARGON.test(t)),
+    plainGenerated.find((t) => JARGON.test(t))?.slice(0, 110));
+
+  // The curated leaf table is the other half of the sentence explain() builds,
+  // and it was written before the voice rules existed. This is a MEASUREMENT,
+  // not a gate: it reports how much of planetInHouse.ts still has to be
+  // rewritten when the interpretation layer migrates, and fails only if the
+  // backlog grows. Baseline at the time of writing: 12 fatalistic, 1 jargon.
+  {
+    const leaves = PLANETS.flatMap((id) => PLANET_IN_HOUSE[id] ?? []);
+    const fatalistic = leaves.filter((t) => FATALISTIC.test(t)).length;
+    const jargon = leaves.filter((t) => JARGON.test(t)).length;
+    console.log(`  curated leaf text: ${leaves.length} entries, ${fatalistic} fatalistic, ${jargon} with jargon`);
+    check("curated leaf text: voice-rule backlog has not grown",
+      fatalistic <= 12 && jargon <= 1,
+      `${fatalistic} fatalistic (baseline 12), ${jargon} jargon (baseline 1)`);
+  }
+
+  // --- Voice rule V2: sentences stay short. Measured on the chain itself,
+  // excluding the curated leaf text from planetInHouse.ts, which predates the
+  // rule and is migrated separately.
+  const chainOnly = samples
+    .filter((b) => b.via !== "occupancy")
+    .map((b) => explain(b, chart));
+  const longest = chainOnly.reduce((a, b) => (b.length > a.length ? b : a), "");
+  const wordsIn = (t: string): number[] =>
+    t.split(/(?<=[.!?])\s+/).map((s) => s.trim().split(/\s+/).filter(Boolean).length);
+  check("explain: no sentence exceeds 30 words (voice rule V2)",
+    chainOnly.every((t) => wordsIn(t).every((n) => n <= 30)),
+    `longest rendering: ${longest.slice(0, 110)}`);
+
+  // --- The four-link chain: a placement fact must name the planet, say what
+  // the planet signifies, and say what the house governs. This is the rule the
+  // whole redesign turns on, so it is checked directly.
+  for (const id of PLANETS) {
+    const text = explain({ via: "occupancy", planet: id, house: 10 }, chart);
+    const linked =
+      text.includes(PLANET_NAMES[id]) &&
+      text.includes(PLANET_SIGNIFIES[id].phrase) &&
+      text.includes(HOUSE_GOVERNS[10].phrase);
+    if (!linked) {
+      check(`explain: ${id} placement carries the full four-link chain`, false, text.slice(0, 140));
+    }
+  }
+  check("explain: every planet's placement carries the full four-link chain",
+    PLANETS.every((id) => {
+      const t = explain({ via: "occupancy", planet: id, house: 10 }, chart);
+      return t.includes(PLANET_NAMES[id]) && t.includes(PLANET_SIGNIFIES[id].phrase) &&
+        t.includes(HOUSE_GOVERNS[10].phrase);
+    }));
+
+  // --- Expert depth adds detail without changing the claim.
+  const expertAspect = explain({ via: "aspect", planet: "Sa", house: 10, offset: 10 }, chart, "expert");
+  check("explain: expert depth names the aspect offset", expertAspect.includes("10th glance"), expertAspect.slice(0, 110));
+  check("explain: plain depth hides the aspect offset",
+    !explain({ via: "aspect", planet: "Sa", house: 10, offset: 10 }, chart).includes("glance)"));
+
+  // --- placementFacts reads the chart rather than inventing facts.
+  const facts = placementFacts(chart, "Su");
+  const sun = chart.planets.find((q) => q.id === "Su")!;
+  check("placementFacts: reports the planet's real house",
+    facts.some((f) => f.via === "occupancy" && f.house === sun.house));
+  check("placementFacts: reports the planet's real dignity",
+    facts.some((f) => f.via === "dignity" && f.dignity === sun.dignity));
+  check("placementFacts: returns nothing for an absent planet",
+    placementFacts({ ...chart, planets: [] }, "Su").length === 0);
+
+  console.log(`  sample: ${explain({ via: "occupancy", planet: "Ma", house: 10 }, chart).slice(0, 150)}`);
 }
 
 // ---------------------------------------------------------------------------

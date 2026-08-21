@@ -7,6 +7,7 @@ import {
   SIGN_LORDS,
   SIGNS,
 } from "@/utils/astrology/constants";
+import { ordinal } from "@/utils/astrology/format";
 import { fmtDeg } from "@/utils/astrology/math";
 import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import {
@@ -42,15 +43,16 @@ import { PLANET_IN_HOUSE } from "./planetInHouse";
  * already on ChartData or comes from the strength/aspect primitives.
  */
 
-const ORDINALS = ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
-
 const KENDRA = [1, 4, 7, 10];
 const TRIKONA = [1, 5, 9];
 const DUSTHANA = [6, 8, 12];
 
-export function ordinal(n: number): string {
-  return ORDINALS[n] ?? `${n}th`;
-}
+/**
+ * Re-exported from `utils/astrology/format`, where it now lives so that the
+ * utils layer (`yogas.ts`) can reach it too — see that file's header. Every
+ * existing `data`-layer importer of `ordinal` keeps working unchanged.
+ */
+export { ordinal };
 
 /** Comma-joined state flags for inline use, e.g. ", retrograde, combust". */
 function flags(p: PlanetPosition): string {

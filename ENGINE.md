@@ -641,3 +641,162 @@ The harness carries both a **null check** (random events never come back determi
 - The **Varshaphala cross-check is a Muntha anchor only** — one sign per completed year plus the solar-return instant. The full Tajika procedure (five year-lord candidates, sahams, mudda dasha) is not implemented, and the output says so.
 - Timezone handling is the highest-risk input: `timezoneWarnings` flags LMT-era records (offsets that are not whole quarter-hours), a clock change inside the search window (civil minutes stop being uniform UTC minutes), a transition within 24 hours, and a historical offset differing from the zone's modern one. This exposed and fixed a latent sub-second rounding bug in `utcOffsetLabel`.
 - The panel computes **in-process like every other panel**; `app/api/rectify` exists as the programmatic entry point, not as the UI's data path (62 charts cost ~150 ms — a round trip buys nothing).
+
+---
+
+## 23. Defect fixes, surfaced techniques and the reasoning renderer (2026-08)
+
+A scoped pass covering six text defects, two missing yoga families, three
+techniques that were computed but never rendered, and the foundation for the
+plain-English interpretation layer. Nothing in the astronomy changed.
+
+### 23.1 The golden-output harness — [utils/astrology/\_\_checks\_\_/golden.ts](utils/astrology/__checks__/golden.ts)
+
+`verify.ts` asks "is this number right?". `golden.ts` asks the other question a
+refactor needs: **"did anything at all change?"** It renders every user-visible
+surface for four fixed charts into one deterministic text file
+(`golden.snapshot.txt`, ~2,150 lines) and diffs against it.
+
+```bash
+node utils/astrology/__checks__/run.mjs golden           # compare, exit 1 on drift
+node utils/astrology/__checks__/run.mjs golden --write   # accept as the new baseline
+```
+
+- **Fixtures**: a canonical Delhi chart, a yoga-dense Pune chart, a southern-hemisphere chart, and a polar chart that forces the equal-house fallback.
+- **Determinism rules** (breaking these makes the snapshot churn): "now" is pinned to `NOW`; every float is rounded at the print site; iteration follows fixed arrays, never `Object.keys`; no `toLocaleString`.
+- **Diffing is LCS-based, not positional.** A positional walk reports one inserted line as hundreds of changes, which defeats the purpose. Common prefix/suffix are trimmed first.
+
+### 23.2 The dev runner — [utils/astrology/\_\_checks\_\_/run.mjs](utils/astrology/__checks__/run.mjs)
+
+The checks are `.ts` with `@/…` aliases, which bare `node` cannot resolve, and
+`tsx` is **not** installed. `run.mjs` drives them through `jiti`, already present
+as a Next.js transitive dependency — no package added, works offline.
+
+```bash
+node utils/astrology/__checks__/run.mjs verify    # the 292-check numeric harness
+node utils/astrology/__checks__/run.mjs golden
+node utils/astrology/__checks__/run.mjs path/to/anything.ts
+```
+
+### 23.3 `ordinal()` moved to [utils/astrology/format.ts](utils/astrology/format.ts)
+
+`ordinal` lived in `data/interpretations/synthesis.ts`, out of reach of
+`utils/astrology/yogas.ts` — dependencies run utils → data, never the reverse.
+`yogas.ts` therefore hand-rolled `${house}th` and printed **"the 1th house"** at
+seven sites. The helper now lives in `utils`, derives the suffix from the rule
+rather than a 12-entry table, and `synthesis.ts` re-exports it so all six
+existing `data`-layer importers are untouched.
+
+**If you need an ordinal anywhere, import it from `format.ts`.** Do not
+re-inline `${n}th`.
+
+### 23.4 Text defects fixed
+
+| Defect | Site |
+|---|---|
+| `"the 1th house"` — 7 sites | `yogas.ts` |
+| Bare-number lordship list (`"lord of the 6"`) | `yogas.ts` Vipareeta |
+| Karakamsa fragment: `LAGNA_TEMPERAMENT[k].split("—")[0]` assumed an em-dash, but **only 5 of 12 strings have one** — the other 7 dropped a whole sentence into a "gives it a … flavour" frame, and the 5 that matched were silently truncated | `personality.ts` ×2 sites (Karakamsa + Navamsa) |
+| Duplicated full stop (`"…surprises people.. When"`) | `personality.ts` Navamsa |
+| `"a Aries"` / `"a Aquarius"` article agreement | `personality.ts` ×2, `cautions.ts` ×1 |
+| `"3 combinations stamp itself"` | `personality.ts` |
+| `"Neechabhanga Raja Yoga, Neechabhanga Raja Yoga"` — no dedup before `join` | `personality.ts` |
+| Zero-weight `Evidence` rendered as a green ▲ because the test was `weight >= 0` | `WhyList.tsx` |
+| **Duplicate career evidence + double-counted score**: `detectYogas` emits one Raja Yoga per lord-pair, so a planet in two pairs collected two identical +8 votes | `career.ts` |
+
+`WhyList` now has three states (▲ / – / ▼) with an `sr-only` label, so polarity
+survives greyscale, print, colour-blindness **and** screen readers.
+
+### 23.5 New yoga detectors — [utils/astrology/yogas.ts](utils/astrology/yogas.ts)
+
+**The lunar-support family.** Sunapha (2nd from the Moon), Anapha (12th),
+Durudhara (both) and Kemadruma (neither) are one rule with four mutually
+exclusive outcomes. **Only Kemadruma was detected**, so every chart leaned more
+pessimistic than the rule family actually says. The three positive members also
+feed `isTemperamentYoga` in `personality.ts`, because Kemadruma already reached
+the reader through `cautions.ts`.
+
+**Parivartana**, graded Maha / Khala / Dainya. `inExchange` already drove the
+Raja and Dhana detectors; the exchange itself was never reported. Emitted **once
+per exchanging pair of planets, not per pair of houses** — a lord with dual
+rulership would otherwise report one exchange three or four times.
+
+Both are cited in `SOURCES.md`, with four new disagreement-log entries covering
+the scope, the Sun/node exclusion, and the two Parivartana conventions.
+
+### 23.6 Surfaced techniques
+
+| Module | Was | Now |
+|---|---|---|
+| [sadeSati.ts](utils/astrology/sadeSati.ts) | `sadeSatiPhase` computed on every chart; **no component ever read it** | Dated passages across a life, folded from Saturn's ingresses, with retrograde re-entry stitched back into one passage. `SadeSatiCard` in the Predictions tab |
+| [varshaphala.ts](utils/astrology/varshaphala.ts) | Muntha inline in `rectify.ts`, visible only to the rectifier | Pure module; `ThreeViewCard` |
+| [sudarshana.ts](utils/astrology/sudarshana.ts) | *(new)* — see the correction below | The twelve houses judged from Lagna, Moon and Sun; `ThreeViewCard` |
+| `bhavaBala` | Computed in `ChartContext`, **rendered nowhere** | `BhavaBalaTable`, beside the Ashtakavarga grid |
+
+**Correction worth keeping.** `rectify.ts` contains a check called "Sudarshana
+Chakra", but it is *not* the natal technique — it asks whether an **event's**
+bhava is lit by the dasha lords running at the time, which needs a dated event.
+`sudarshana.ts` is the natal version and shares no code with it. An earlier
+benchmark described the rectification version as the natal feature "already
+implemented"; it was not.
+
+Sade Sati costs ~40 ms (a Saturn ingress scan over ~96 years), so it sits behind
+the card's first expand. Muntha and Sudarshana are pure arithmetic; their
+collapse is for reading order, not cost.
+
+### 23.7 The reasoning renderer — [explain.ts](data/interpretations/explain.ts) + [significations.ts](data/interpretations/significations.ts)
+
+The foundation for making the "why" **data-driven instead of hardcoded prose**.
+Today a reason is an English sentence written at the point of computation, which
+cannot be translated, linted, or rendered at two depths.
+
+A `Because` is a language-free fact about the chart. `explain(because, chart,
+depth)` renders the four-link chain:
+
+```
+[placement] → [what the planet signifies] → [what the house governs] → [therefore]
+
+{ via: "occupancy", planet: "Ma", house: 10 }
+  → "Mars sits in your 10th house. Mars is the planet of drive, courage and
+     confrontation; the 10th house governs career, status and how the public
+     sees you. …"
+```
+
+Three of the four links already existed: the chart supplies link 1, and
+`planetInHouse.ts`'s 108 curated entries supply link 4. Only
+`PLANET_SIGNIFIES` (9 rows) and a plain-English column on `HOUSE_GOVERNS` were
+missing — which is why `significations.ts` is small.
+
+**STATUS: foundation only. No section builder consumes it yet, so nothing a
+reader sees has changed.** Migrating the builders onto `Because[]` is the next
+step (REDESIGN.md §5).
+
+### 23.8 Voice rules are now machine-checked
+
+`verify.ts` enforces the REDESIGN §3b.1 rules against every `Because` variant
+(669 renderings): no `undefined`/`NaN`, complete sentences, no sentence over 30
+words (V2), no untranslated Sanskrit at plain depth (V3), no fatalistic
+absolutes (V6), and the full four-link chain for every planet.
+
+**These are scoped to the generated chain.** The curated leaf text predates the
+rules, and a separate check *measures* rather than gates it:
+
+```
+curated leaf text: 108 entries, 12 fatalistic, 1 with jargon
+```
+
+That backlog is tracked with a ratchet — it may shrink, never grow — and
+quantifies the rewrite when the interpretation layer migrates.
+
+### 23.9 New "I want to add X" rows
+
+| Feature request | Primary file(s) |
+|---|---|
+| An ordinal anywhere in either layer | `utils/astrology/format.ts` (`ordinal`) — never re-inline `${n}th` |
+| Prove a refactor changed nothing / see exactly what moved | `node utils/astrology/__checks__/run.mjs golden` |
+| Add a chart to the regression panel | `FIXTURES` in `golden.ts`, then `--write` |
+| A new yoga | `utils/astrology/yogas.ts` + a `SOURCES.md` row + a fixture in `verify.ts` Phase 3.0 |
+| Change Sade Sati phase copy | `data/interpretations/sadeSatiTexts.ts` — calculation stays in `utils/astrology/sadeSati.ts` |
+| Change what a planet or house "means" in generated prose | `data/interpretations/significations.ts` |
+| Add a new kind of reason | `Because` union + a `switch` arm in `explain.ts` + a sample in `verify.ts` Phase 6.7 |
+| Plain-English house names | `HOUSE_TITLES` in `significations.ts` |

@@ -90,6 +90,18 @@ export interface PersonalityProfile {
   weakest: PlanetId | null;
 }
 
+/**
+ * "a" or "an" for a sign name. Aries and Aquarius are the vowel-initial two,
+ * but the test is on the string so a renamed or translated table stays correct.
+ */
+function article(sign: number): string {
+  return /^[AEIOU]/.test(SIGNS[sign]) ? "an" : "a";
+}
+
+function Article(sign: number): string {
+  return article(sign) === "an" ? "An" : "A";
+}
+
 function nakClause(p: PlanetPosition): string {
   return `${NAKSHATRAS[p.nakshatra]} pada ${p.pada} (lord ${PLANET_NAMES[p.nakshatraLord]}) — ${NAKSHATRA_QUALITIES[p.nakshatra]}`;
 }
@@ -119,6 +131,13 @@ function isTemperamentYoga(key: string): boolean {
     key === "gajakesari" ||
     key === "budhaditya" ||
     key === "chandra-mangala" ||
+    // The lunar-support yogas describe the mind's backing, which is character
+    // rather than circumstance. Their absent counterpart, Kemadruma, already
+    // reaches the reader through `cautions.ts`; leaving these three out of the
+    // temperament section kept that exchange one-sided.
+    key === "sunapha" ||
+    key === "anapha" ||
+    key === "durudhara" ||
     key.startsWith("yk-")
   );
 }
@@ -228,7 +247,7 @@ export function buildPersonalityProfile(
         `${PLANET_NAMES[ak.id]} is the Atmakaraka (the soul significator — the planet that travelled furthest through its sign, at ${fmtDeg(ak.degInSign)}). In simple terms: whatever ${PLANET_NAMES[ak.id]} stands for — placed in your ${ordinal(ak.house)} house in ${SIGNS[ak.sign]} — is the lesson this life keeps returning to, in relationships, in work, everywhere. It is less "what you do" and more "what you cannot avoid becoming good at".`
       );
       akParas.push(
-        `Its Karakamsa (the Navamsa sign of the Atmakaraka) is ${SIGNS[jaimini.karakamsa]}: the inner room where that lesson is actually worked out. A ${SIGNS[jaimini.karakamsa]} Karakamsa gives the soul's work a ${LAGNA_TEMPERAMENT[jaimini.karakamsa].split("—")[0].trim()} flavour.`
+        `Its Karakamsa (the Navamsa sign of the Atmakaraka) is ${SIGNS[jaimini.karakamsa]}: the inner room where that lesson is actually worked out. ${Article(jaimini.karakamsa)} ${SIGNS[jaimini.karakamsa]} Karakamsa colours the soul's work: ${LAGNA_TEMPERAMENT[jaimini.karakamsa]}`
       );
     }
     if (akParas.length) {
@@ -240,7 +259,7 @@ export function buildPersonalityProfile(
   if (vargas) {
     const d9 = vargas.charts.D9;
     const navParas: string[] = [
-      `The Navamsa (D-9) Lagna is ${SIGNS[d9.ascendant]}. If the birth chart is how life presents itself, the Navamsa is how you are on the inside once the noise settles — and a ${SIGNS[d9.ascendant]} inner nature is ${LAGNA_TEMPERAMENT[d9.ascendant].split("—")[0].trim()}. When the outer (${SIGNS[lagnaSign]}) and inner (${SIGNS[d9.ascendant]}) signs differ in element, people who only know you casually often misread you; those close to you meet the Navamsa.`,
+      `The Navamsa (D-9) Lagna is ${SIGNS[d9.ascendant]}. If the birth chart is how life presents itself, the Navamsa is how you are on the inside once the noise settles — and ${article(d9.ascendant)} ${SIGNS[d9.ascendant]} inner nature is ${LAGNA_TEMPERAMENT[d9.ascendant]} When the outer (${SIGNS[lagnaSign]}) and inner (${SIGNS[d9.ascendant]}) signs differ in element, people who only know you casually often misread you; those close to you meet the Navamsa.`,
     ];
     if (vargas.vargottama.length) {
       navParas.push(
@@ -295,16 +314,19 @@ export function buildPersonalityProfile(
   /* --- 5. Yoga signatures --- */
   const temperament = yogas.filter((y) => isTemperamentYoga(y.key));
   const resilience = yogas.filter((y) => y.key.startsWith("nbrj-") || y.key.startsWith("vrj-"));
+  /** Distinct names, order preserved — two findings can share a yoga name. */
+  const uniqueNames = (ys: YogaFinding[]): string => [...new Set(ys.map((y) => y.name))].join(", ");
+
   const yogaParas: string[] = [];
   if (temperament.length) {
     yogaParas.push(
-      `${temperament.length === 1 ? "One combination stamps" : `${temperament.length} combinations stamp`} itself directly on the character: ${temperament.map((y) => y.name).join(", ")}.`
+      `${temperament.length === 1 ? "One combination stamps itself" : `${temperament.length} combinations stamp themselves`} directly on the character: ${uniqueNames(temperament)}.`
     );
     for (const y of temperament) yogaParas.push(`${y.name} — ${y.description}`);
   }
   if (resilience.length) {
     yogaParas.push(
-      `Beneath that sits a resilience signature — ${resilience.map((y) => y.name).join(", ")} — the combinations that convert this chart's difficulties into capability rather than damage. They rarely show early; they are what the native is left holding after the hard decade.`
+      `Beneath that sits a resilience signature — ${uniqueNames(resilience)} — the combinations that convert this chart's difficulties into capability rather than damage. They rarely show early; they are what the native is left holding after the hard decade.`
     );
     for (const y of resilience) yogaParas.push(`${y.name} — ${y.description}`);
   }

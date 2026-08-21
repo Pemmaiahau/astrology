@@ -3,6 +3,7 @@
 import { AV_PLANETS } from "@/utils/astrology/ashtakavarga";
 import { PLANET_NAMES, SIGNS } from "@/utils/astrology/constants";
 import { useChart } from "@/components/context/ChartContext";
+import BhavaBalaTable from "./BhavaBalaTable";
 
 /** 12 × 8 Bhinna Ashtakavarga grid + Sarvashtakavarga row, by sign. */
 export default function AshtakavargaTable() {
@@ -66,6 +67,9 @@ export default function AshtakavargaTable() {
         </span>
         <span className="text-fg-subtle">Total SAV = {ashtakavarga.sav.reduce((a, b) => a + b, 0)} (classical total: 337)</span>
       </div>
+
+      {/* House strength, computed all along and never surfaced until now. */}
+      <BhavaBalaTable />
     </div>
   );
 }

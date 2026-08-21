@@ -25,6 +25,8 @@ Abbreviations: **BPHS** = Brihat Parashara Hora Shastra.
 | | Raja Yoga (kendra-lord + trikona-lord association by conjunction/mutual aspect/exchange) | BPHS, Raja Yoga adhyaya |
 | | Dhana Yogas (2nd–11th lord links; trine-lord links to the wealth axis), Lakshmi Yoga | BPHS, Dhana Yoga adhyaya |
 | | Kemadruma (bare 2nd/12th-from-Moon rule) + reported cancellations | Standard Chandra-yoga literature (Phaladeepika tradition) |
+| | Sunapha (2nd from the Moon), Anapha (12th), Durudhara (both) — the Sun and the nodes excluded throughout | BPHS Chandra-yoga adhyaya; Brihat Jataka Ch.12 |
+| | Parivartana Yoga, graded Maha / Khala / Dainya by the houses the exchanging lords own | Standard yoga literature (Phaladeepika tradition); the grading is the common three-fold scheme |
 | | Shakata, Daridra, Amala | Phaladeepika / standard yoga literature |
 | | Kala Sarpa (all seven within the nodal axis) | **Later tradition**, not in BPHS — presented with that framing in the prose |
 | `data/interpretations/career.ts` | Profession judged from the 10th lord counted from Lagna, Moon AND Sun | Phaladeepika, karmajiva chapter |
@@ -104,6 +106,10 @@ Abbreviations: **BPHS** = Brihat Parashara Hora Shastra.
 | Cheshta bala | Full seeghrocca ephemeris vs speed proxy | Seeghrocca via J2000 mean elements (JHora-style) |
 | Sputa drishti special aspects | Continuous ramps vs step bonuses | Step bonuses on the special-aspect arcs, capped at 60 |
 | Kemadruma | Bare rule vs long cancellation lists | Bare rule, standard cancellations *reported* inside the finding |
+| **Lunar-support family scope** | Detect only Kemadruma (the adverse one), or the whole Sunapha/Anapha/Durudhara/Kemadruma set | **The whole set.** They are one rule decided by which signs flank the Moon, and only the adverse outcome was implemented. Reporting a chart's lunar isolation while staying silent about its lunar support is not a neutral omission — it makes every reading lean more pessimistic than the rule family says. `personality.ts` therefore also counts the three positive members as temperament yogas, since Kemadruma already reaches the reader through `cautions.ts` |
+| **Who counts as lunar support** | Any graha in the 2nd/12th from the Moon, or the seven excluding the Sun, or excluding the Sun and the nodes | **Excluding the Sun and the nodes.** The Sun's proximity to the Moon is a fact about the tithi rather than about support, and the nodes hold no sign of their own. This matches the exclusion the pre-existing Kemadruma detector already used, so the four outcomes stay mutually exclusive by construction |
+| **Parivartana emission** | One finding per exchanging pair of *houses*, or per pair of *planets* | **Per pair of planets.** A lord with dual rulership (Saturn over the 1st and 12th for an Aquarius Lagna) makes three or four house-pairs describe a single exchange of signs; emitting each would report one event as four yogas. The finding names every house both lords own |
+| **Parivartana grade with dual rulership** | Grade on the specific house pair, or on every house either lord owns | **On every house either lord owns**, taking the most severe present (dusthana → Dainya, else 3rd → Khala, else Maha). The conservative reading: a 12th lordship inside the exchange is real whether or not an auspicious house is in it too |
 | Mangal Dosha | House sets ±2nd, also from Venus; cancellation lists vary widely | 1/4/7/8/12 from Lagna + Moon; conservative cancellations (dignified Mars, Jupiter link, house-sign exemptions) |
 | Badhaka | Standard scheme vs lagna-specific exceptions | Standard movable/fixed/dual scheme |
 | Rahu/Ketu | Mean node (classical convention) vs true node | Mean by default; true node available as a toggle |

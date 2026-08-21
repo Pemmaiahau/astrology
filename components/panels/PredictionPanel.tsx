@@ -6,6 +6,8 @@ import { useChart } from "@/components/context/ChartContext";
 import { buildYearForecast } from "@/data/interpretations/yearForecast";
 import { solarReturn } from "@/utils/astrology/scan";
 import { PLANET_NAMES, SIGNS } from "@/utils/astrology/constants";
+import SadeSatiCard from "./SadeSatiCard";
+import ThreeViewCard from "./ThreeViewCard";
 
 const MIN_YEAR = 1850;
 const MAX_YEAR = 2150;
@@ -139,6 +141,12 @@ export default function PredictionPanel() {
           sky for that year, but personal predictions apply only from birth onward.
         </p>
       )}
+
+      {/* Saturn's passage — dated, and independent of the selected year. */}
+      <SadeSatiCard />
+
+      {/* Sudarshana Chakra + the Tajika annual point. */}
+      <ThreeViewCard />
 
       {/* Year overview */}
       {(forecast.mahaSegments.length > 0 || forecast.sadeSatiText) && (

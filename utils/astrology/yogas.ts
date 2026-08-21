@@ -1,4 +1,5 @@
 import { EXALTATION, OWN_SIGNS, PLANET_NAMES, SIGN_LORDS } from "./constants";
+import { ordinal } from "./format";
 import type { ChartData, PlanetId, YogaFinding } from "./types";
 
 const KENDRA = [1, 4, 7, 10];
@@ -74,7 +75,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         key: `vrj-${p.id}`,
         name: `Vipareeta Raja Yoga (${kind})`,
         planets: [p.id],
-        description: `${PLANET_NAMES[p.id]}, lord of the ${dusthanaLordships.join(" and ")}, sits in the ${p.house}th — a dusthana lord hidden in a dusthana. Adversity turns on itself: rivals self-destruct, crises resolve in the native's favour, and gains arrive through difficulty others cannot stomach.`,
+        description: `${PLANET_NAMES[p.id]}, lord of the ${dusthanaLordships.map(ordinal).join(" and ")}, sits in the ${ordinal(p.house)} — a dusthana lord hidden in a dusthana. Adversity turns on itself: rivals self-destruct, crises resolve in the native's favour, and gains arrive through difficulty others cannot stomach.`,
       });
     }
   }
@@ -99,7 +100,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
       key: "budhaditya",
       name: "Budhaditya Yoga",
       planets: ["Su", "Me"],
-      description: `Sun and Mercury conjoin in the ${su.house}th house: sharp administrative intellect and articulate authority${me.combust ? ", though Mercury's combustion demands the native learn to separate ego from analysis" : ""}.`,
+      description: `Sun and Mercury conjoin in the ${ordinal(su.house)} house: sharp administrative intellect and articulate authority${me.combust ? ", though Mercury's combustion demands the native learn to separate ego from analysis" : ""}.`,
     });
   }
 
@@ -157,7 +158,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
       key: `mahapurusha-${p.id}`,
       name: `${mp.name} Yoga (Pancha Mahapurusha)`,
       planets: [p.id],
-      description: `${PLANET_NAMES[p.id]} is ${p.dignity === "exalted" ? "exalted" : p.dignity === "moolatrikona" ? "in its moolatrikona" : "in its own sign"} and occupies the ${p.house}th house, a kendra — one of the five Mahapurusha ("great person") combinations. It stamps the whole personality with ${mp.trait}`,
+      description: `${PLANET_NAMES[p.id]} is ${p.dignity === "exalted" ? "exalted" : p.dignity === "moolatrikona" ? "in its moolatrikona" : "in its own sign"} and occupies the ${ordinal(p.house)} house, a kendra — one of the five Mahapurusha ("great person") combinations. It stamps the whole personality with ${mp.trait}`,
     });
   }
 
@@ -173,7 +174,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         key: `yk-${yk}`,
         name: "Yogakaraka in Strength",
         planets: [yk],
-        description: `${PLANET_NAMES[yk]}, the yogakaraka for this Lagna (simultaneous kendra and trikona lord), occupies the ${p.house}th house. A single-planet raja yoga engine: its dasha periods carry the chart's biggest promotions in status and material standing.`,
+        description: `${PLANET_NAMES[yk]}, the yogakaraka for this Lagna (simultaneous kendra and trikona lord), occupies the ${ordinal(p.house)} house. A single-planet raja yoga engine: its dasha periods carry the chart's biggest promotions in status and material standing.`,
       });
     }
   }
@@ -278,6 +279,64 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
     }
   }
 
+  // --- Parivartana (exchange of signs between two house lords) ---
+  // `inExchange` already drives the Raja and Dhana detectors above, but the
+  // exchange was never reported as the yoga it is in its own right.
+  //
+  // Three classical grades, by which houses the exchanging lords own:
+  //   Dainya — a 6th, 8th or 12th lord is involved (difficulty, then reversal)
+  //   Khala  — the 3rd lord is involved, and no dusthana (mixed, uneven)
+  //   Maha   — both lords own only auspicious houses (the strong one)
+  //
+  // One finding per exchanging PAIR OF PLANETS, not per pair of houses: a lord
+  // with dual rulership (Saturn over the 1st and 12th for an Aquarius Lagna)
+  // would otherwise emit the same exchange three or four times over. The grade
+  // is then taken from the most severe house either planet owns, which is the
+  // conservative reading — a 12th lordship in the exchange is real whether or
+  // not the 1st is also in it. Recorded in SOURCES.md.
+  {
+    const seenExchange = new Set<string>();
+    for (let h1 = 1; h1 <= 12; h1++) {
+      for (let h2 = h1 + 1; h2 <= 12; h2++) {
+        const a = lordOfHouse(h1);
+        const b = lordOfHouse(h2);
+        if (a === b || a === "Ra" || a === "Ke" || b === "Ra" || b === "Ke") continue;
+        if (!inExchange(a, b)) continue;
+        const pairKey = [a, b].sort().join("-");
+        if (seenExchange.has(pairKey)) continue;
+        seenExchange.add(pairKey);
+
+        const housesA = ownedHouses(a, lagna);
+        const housesB = ownedHouses(b, lagna);
+        const involved = [...housesA, ...housesB].sort((x, y) => x - y);
+        const grade = involved.some((h) => DUSTHANA.includes(h))
+          ? {
+              kind: "Dainya",
+              gloss:
+                "A difficult house is inside the exchange, so its results arrive the hard way — obstruction first, resolution afterwards. The tradition still counts it a yoga: what it costs early it tends to return as capability later.",
+            }
+          : involved.includes(3)
+            ? {
+                kind: "Khala",
+                gloss:
+                  "The 3rd lord is inside the exchange, which makes the results uneven — bursts of effort and reward alternating with flat stretches. Consistency, not capability, is the thing to engineer around.",
+              }
+            : {
+                kind: "Maha",
+                gloss:
+                  "Both lords own auspicious houses, which is the strong form of the exchange: the two areas actively fund each other, and the native's periods for either planet tend to move both at once.",
+              };
+
+        out.push({
+          key: `parivartana-${pairKey}`,
+          name: `Parivartana Yoga (${grade.kind})`,
+          planets: [a, b],
+          description: `${PLANET_NAMES[a]} and ${PLANET_NAMES[b]} sit in each other's signs — a parivartana, or mutual exchange, linking the ${housesA.map(ordinal).join(" and ")} with the ${housesB.map(ordinal).join(" and ")}. An exchange fuses two houses: neither can be read without the other, and whatever happens to one shows up in the other. ${grade.gloss}`,
+        });
+      }
+    }
+  }
+
   // --- Lakshmi Yoga: 9th lord powerfully placed with a sound Lagna lord ---
   {
     const ninth = planetOf(lordOfHouse(9));
@@ -292,16 +351,64 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         key: "lakshmi",
         name: "Lakshmi Yoga",
         planets: [ninth.id, lagnaLord.id],
-        description: `The 9th lord ${PLANET_NAMES[ninth.id]} is ${ninth.dignity === "exalted" ? "exalted" : "in its own field"} in the ${ninth.house}th while the Lagna lord stays sound — the combination named for the goddess of fortune. Prosperity, protection and well-timed luck run through the life, strongest in the 9th lord's periods.`,
+        description: `The 9th lord ${PLANET_NAMES[ninth.id]} is ${ninth.dignity === "exalted" ? "exalted" : "in its own field"} in the ${ordinal(ninth.house)} while the Lagna lord stays sound — the combination named for the goddess of fortune. Prosperity, protection and well-timed luck run through the life, strongest in the 9th lord's periods.`,
+      });
+    }
+  }
+
+  // --- The four lunar-support yogas: Sunapha, Anapha, Durudhara, Kemadruma ---
+  // One rule family, four mutually exclusive outcomes, decided by which of the
+  // signs flanking the Moon are tenanted. The Sun and the nodes are excluded
+  // throughout (BPHS/Brihat Jataka): the Sun because its proximity to the Moon
+  // is a fact about the tithi rather than about support, the nodes because
+  // they are shadow bodies holding no sign of their own.
+  //
+  //   2nd only   -> Sunapha      12th only  -> Anapha
+  //   both       -> Durudhara    neither    -> Kemadruma
+  //
+  // Only the fourth used to be detected. Reporting a chart's lunar isolation
+  // while staying silent about its lunar support made every reading lean more
+  // pessimistic than the rule family actually says.
+  if (mo) {
+    const flanking = (offset: number): PlanetId[] =>
+      chart.planets
+        .filter(
+          (p) => !["Mo", "Su", "Ra", "Ke"].includes(p.id) && (p.sign - mo.sign + 12) % 12 === offset
+        )
+        .map((p) => p.id);
+
+    const second = flanking(1); // 2nd from the Moon
+    const twelfth = flanking(11); // 12th from the Moon
+    const names = (ids: PlanetId[]): string => ids.map((id) => PLANET_NAMES[id]).join(" and ");
+
+    if (second.length && twelfth.length) {
+      out.push({
+        key: "durudhara",
+        name: "Durudhara Yoga",
+        planets: [...twelfth, ...second],
+        description: `The Moon is flanked on both sides — ${names(twelfth)} in the sign before it, ${names(second)} in the sign after. The strongest of the lunar support combinations: the mind is braced from either side, so the native tends to have both means and backing, gives as readily as they receive, and rarely faces a difficult stretch entirely alone. Comforts and vehicles come without the grinding that other charts need.`,
+      });
+    } else if (second.length) {
+      out.push({
+        key: "sunapha",
+        name: "Sunapha Yoga",
+        planets: second,
+        description: `${names(second)} occupies the sign after the Moon. Sunapha builds self-made standing: intelligence applied to earning, wealth accumulated by the native's own effort rather than inherited, and a reputation that grows on results. What ${names(second)} governs is where that earning tends to concentrate.`,
+      });
+    } else if (twelfth.length) {
+      out.push({
+        key: "anapha",
+        name: "Anapha Yoga",
+        planets: twelfth,
+        description: `${names(twelfth)} occupies the sign before the Moon. Anapha gives a settled constitution and an agreeable presence: health that holds, comfort that is enjoyed rather than chased, and a good name that arrives without campaigning for it. A pull toward simplicity often shows in the second half of life.`,
       });
     }
   }
 
   // --- Kemadruma: no support around the Moon ---
-  // Definition: no planet (Sun and the nodes excluded) in the 2nd or 12th
-  // from the Moon. Standard cancellations reported inside the finding rather
-  // than silently suppressing it: a planet in a kendra from the Moon, or the
-  // Moon itself in a kendra from the Lagna.
+  // The fourth outcome of the family above. Standard cancellations reported
+  // inside the finding rather than silently suppressing it: a planet in a
+  // kendra from the Moon, or the Moon itself in a kendra from the Lagna.
   if (mo) {
     const support = chart.planets.some(
       (p) =>
@@ -355,7 +462,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         key: "daridra",
         name: "Daridra Yoga",
         planets: [eleventh.id],
-        description: `The 11th lord ${PLANET_NAMES[eleventh.id]}, carrier of income and gains, sits in the ${eleventh.house}th — a dusthana. Income arrives with friction: leaks, delays or expenditure that shadows earning.${vrjToo ? " Its simultaneous Vipareeta Raja Yoga softens this — losses can invert into gains after struggle." : ""} Budgeting discipline and diversified income are the practical counters.`,
+        description: `The 11th lord ${PLANET_NAMES[eleventh.id]}, carrier of income and gains, sits in the ${ordinal(eleventh.house)} — a dusthana. Income arrives with friction: leaks, delays or expenditure that shadows earning.${vrjToo ? " Its simultaneous Vipareeta Raja Yoga softens this — losses can invert into gains after struggle." : ""} Budgeting discipline and diversified income are the practical counters.`,
       });
     }
   }
@@ -378,7 +485,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
           key: "kala-sarpa",
           name: "Kala Sarpa Yoga",
           planets: ["Ra", "Ke"],
-          description: `All seven planets are hemmed within the ${allRahuSide ? "Rahu-to-Ketu" : "Ketu-to-Rahu"} half of the zodiac. Life tends to move in intense, fated-feeling chapters — long plateaus broken by sudden turns — with the nodal axis houses (${ra.house}th and ${ke.house}th) naming the battleground. The tradition treats it as a driver of extraordinary rises as often as obstacles; discipline during the plateaus is what converts it.`,
+          description: `All seven planets are hemmed within the ${allRahuSide ? "Rahu-to-Ketu" : "Ketu-to-Rahu"} half of the zodiac. Life tends to move in intense, fated-feeling chapters — long plateaus broken by sudden turns — with the nodal axis houses (${ordinal(ra.house)} and ${ordinal(ke.house)}) naming the battleground. The tradition treats it as a driver of extraordinary rises as often as obstacles; discipline during the plateaus is what converts it.`,
         });
       }
     }

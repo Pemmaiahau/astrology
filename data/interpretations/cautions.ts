@@ -58,7 +58,7 @@ export function buildCautionsReport(
     const strong = s ? s.score >= 60 : false;
     cautions.push({
       caution: {
-        text: `${PLANET_NAMES[id]} rules houses that pull against your interests for a ${SIGNS[lagna]} rising chart, so its instincts tend to be the ones that get you into trouble. ${strong ? `Yours is strong, which is the awkward case: it works well enough to keep talking you into the wrong battles, particularly in ${PLANET_NAMES[id]}'s areas.` : `In your chart it sits in the ${ordinal(p.house)} house, so that is where its decisions get made — and where a second opinion pays for itself.`}`,
+        text: `${PLANET_NAMES[id]} rules houses that pull against your interests for ${/^[AEIOU]/.test(SIGNS[lagna]) ? "an" : "a"} ${SIGNS[lagna]} rising chart, so its instincts tend to be the ones that get you into trouble. ${strong ? `Yours is strong, which is the awkward case: it works well enough to keep talking you into the wrong battles, particularly in ${PLANET_NAMES[id]}'s areas.` : `In your chart it sits in the ${ordinal(p.house)} house, so that is where its decisions get made — and where a second opinion pays for itself.`}`,
         weight: strong ? -6 : -3,
         source: { work: "BPHS", ref: "functional lordship scheme for the lagna" },
       },

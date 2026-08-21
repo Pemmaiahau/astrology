@@ -124,11 +124,24 @@ export function buildCareerReport(
       );
   }
 
-  // Career-relevant yogas boost their planets.
+  // Career-relevant yogas boost their planets — once per yoga *name*, not once
+  // per finding. `detectYogas` emits a separate Raja Yoga finding for every
+  // kendra-lord/trikona-lord pair, so a planet standing in two such pairs used
+  // to collect two identical +8 votes carrying word-for-word identical text:
+  // the reader saw the same sentence twice and the score counted it twice.
+  // One yoga type, one vote. (The alternative — scaling the weight by how many
+  // pairs a planet appears in — would need a multiplicity weighting no source
+  // supplies, so it is deliberately not done.)
+  const creditedYogas = new Set<string>();
   for (const y of yogas) {
     if (y.key.startsWith("raja-") || y.key.startsWith("mahapurusha-") || y.key === "budhaditya" ||
         y.key.startsWith("amala") || y.key === "chandra-mangala" || y.key.startsWith("yk-")) {
-      for (const pid of y.planets) addVote(pid, `${y.name} forms in your chart and ${PLANET_NAMES[pid]} is part of it, which lifts everything that planet governs`, 8);
+      for (const pid of y.planets) {
+        const credit = `${pid}|${y.name}`;
+        if (creditedYogas.has(credit)) continue;
+        creditedYogas.add(credit);
+        addVote(pid, `${y.name} forms in your chart and ${PLANET_NAMES[pid]} is part of it, which lifts everything that planet governs`, 8);
+      }
     }
   }
 
