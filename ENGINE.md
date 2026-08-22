@@ -490,6 +490,7 @@ These were deliberate, verified choices — see also the `aipems-astrology` memo
 | **Change an age band** (when marriage/career/wealth/foreign windows are scanned) | `utils/astrology/ageBands.ts` (`AGE_BANDS`) — see §21.5 |
 | New computed panel/feature in the UI | add util → wire in `ChartContext.tsx` → consume in a new/existing panel |
 | **Rectify a birth time from life events** | `utils/astrology/rectification/*` + `data/rectification/eventRules.ts` — see §22 |
+| **Predict when life events are likely** (timeline, natal promise, gochara) | `utils/astrology/eventTiming.ts` + `data/interpretations/lifeEventRules.ts` — see §24 |
 | True (not mean) Rahu/Ketu node | `utils/astrology/ephemeris.ts` (`meanLunarNode` sibling) |
 | Ashtakavarga refinements (Kaksha, Shodhya Pinda, Prastarashtakavarga) | `utils/astrology/ashtakavarga.ts`, layered on existing `bav`/`sav` |
 
@@ -800,3 +801,183 @@ quantifies the rewrite when the interpretation layer migrates.
 | Change what a planet or house "means" in generated prose | `data/interpretations/significations.ts` |
 | Add a new kind of reason | `Because` union + a `switch` arm in `explain.ts` + a sample in `verify.ts` Phase 6.7 |
 | Plain-English house names | `HOUSE_TITLES` in `significations.ts` |
+
+---
+
+## 24. Life Events timeline (Gochara Phala + inverted rectification)
+
+§22 runs the inference backwards: *given these dated events, which birth minute explains them?* This section runs it **forwards again over the same doctrine**: *given the chart, which stretches of life carry each event?* The two are inverses, and the whole point of the design is that they share their classical knowledge rather than each holding a copy of it.
+
+```
+utils/astrology/gochara.ts        Gochara Phala across a date range: the auspicious-house
+                                  table DERIVED from VEDHA_TABLE, vedha cancellation,
+                                  Saturn's stance, slow-graha contact intervals
+utils/astrology/eventTiming.ts    natal promise + window generation/ranking. Imports the
+                                  rules seam and planetSignification from rectification/;
+                                  holds no event knowledge of its own
+data/interpretations/lifeEventRules.ts   the 25-event catalogue + age bands
+data/interpretations/lifeEvents.ts       report builder: engine output → TimingWindow/Evidence
+components/panels/lifeEvents/     LifeEventsPanel, EventCard, EventReasoningPanel, PromiseTable
+```
+
+### 24.1 What is reused, and why that matters
+
+| Limb | Comes from |
+|---|---|
+| Event → bhava / karaka / varga table | `EVENT_RULES` (§22) — **by identity, not by copy** |
+| "How strongly does this planet signify this event?" | `planetSignification` (`dashaFitness.ts`) — ownership, occupancy by rashi *and* bhava, drishti, nakshatra-dispositor recursion, nodal delegation |
+| Gochara vedha | `VEDHA_TABLE` / `vedhaBlocked` (`transitFitness.ts`) |
+| Ingress scanning, double transit, period overlap | `scan.ts`, `jaimini.ts` |
+| Age plausibility | `ageBands.ts` — the same five bands the Interpretation tab uses |
+| Display shapes | `TimingWindow`, `Evidence`, `Verdict`, `WhyList`, `ConfidenceBadge` |
+
+`verify.ts` asserts the identity sharing (`LIFE_EVENT_BY_KEY.marriage.rule === EVENT_RULES.marriage`). A copy would let the two directions drift apart on doctrine with no test noticing, which is the failure this feature is most exposed to.
+
+The auspicious-house set is likewise **derived** rather than restated: `VEDHA_TABLE` is keyed by exactly the houses in which each graha's transit is auspicious, so `AUSPICIOUS_HOUSES` reads its keys. A check pins the derivation against the classical table (Sun 3/6/10/11 … Venus 1/2/3/4/5/8/9/11/12).
+
+### 24.2 What is new: natal promise
+
+A dated scorer never has to ask whether the chart holds an event at all — the native reported that it happened. A forward scanner does, and the classical order is **promise first, timing second**: a dasha cannot deliver what the birth chart does not hold.
+
+`natalPromise(ctx, spec)` scores that, from natal facts only (nothing here moves with time):
+
+- Bhava Bala of the event's bhavas, measured against *that chart's own mean* rather than an absolute;
+- Shadbala ratio (achieved / required) of the bhava lords and of the karakas, falling back to the composite `strength.ts` score for the nodes and for anchorless charts;
+- each lord's position counted **from the house it rules** (Bhavat Bhavam) — a lord in the 6th/8th/12th from its own house damages it;
+- benefic/malefic occupancy and drishti on the bhavas;
+- *karako bhava nashaya* — a karaka in the very house it signifies;
+- the **nakshatra lord of each bhava cusp**, scored by its own signification of the event (the Nadi refinement);
+- Sarvashtakavarga bindus in the bhava signs;
+- negating-house lords sitting in, or aspecting, the primary set.
+
+The result modulates every window the event produces, and is surfaced separately in the Natal Promise panel — including for events whose scan produced no window at all, which is the only place that reading can appear.
+
+### 24.3 Scoring is saturating, not summed
+
+The first cut summed the weighted limbs and clamped at 100. A chart with the double transit running, a strong Antardasha and the age band at its peak scored 117 and printed 100, which made a merely good window and an outstanding one indistinguishable — the *clamp*, not the chart, was deciding the top of the range.
+
+`compositeScore` therefore saturates the supportive and adverse sides separately, the same exponential idiom `planetSignification` already uses:
+
+```
+lift = 62 · (1 − e^(−supportive/42))
+drag = 38 · (1 − e^(−adverse/30))
+score = 30 + lift − drag
+```
+
+Each further limb still moves the score, by less than the one before. The asymptote is ~92, so no window reaches certainty and no single limb can drive one there alone. `DEFAULT_MIN_SCORE = 48`; the catalogue raises the floor per event where the bhava set is broad (the 6th, 8th and 12th appear in half the adversity rules).
+
+**Score and confidence are different questions.** The score answers "how strong?"; `confidenceOf` answers "how much do the limbs agree?" — counting how many of the five independent limbs cleared their own threshold. They come apart exactly where it matters: a window carried by one limb alone can score respectably while resting on a single leg.
+
+### 24.4 Two deduplications that make the timeline readable
+
+Both were added after reading real output, and both are load-bearing:
+
+- **At most two windows per Mahadasha, per event.** Consecutive Antardashas under one Maha lord share that lord's signification and usually the same slow transit, so they score alike; the raw list printed four "study abroad" rows spanning ages 22–25 that were really one stretch.
+- **A named peak must be at least three weeks.** Inside a short Antardasha (Sun's under Sun's runs six days) every Pratyantardasha is shorter than that, and naming one "the peak" claims a precision the method does not have.
+
+### 24.5 Nodal gochara carries half a vote
+
+Rahu and Ketu are always six signs apart, so at most one of them can occupy an upachaya house from the Moon at any time. Scored as a flat mean alongside Jupiter and Saturn they dragged *every* window negative for a reason that said nothing about the window. They also rest on convention rather than on the classical seven-graha table (they have no vedha, and are given none). Both facts point the same way, so they are weighted 0.5 against Jupiter's and Saturn's 1.0.
+
+### 24.6 Performance
+
+One `TimingContext` carries four slow-graha ingress scans for all 25 events, and `planetSignification` is cached per graha per event. The whole timeline is **~300 ms** — roughly what a single event would cost computed naively. It lives in a `useMemo` inside the panel, not on the `ChartContext` cascade: a reader who never opens the tab never pays for it, and toggling a filter does not re-run it.
+
+### 24.7 What is deliberately absent
+
+`EVENT_RULES` carries `fatherDeath` and `motherDeath`, and they are correct there — rectification scores a date the native has already lived through and reported. Running the same rules forward to hand someone a predicted window for a parent's death is a different act, and the catalogue does not do it. A `verify.ts` check pins that.
+
+The age bands remain a modern demographic convention, not a classical rule, and the panel says so in its standing footer as well as in `SOURCES.md`.
+
+### 24.8 New "I want to add X" rows
+
+| Feature request | Primary file(s) |
+|---|---|
+| **A new predicted life event** | `LIFE_EVENTS` in `data/interpretations/lifeEventRules.ts` — one table entry, nothing else |
+| Change an event's houses/karakas where rectification shares the rule | `data/rectification/eventRules.ts` — changes **both** directions at once, by design |
+| Change when an event is considered plausible by age | the `band:` field in `LIFE_EVENTS` (or `AGE_BANDS` for the five shared bands) |
+| Retune how the limbs blend into a score | `compositeScore` + the `add(...)` weights in `findEventWindows` |
+| Change what counts as a transit trigger | the target-sign construction in `findEventWindows` / `contactsFromOccupancy` |
+| Classical Gochara results at an instant (with vedha) | `utils/astrology/gochara.ts` (`gocharaAt`) |
+| Suppress or surface an event's windows | `minScore` / `maxWindows` on the catalogue entry |
+
+---
+
+## 25. Speculation & Intimacy — deeper classical tests, and the reveal gate
+
+Both sections were reading a real but partial set of techniques. This pass added the classical tests the engine already *computed* and neither section had ever consulted, and replaced the rule that revealed them.
+
+```
+components/context/advancedAccess.ts     the reveal predicate (plain .ts, harness-testable)
+data/interpretations/speculationDepth.ts Bhava Bala, Vimshopaka, Vargottama, D-3, argala,
+                                          badhaka, natal vakri, Sudarshana, yoga cross-checks
+data/interpretations/intimacyDepth.ts    Ashtakavarga, Bhava Bala, Vimshopaka, D-60, argala,
+                                          UL-2, badhaka, natal vakri, lunar support,
+                                          paksha bala, Sudarshana, Bhavat Bhavam on the 12th
+```
+
+### 25.1 The reveal gate
+
+`name` starts with a **case-sensitive** `AU-` prefix **and** `gender === "other"`. Both, or neither section appears. Previously the gender alone was the switch.
+
+The prefix carries the deliberateness: `AU-` is not something a name arrives with by accident, `au-` and `Au-` do not match, and `startsWith` rather than `includes` means `BeAU-Something` does not qualify either. The name is trimmed before matching — a leading space is a typo, not a different intent — which does not loosen the case rule. Eleven harness checks pin all of this, in both directions on the case sensitivity, since that is the part most likely to be softened by accident in a refactor.
+
+**`"other"` is doing double duty**, and anything touching the gender-differentiated classical rules needs to know it. It is a real answer a real reader may give *and* half of this switch, so a chart cast as `"other"` cannot be assumed to have been answered on its own terms. `marriage.ts` (Jupiter as an additional marriage karaka) and `lucky.ts` (the Kua number) already treat `"other"` as the ungendered default rather than branching on it — keep it that way, because branching on `"other"` would read this switch as a fact about the native.
+
+`isAdvancedUnlocked` lives in a plain `.ts` module rather than inside `ChartContext.tsx`, because the checks harness runs TypeScript through `jiti` without JSX support and cannot import a `.tsx` file. `ChartContext` re-exports it so callers still have one import site.
+
+### 25.2 What was missing, by section
+
+**Speculation** consulted the rashi chart, the composite strengths, D-2/D-4/D-9/D-30, Ashtakavarga and the gochara. It did not consult: Bhava Bala (the *houses*, as opposed to their lords), Vimshopaka, Vargottama, the Drekkana, Jaimini argala, the badhaka lord, natal vakri motion, the Sudarshana Chakra, Neechabhanga on a speculation ruler, or — in a section whose main control is a **year selector** — the Muntha, which is the one classical technique built for exactly that question.
+
+**Intimacy** consulted the kama trikona, the 12th, the 8th, the 5th, Venus and Mars, sputa drishti, D-9/D-16/D-7/D-30 and the nakshatra layer. It used **Ashtakavarga not at all**, and used neither Vimshopaka nor the D-60 despite `SOURCES.md` already listing both for it — a documentation-vs-code gap this pass closes in the code rather than by weakening the note. Also absent: Bhava Bala, argala, the 2nd from the Upapada (the durability test, as distinct from the Upapada itself), the badhaka, natal vakri motion, the Moon's lunar-support family, paksha bala, the Sudarshana Chakra, and Bhavat Bhavam on the 12th.
+
+### 25.3 Why they are an adjustment, not a sixth axis
+
+Each depth module returns `{ positives/strengths, negatives/frictions, paragraphs, adjustment }`, and the adjustment is **bounded to ±10** on the section's 5–95 scale.
+
+These tests re-examine the same lords, houses and karakas the axes already weighed — Bhava Bala looks at the house an axis scored through its lord; Vimshopaka re-measures a planet an axis already scored. Giving them an axis or facet of their own would count Venus, or the 11th lord, twice. Bounding the adjustment stops a corroborating layer from overturning the primary reading it exists to corroborate.
+
+### 25.4 One deliberate contradiction, named in the output
+
+The month table scores **transiting** Mercury/Venus/Mars retrogrades as adverse — twentieth-century market-astrology convention, already labelled as such. The new natal rows score **natal** vakri motion as *positive*, because BPHS counts it as cheshta bala. Rather than let the same word silently mean opposite things in one panel, the natal row names the contrast in the sentence the reader sees.
+
+### 25.6 Intimacy gets a timing layer (and keeps its refusal)
+
+The section previously produced **nothing datable** — grepping for `transit`/`gochara` returned only prose describing what Ashtakavarga means, and `dasha` appeared only as seven generic per-planet paragraphs with no periods and no dates. A section with no dates cannot be checked against a life, which is a problem for a section whose point is testing.
+
+`data/interpretations/intimacyTiming.ts` fixes that by reusing the Life Events engine (§24) rather than building a second one: `buildTimingContext` → `natalPromise` → `findEventWindows`, over two themes (**desire**: 12th + 8th; **closeness**: 7th + 5th), plus `gocharaAt` for where the sky stands today and `retrogradeIntervals` for Venus/Mars revisiting stretches.
+
+**`agePriorAt` is deliberately left undefined.** The disagreement-log objection was to a demographic "peak years for desire" band — which describes when a person is *allowed to want* something, on stereotype rather than evidence. That objection is to the age prior, not to dates. Windows here are scored purely on the chart.
+
+The one age constraint is a **floor at 18**: the section's standing adults-only boundary applied to its own output. It is not a band — no peak, no taper, no weighting; windows before 18 are simply not produced. `AGE_BANDS` keeps exactly its five entries and a harness check pins that it does.
+
+Cost is four slow-graha ingress scans, so it sits behind an explicit "Run the timing scan" button, the same habit `SpeculationPanel` uses for its year engine.
+
+### 25.7 The D-30 character rule: reported, not pronounced
+
+The Trimsamsa character rule was previously **refused outright**. That refusal removed a genuinely classical technique from a section that exists to let classical claims be checked — it made the app quieter rather than more honest.
+
+`data/interpretations/trimsamsaClaim.ts` implements it, and refuses the *verdict form* instead:
+
+- the gloss is printed as **what the text asserts**, attributed, never as a statement about the reader;
+- the source's moral vocabulary (*chaste*, *impure*, *of bad character*) is not reproduced — what carries over is the temperament each Trimsamsa lord is said to confer, which is the part a life can actually confirm or contradict;
+- the rule runs **identically whatever the chart's gender**, because nothing in the D-30 construction is gender-dependent; the asymmetry in the tradition is in reception, not mathematics;
+- the contested status and the historical asymmetry are stated in the reader's own copy, not buried in a source note.
+
+All four are harness-checked, including a regex gate on the moral vocabulary and an equality check across the three gender values.
+
+### 25.5 New "I want to add X" rows
+
+| Feature request | Primary file(s) |
+|---|---|
+| **Change what reveals Speculation / Intimacy** | `components/context/advancedAccess.ts` — one predicate, eight harness checks |
+| Add a classical test to Speculation | `data/interpretations/speculationDepth.ts` — additive; the axes are untouched |
+| Add a classical test to Intimacy | `data/interpretations/intimacyDepth.ts` |
+| Change how much the deeper tests can move a score | the `clamp(..., -10, 10)` on each module's `adjustment` |
+| Tune the Tajika annual reading | the Muntha block in `scoreMonth` (`speculation.ts`) |
+| Gloss a new Sanskrit term used in either section | `GLOSSARY` in `data/interpretations/report.ts` — required before the term may appear in prose |
+| **Add or retune an intimacy timing theme** | `THEMES` in `data/interpretations/intimacyTiming.ts` — house sets and karakas, one entry |
+| Change the intimacy adults-only scan floor | the `dateAtAge(ctx.birthUtc, 18)` in `intimacyTiming.ts` — deliberately *not* an `AGE_BANDS` entry |
+| Reword or extend the Trimsamsa claim | `TRIMSAMSA_LORD` in `data/interpretations/trimsamsaClaim.ts` — the moral-vocabulary gate in `verify.ts` applies to anything added |
+

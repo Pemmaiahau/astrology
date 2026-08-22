@@ -22,7 +22,7 @@ import {
   vedhaBlocked,
   VEDHA_TABLE,
 } from "@/utils/astrology/rectification/transitFitness";
-import type { ShadbalaSet } from "@/utils/astrology/shadbala";
+import type { BhavaBala, ShadbalaSet } from "@/utils/astrology/shadbala";
 import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import type { PlanetStrength } from "@/utils/astrology/strength";
 import { vargaPositionOf, type VargaSet } from "@/utils/astrology/varga";
@@ -35,7 +35,9 @@ import type {
   PlanetId,
   YogaFinding,
 } from "@/utils/astrology/types";
+import { munthaAt, type Muntha } from "@/utils/astrology/varshaphala";
 import { isGandanta, traitOf } from "./nakshatraTraits";
+import { buildSpeculationDepth } from "./speculationDepth";
 import type { Evidence, RankedItem, SectionReport } from "./report";
 import { plain, themeConnection, verdictOf } from "./report";
 import { ordinal } from "./synthesis";
@@ -1238,7 +1240,8 @@ export function buildSpeculationReport(
   shadbala: ShadbalaSet | null,
   strengths: Partial<Record<PlanetId, PlanetStrength>>,
   ashtakavarga: AshtakavargaResult | null,
-  yogas: YogaFinding[]
+  yogas: YogaFinding[],
+  bhavaBala: BhavaBala[] | null
 ): SpeculationReport {
   const ctx = makeCtx(chart, strengths, ashtakavarga);
   const caveats: string[] = [];
@@ -1263,6 +1266,11 @@ export function buildSpeculationReport(
       "Ashtakavarga could not be computed for this chart, so nothing below is weighted by how much transit support each sign actually carries."
     );
   }
+  if (!bhavaBala) {
+    caveats.push(
+      "Bhava Bala — the strength of the houses themselves, as opposed to their rulers — is unavailable for this chart, so the deeper tests below judge the money houses only through the planets that rule them."
+    );
+  }
   if (!chart.birthUtc) {
     caveats.push(
       "Without a birth time there are no dasha periods, so the year engine below cannot run at all. The standing reading of the chart still holds; the timing layer is absent rather than weak."
@@ -1275,6 +1283,13 @@ export function buildSpeculationReport(
   const d = axisRisk(ctx, shadbala, yogas);
   const e = axisJudgement(ctx, yogas);
 
+  // The deeper classical tests: Bhava Bala, Vimshopaka, Jaimini argala, the
+  // badhaka lord, natal vakri motion, the Sudarshana Chakra and the yoga
+  // cross-checks. Kept in their own module because they ask different
+  // questions from the five axes rather than re-weighting them, and because
+  // this file is long enough already.
+  const depth = buildSpeculationDepth(chart, vargas, jaimini, bhavaBala, yogas);
+
   const axes = [a.axis, b.axis, c.axis, d.axis, e.axis];
   // Weighted because these axes are not equally decisive: a chart can be full
   // of Dhana yogas and still blow up on the risk axis, which is why capacity
@@ -1285,16 +1300,24 @@ export function buildSpeculationReport(
         b.axis.score * 0.14 +
         c.axis.score * 0.22 +
         d.axis.score * 0.22 +
-        e.axis.score * 0.16
+        e.axis.score * 0.16 +
+        // The deeper tests adjust rather than form their own axis: they are
+        // corroboration of the five, not a sixth independent question, and
+        // giving them an axis of their own would double-count the same lords.
+        depth.adjustment
     ),
     5,
     95
   );
 
-  const worksBecause = [...a.positives, ...b.positives, ...c.positives, ...d.positives, ...e.positives]
-    .sort((x, y) => y.weight - x.weight);
-  const failsBecause = [...a.negatives, ...b.negatives, ...c.negatives, ...d.negatives, ...e.negatives]
-    .sort((x, y) => x.weight - y.weight);
+  const worksBecause = [
+    ...a.positives, ...b.positives, ...c.positives, ...d.positives, ...e.positives,
+    ...depth.positives,
+  ].sort((x, y) => y.weight - x.weight);
+  const failsBecause = [
+    ...a.negatives, ...b.negatives, ...c.negatives, ...d.negatives, ...e.negatives,
+    ...depth.negatives,
+  ].sort((x, y) => x.weight - y.weight);
 
   // --- Instrument fit + a split that sums to exactly 100 ---------------------
   const rows = scoreInstruments(ctx, vargas, yogas);
@@ -1398,6 +1421,18 @@ export function buildSpeculationReport(
         ],
         items: instruments,
       },
+      ...(depth.paragraphs.length
+        ? [
+            {
+              heading: "Deeper classical tests",
+              paragraphs: [
+                "The five gauges above are read from the birth chart, the composite strengths and the transits. What follows asks a set of different questions the same chart can answer — how strong the money houses are in themselves rather than through their rulers, whether the promise survives being subdivided sixteen ways, who intervenes on it, and whether the Moon and the Sun agree with the rising sign about any of it.",
+                ...depth.paragraphs,
+              ],
+              reasons: [...depth.positives.slice(0, 4), ...depth.negatives.slice(0, 4)],
+            },
+          ]
+        : []),
       {
         heading: "Position sizing, leverage and drawdown behaviour",
         paragraphs: riskManagement,
@@ -1468,7 +1503,8 @@ function scoreMonth(
   monthStart: Date,
   monthEnd: Date,
   retro: Record<string, { start: Date; end: Date }[]>,
-  eclipses: { at: Date; kind: "solar" | "lunar" }[]
+  eclipses: { at: Date; kind: "solar" | "lunar" }[],
+  strengths: Partial<Record<PlanetId, PlanetStrength>>
 ): MonthScore {
   const reasons: { text: string; weight: number }[] = [];
   let score = 0;
@@ -1576,11 +1612,22 @@ function scoreMonth(
         );
       }
     }
-    const juBav = av.bav.Ju?.[juSign];
-    if (juBav !== undefined) {
+    // A transiting planet's *own* Bhinnashtakavarga bindus in the sign it
+    // occupies is the standard applied refinement on top of the Sarva figure
+    // — the same idea the Kaksha subdivision formalises. Jupiter was already
+    // scored this way; Saturn, which does at least as much of the damage in
+    // this section, was not.
+    for (const [id, sign, label] of [
+      ["Ju", juSign, "Jupiter"],
+      ["Sa", saSign, "Saturn"],
+    ] as [PlanetId, number, string][]) {
+      const bav = av.bav[id]?.[sign];
+      if (bav === undefined) continue;
       add(
-        `Jupiter carries ${juBav} of its own 8 bindus in the sign it transits`,
-        clamp((juBav - 4) * 1.5, -6, 6)
+        `${label} carries ${bav} of its own 8 bindus in the sign it transits${
+          bav >= 5 ? " — a transit its own points support" : bav <= 3 ? " — a transit its own points do not support" : ""
+        }`,
+        clamp((bav - 4) * 1.5, -6, 6)
       );
     }
   }
@@ -1603,6 +1650,30 @@ function scoreMonth(
     const frac = (retro[id] ?? []).reduce((s, iv) => s + overlapFraction(iv), 0);
     if (frac > 0.15) {
       add(`${cfg.text} for about ${Math.round(Math.min(1, frac) * 100)}% of this month`, cfg.w * Math.min(1, frac));
+    }
+  }
+
+  // --- 5b. Muntha: the Tajika annual point ---------------------------------
+  // The section carries a *year* selector, and the annual point is the one
+  // classical technique built for exactly that question. It advances one house
+  // per completed year of life, so it is constant across most of a window and
+  // steps once on the birthday — which is why it is evaluated per month rather
+  // than once for the window.
+  const muntha = munthaAt(chart, mid);
+  if (muntha) {
+    const GAIN = [1, 2, 5, 9, 10, 11];
+    const LOSS = [6, 8, 12];
+    const lordScore = strengths[muntha.lord]?.score ?? 50;
+    if (GAIN.includes(muntha.house)) {
+      add(
+        `Your ${plain("Muntha")} — the Tajika annual point — stands in your ${ordinal(muntha.house)} house this year, one of the houses the annual tradition reads as productive. Its lord ${PLANET_NAMES[muntha.lord]} scores ${lordScore}/100, which is what decides how much of that the year actually delivers`,
+        clamp(4 + (lordScore - 50) * 0.08, 0, 7)
+      );
+    } else if (LOSS.includes(muntha.house)) {
+      add(
+        `Your ${plain("Muntha")} stands in your ${ordinal(muntha.house)} this year — one of the difficult houses in the ${plain("Varshaphala")} scheme. The annual tradition reads this as a year for consolidation rather than expansion, and its lord ${PLANET_NAMES[muntha.lord]} at ${lordScore}/100 sets how sharply that lands`,
+        clamp(-5 + (lordScore - 50) * 0.05, -8, -1)
+      );
     }
   }
 
@@ -1677,7 +1748,8 @@ export function speculationYearWindows(
   ashtakavarga: AshtakavargaResult | null,
   start: Date,
   end: Date,
-  now: Date
+  now: Date,
+  strengths: Partial<Record<PlanetId, PlanetStrength>> = {}
 ): SpeculationYear {
   const hasDasha = Boolean(dashaTree && chart.birthUtc);
   const beforeBirth = Boolean(chart.birthUtc && end.getTime() <= chart.birthUtc.getTime());
@@ -1700,7 +1772,9 @@ export function speculationYearWindows(
     const blockEnd = next.getTime() > end.getTime() ? new Date(end) : next;
     const mid = new Date((cursor.getTime() + blockEnd.getTime()) / 2);
 
-    const ms = scoreMonth(chart, dashaTree, ayanamsha, ashtakavarga, new Date(cursor), blockEnd, retro, peaks);
+    const ms = scoreMonth(
+      chart, dashaTree, ayanamsha, ashtakavarga, new Date(cursor), blockEnd, retro, peaks, strengths
+    );
     scored.push(ms);
     months.push({
       label: mid.toLocaleString("en-US", { month: "long", year: "numeric" }),

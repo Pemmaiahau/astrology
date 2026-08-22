@@ -29,6 +29,8 @@ For how the calculation and prediction engine actually works (file-by-file, form
   - *Foreign Travel & Settlement* — travel / long-stay / settlement scored separately, purpose and direction indications.
   - *Things to Watch and Avoid* — every caution paired with a practical counter-measure, no fatalism.
   - *Lucky Number, Colour & Direction* — numerology (Moolank/Bhagyank/Chaldean-or-Pythagorean name number/Kua) and Jyotisha verdicts shown separately, then combined, with disagreements surfaced.
+- **Life Events timeline** — twenty-five events (graduation, higher studies, study abroad, love, marriage, breakup, divorce, first job, promotion, job change, starting a business, job loss, retirement, children, property, vehicle, relocation, foreign settlement, windfall, peak earning years, illness, accident, litigation, spiritual turn) scanned across the whole life as probable **windows**, grouped by Mahadasha or chronologically, filterable by category. Each window opens into a reasoning panel showing the four limbs behind it — the birth chart's **natal promise** for that event (Bhava Bala, Shadbala of lords and karakas, drishti, cusp star-lords, Sarvashtakavarga), the Vimshottari period and what its lords signify, the **Gochara Phala** from the natal Moon with the classical vedha cancellations plus the Guru–Shani double transit, and the age band — ending in the classical rule the whole reading came from. The event→bhava table is *shared by identity* with the rectification engine, so the "when will it happen?" and "which birth minute explains it?" directions cannot drift apart on doctrine.
+
 - **Deepened personality profile** — Atmakaraka & Karakamsa, Navamsa lagna, Shadbala strong/weak axis, glances on the Lagna, and perceived-vs-actual (Arudha vs Lagna).
 - **True node toggle** — mean (default, classical) or osculating Rahu/Ketu.
 - **Light & dark themes** — AstroSage-inspired light theme (default) with the original indigo/amber look preserved behind a toggle; fully tokenized palette, WCAG-AA checked.
@@ -51,7 +53,8 @@ Import the repository, set the project **Root Directory** to `astrology/`, frame
 app/                      # App Router shell (single-page client workspace)
 components/charts/        # South Indian chart, planet table, Ashtakavarga grid
 components/inputs/        # Manual + automatic workflows, city search
-components/panels/        # Interpretation, Dasha, Panchang, Predictions, roles
+components/panels/        # Interpretation, Life Areas, Dasha, Life Events, Panchang,
+                          #   Predictions, Ashtakavarga, Rectify Time, roles
 components/context/       # ChartContext — global state + derived computation
 utils/astrology/          # Ephemeris, ayanamsha, houses, dasha, panchang, yogas…
 data/interpretations/     # Curated matrices + synthesis and prediction engines

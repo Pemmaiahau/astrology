@@ -183,6 +183,20 @@ const GLOSSARY: Record<string, string> = {
   "kama trikona": "the desire trine — houses 3, 7 and 11",
   "shayana sukha": "the pleasures of the bed — the 12th house's classical remit",
   "Yoni kuta": "the animal-temperament limb of traditional compatibility matching",
+  // Added for the deeper classical tests in speculationDepth.ts and
+  // intimacyDepth.ts. Same rule as above: a Sanskrit term is only used in
+  // prose if it is glossed here on first mention.
+  "vakri": "retrograde — a planet apparently moving backwards through the zodiac",
+  "argala": "the Jaimini rule of intervention — a planet in the 2nd, 4th or 11th from a house pushes on it, and one in the 12th, 10th or 3rd obstructs that push",
+  "Drekkana": "the D-3 divisional chart, read for courage and self-effort",
+  "Sudarshana Chakra": "the same twelve houses read three times — from the rising sign, from the Moon and from the Sun",
+  "Muntha": "the Tajika annual point, which advances one house per completed year of life",
+  "Varshaphala": "the annual-chart tradition, read from the solar return",
+  "Kaksha": "the eightfold subdivision of a sign used to read a transit against its own Ashtakavarga points",
+  "Shashtiamsa": "the D-60, the finest division and the one BPHS weights most heavily",
+  "paksha bala": "the strength the Moon draws from being waxing rather than waning",
+  "kalatra": "the spouse or partner",
+  "rati": "erotic pleasure — the classical term for the 12th house's sexual remit",
   "gana": "the Deva, Manushya or Rakshasa temperament class of a nakshatra",
 };
 

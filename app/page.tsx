@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   BookOpen,
   CalendarDays,
+  CalendarRange,
   Compass,
   Dices,
   Flame,
@@ -26,6 +27,7 @@ import FunctionalLords from "@/components/panels/FunctionalLords";
 import IntimacyPanel from "@/components/panels/IntimacyPanel";
 import InterpretationPanel from "@/components/panels/interpretation/InterpretationPanel";
 import LifeAreasPanel from "@/components/panels/LifeAreasPanel";
+import LifeEventsPanel from "@/components/panels/lifeEvents/LifeEventsPanel";
 import PanchangPanel from "@/components/panels/PanchangPanel";
 import PredictionPanel from "@/components/panels/PredictionPanel";
 import RectificationPanel from "@/components/panels/rectification/RectificationPanel";
@@ -39,6 +41,7 @@ const BASE_TABS = [
   { key: "interpret", label: "Interpretation", icon: BookOpen },
   { key: "life", label: "Life Areas", icon: Compass },
   { key: "dasha", label: "Dasha", icon: Hourglass },
+  { key: "events", label: "Life Events", icon: CalendarRange },
   { key: "predict", label: "Predictions", icon: TrendingUp },
   { key: "panchang", label: "Panchang", icon: CalendarDays },
   { key: "ashtaka", label: "Ashtakavarga", icon: Grid3x3 },
@@ -46,16 +49,17 @@ const BASE_TABS = [
 ] as const;
 
 /**
- * Shown only when `chart.meta.gender === "other"`. The gate is silent by
+ * Shown only when `isAdvancedUnlocked` (see ChartContext) — the `AU-` name
+ * prefix together with an actual gender selection. The gate is silent by
  * design: nothing in the input forms advertises it, and neither panel's copy
- * refers to the selection that revealed it.
+ * refers to what revealed it.
  */
-const GENDER_TABS = [
+const GATED_TABS = [
   { key: "speculation", label: "Speculation", icon: Dices },
   { key: "intimacy", label: "Intimacy", icon: Flame },
 ] as const;
 
-type TabKey = (typeof BASE_TABS)[number]["key"] | (typeof GENDER_TABS)[number]["key"];
+type TabKey = (typeof BASE_TABS)[number]["key"] | (typeof GATED_TABS)[number]["key"];
 
 function Header() {
   const { ayanamsha, setAyanamsha, chartStyle, setChartStyle, chart, nodeMode, setNodeMode } =
@@ -178,15 +182,15 @@ function ChalitShiftSummary() {
 }
 
 function Workspace() {
-  const { chart } = useChart();
+  const { chart, advancedUnlocked } = useChart();
   const [tab, setTab] = useState<TabKey>("interpret");
 
   const tabs = useMemo(
-    () => (chart?.meta.gender === "other" ? [...BASE_TABS, ...GENDER_TABS] : [...BASE_TABS]),
-    [chart]
+    () => (advancedUnlocked ? [...BASE_TABS, ...GATED_TABS] : [...BASE_TABS]),
+    [advancedUnlocked]
   );
 
-  // Derived, not stored: recasting the chart with a different gender falls
+  // Derived, not stored: recasting the chart without the gate satisfied falls
   // back to Interpretation on the same render, with no effect, no loop and no
   // flash of an unavailable panel.
   const activeTab: TabKey = tabs.some((t) => t.key === tab) ? tab : "interpret";
@@ -229,6 +233,7 @@ function Workspace() {
             {activeTab === "interpret" && <InterpretationPanel />}
             {activeTab === "life" && <LifeAreasPanel />}
             {activeTab === "dasha" && <DashaPanel />}
+            {activeTab === "events" && <LifeEventsPanel />}
             {activeTab === "predict" && <PredictionPanel />}
             {activeTab === "panchang" && <PanchangPanel />}
             {activeTab === "ashtaka" && <AshtakavargaTable />}

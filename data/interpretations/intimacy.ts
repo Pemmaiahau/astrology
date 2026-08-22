@@ -6,13 +6,16 @@ import {
   SIGNS,
   type PlanetId7,
 } from "@/utils/astrology/constants";
+import type { AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
 import { arudhaOfHouse, type JaiminiInfo } from "@/utils/astrology/jaimini";
 import { norm360 } from "@/utils/astrology/math";
-import { sputaDrishti, type ShadbalaSet } from "@/utils/astrology/shadbala";
+import { sputaDrishti, type BhavaBala, type ShadbalaSet } from "@/utils/astrology/shadbala";
 import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import type { PlanetStrength } from "@/utils/astrology/strength";
 import { vargaPositionOf, type VargaSet } from "@/utils/astrology/varga";
 import type { ChartData, PlanetId, YogaFinding } from "@/utils/astrology/types";
+import { buildIntimacyDepth } from "./intimacyDepth";
+import { buildTrimsamsaClaim } from "./trimsamsaClaim";
 import { checkMangalDosha } from "./marriage";
 import {
   appetiteOf,
@@ -57,10 +60,15 @@ import { ordinal } from "./synthesis";
  *     is assumed anywhere.
  *  4. No moralising. A strong appetite or a pull toward novelty is described
  *     as a temperament to work with, never as a defect.
- *  5. **The classical D-30 "chastity" usage is refused outright.** Trimsamsa
- *     is used in the older literature to judge moral character, overwhelmingly
- *     applied to women's charts. Here D-30 is read only for vulnerability and
- *     health-adjacent themes. Recorded in the SOURCES.md disagreement log.
+ *  5. **The classical D-30 character rule is reported, never pronounced.**
+ *     Trimsamsa is used in the older literature to judge moral conduct,
+ *     overwhelmingly applied to women's charts. The rule is implemented (see
+ *     `trimsamsaClaim.ts`) because a section that exists to let classical
+ *     claims be checked should not quietly drop the awkward ones — but it is
+ *     printed as an attributed claim under test, run identically whatever the
+ *     chart's gender, with the source's moral vocabulary not reproduced and
+ *     its contested status stated in the reader's own copy. Elsewhere D-30 is
+ *     still read only for vulnerability. Recorded in the disagreement log.
  *  6. No medical diagnosis. Fertility, pain, dysfunction and infection are
  *     framed as worth raising with a clinician, never as findings.
  *  7. Analytical register only — no explicit content, no sexual instruction,
@@ -180,7 +188,9 @@ export function buildIntimacyReport(
   jaimini: JaiminiInfo | null,
   shadbala: ShadbalaSet | null,
   strengths: Partial<Record<PlanetId, PlanetStrength>>,
-  yogas: YogaFinding[]
+  yogas: YogaFinding[],
+  ashtakavarga: AshtakavargaResult | null = null,
+  bhavaBala: BhavaBala[] | null = null
 ): IntimacyReport {
   const lagna = chart.ascendant.sign;
   const caveats: string[] = [];
@@ -962,17 +972,62 @@ export function buildIntimacyReport(
   );
 
   // -------------------------------------------------------------------------
+  // Deeper classical tests
+  // -------------------------------------------------------------------------
+  // Ashtakavarga, Bhava Bala, Vimshopaka, the D-60, Jaimini argala and the 2nd
+  // from the Upapada, the badhaka, natal vakri motion, the Moon's lunar support
+  // and paksha bala, and the Sudarshana Chakra. Kept in their own module: they
+  // ask different questions from the four facets rather than re-weighting
+  // them, and two of them close a gap between this file and the project's own
+  // source notes, which already claimed Vimshopaka and the D-60 for Venus here.
+  const depth = buildIntimacyDepth(chart, vargas, jaimini, ashtakavarga, bhavaBala, yogas);
+
+  // The Trimsamsa lord reading. This section used to refuse the rule outright;
+  // it is now reported as an attributed classical *claim* with its contested
+  // status stated, and the moral vocabulary of the source is not reproduced.
+  // See `trimsamsaClaim.ts` for the full reasoning.
+  const trimsamsa = buildTrimsamsaClaim(chart);
+  strengthRows.push(...depth.strengths);
+  frictionRows.push(...depth.frictions);
+
+  if (!ashtakavarga) {
+    caveats.push(
+      "Ashtakavarga could not be computed for this chart, so the transit-support scores for your 7th, 8th, 12th and 5th are absent from the reading below rather than estimated."
+    );
+  }
+  if (!bhavaBala) {
+    caveats.push(
+      "Bhava Bala — the strength of the houses themselves as distinct from their rulers — is unavailable here, so those four houses are judged only through the planets that rule them."
+    );
+  }
+
+  // -------------------------------------------------------------------------
   // Score, verdict, confidence
   // -------------------------------------------------------------------------
   const overall = clamp(
-    Math.round(attraction * 0.22 + desire * 0.28 + pleasure * 0.28 + fusion * 0.22),
+    Math.round(
+      attraction * 0.22 +
+        desire * 0.28 +
+        pleasure * 0.28 +
+        fusion * 0.22 +
+        // Corroboration, not a fifth facet: these tests re-examine the same
+        // houses and karakas from other angles, so giving them a facet of
+        // their own would count Venus twice.
+        depth.adjustment
+    ),
     5,
     95
   );
   const confidence = clamp(
-    40 + (shadbala ? 10 : -6) + (vargas ? 8 : -4) + (jaimini ? 6 : 0) + (chart.birthUtc ? 8 : -8),
+    40 +
+      (shadbala ? 10 : -6) +
+      (vargas ? 8 : -4) +
+      (jaimini ? 6 : 0) +
+      (ashtakavarga ? 4 : -3) +
+      (bhavaBala ? 3 : -2) +
+      (chart.birthUtc ? 8 : -8),
     25,
-    88
+    90
   );
 
   const facets: IntimacyFacet[] = [
@@ -1063,10 +1118,30 @@ export function buildIntimacyReport(
         heading: "The Yoni and nakshatra layer",
         paragraphs: yoniParagraphs,
       },
+      ...(trimsamsa
+        ? [
+            {
+              heading: "A contested classical claim, reported for testing",
+              paragraphs: [...trimsamsa.preamble, ...trimsamsa.rows.map((r) => r.text)],
+            },
+          ]
+        : []),
       {
         heading: "How the star lords route your desire",
         paragraphs: chains,
       },
+      ...(depth.paragraphs.length
+        ? [
+            {
+              heading: "Deeper classical tests",
+              paragraphs: [
+                "The four gauges above are read from the houses, the two karakas and the divisional charts. What follows asks a different set of questions of the same chart: how much transit support these houses actually carry, how strong they are in themselves as opposed to through their rulers, whether Venus survives being re-measured across all sixteen divisions, and whether the Moon and the Sun agree with the rising sign about any of it.",
+                ...depth.paragraphs,
+              ],
+              reasons: [...depth.strengths.slice(0, 4), ...depth.frictions.slice(0, 4)],
+            },
+          ]
+        : []),
       {
         heading: "How this tends to move across a life",
         paragraphs: [

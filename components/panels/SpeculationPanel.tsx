@@ -109,6 +109,7 @@ export default function SpeculationPanel() {
     vargas,
     jaimini,
     shadbala,
+    bhavaBala,
     strengths,
     ashtakavarga,
     yogas,
@@ -129,9 +130,11 @@ export default function SpeculationPanel() {
   const report = useMemo(
     () =>
       chart
-        ? buildSpeculationReport(chart, vargas, jaimini, shadbala, strengths, ashtakavarga, yogas)
+        ? buildSpeculationReport(
+            chart, vargas, jaimini, shadbala, strengths, ashtakavarga, yogas, bhavaBala
+          )
         : null,
-    [chart, vargas, jaimini, shadbala, strengths, ashtakavarga, yogas]
+    [chart, vargas, jaimini, shadbala, strengths, ashtakavarga, yogas, bhavaBala]
   );
 
   const hasBirth = Boolean(chart?.birthUtc);
@@ -159,9 +162,10 @@ export default function SpeculationPanel() {
       ashtakavarga,
       window.start,
       window.end,
-      now
+      now,
+      strengths
     );
-  }, [yearOpen, chart, dashaTree, ayanamsha, ashtakavarga, window, now]);
+  }, [yearOpen, chart, dashaTree, ayanamsha, ashtakavarga, window, now, strengths]);
 
   if (!chart || !report) return null;
 

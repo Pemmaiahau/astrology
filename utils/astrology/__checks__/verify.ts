@@ -9,6 +9,7 @@
 
 import * as Astronomy from "astronomy-engine";
 import { AGE_BANDS, ageAt, agePrior, dateAtAge, EDGE_PRIOR } from "../ageBands";
+import { computeAshtakavarga } from "../ashtakavarga";
 import { computeAutoChart, computeManualChart } from "../chart";
 import { CHALDEAN_MAP, NAISARGIKA_BALA, PLANET_NAMES, PLANETS, signMobility } from "../constants";
 import { computeNumerology } from "../numerology";
@@ -58,6 +59,24 @@ import { buildForeignReport, foreignTimingWindows } from "../../../data/interpre
 import { buildMarriageReport, marriageTimingWindows } from "../../../data/interpretations/marriage";
 import { buildPersonalityProfile } from "../../../data/interpretations/personality";
 import { buildWealthReport, wealthTimingWindows } from "../../../data/interpretations/wealth";
+import {
+  AUSPICIOUS_HOUSES, contactCoverage, contactsFromOccupancy, gocharaAt, NODE_AUSPICIOUS_HOUSES,
+  saturnStanceAt, transitContacts, type TransitContact,
+} from "../gochara";
+import {
+  buildTimingContext, compositeScore, DEFAULT_MIN_SCORE, findEventWindows, natalPromise,
+  SLOW_BODIES,
+} from "../eventTiming";
+import { LIFE_EVENTS, LIFE_EVENT_BY_KEY } from "../../../data/interpretations/lifeEventRules";
+import { buildLifeEventTimeline } from "../../../data/interpretations/lifeEvents";
+import { buildSpeculationDepth } from "../../../data/interpretations/speculationDepth";
+import { buildIntimacyDepth } from "../../../data/interpretations/intimacyDepth";
+import { buildSpeculationReport, speculationYearWindows } from "../../../data/interpretations/speculation";
+import { buildIntimacyReport } from "../../../data/interpretations/intimacy";
+import { buildIntimacyTiming } from "../../../data/interpretations/intimacyTiming";
+import { buildTrimsamsaClaim } from "../../../data/interpretations/trimsamsaClaim";
+import { isAdvancedUnlocked } from "../../../components/context/advancedAccess";
+import { resolveHouses } from "../rectification/eventRules";
 import type { AutoInputState, AyanamshaId, PlanetId, PlanetPosition } from "../types";
 
 let failures = 0;
@@ -1941,6 +1960,588 @@ console.log("\n=== Phase 6: birth time rectification ===");
       if (printed >= 30) displayAgrees = false;
     }
     check("Printed degree always matches floor(degInSign) over 20 000 samples", displayAgrees);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase: Gochara Phala, the life-event timing engine and the event catalogue.
+// ---------------------------------------------------------------------------
+{
+  const chart = computeAutoChart(CANONICAL_INPUT, "lahiri", "mean")!;
+  const NOW = new Date("2026-06-15T00:00:00.000Z");
+  const moon = chart.planets.find((p) => p.id === "Mo")!;
+  const tree = vimshottariTree(moon.longitude, chart.birthUtc!);
+
+  const avSigns: Partial<Record<PlanetId, number>> = {};
+  for (const id of PLANETS) {
+    const p = chart.planets.find((q) => q.id === id);
+    if (p) avSigns[id] = p.sign;
+  }
+  const av = computeAshtakavarga(avSigns, chart.ascendant.sign);
+  const sb = computeShadbala(chart);
+  const bb = sb ? computeBhavaBala(chart, sb) : null;
+  const strengths = allStrengths(chart, av);
+
+  // --- The auspicious-house table is DERIVED from VEDHA_TABLE --------------
+  // A silent `{}` here would make every gochara reading come out neutral, and
+  // nothing else in the engine would notice.
+  {
+    const CLASSICAL: Record<string, number[]> = {
+      Su: [3, 6, 10, 11],
+      Mo: [1, 3, 6, 7, 10, 11],
+      Ma: [3, 6, 11],
+      Me: [2, 4, 6, 8, 10, 11],
+      Ju: [2, 5, 7, 9, 11],
+      Ve: [1, 2, 3, 4, 5, 8, 9, 11, 12],
+      Sa: [3, 6, 11],
+    };
+    let allMatch = true;
+    for (const [id, want] of Object.entries(CLASSICAL)) {
+      const got = [...(AUSPICIOUS_HOUSES[id as PlanetId] ?? [])].sort((a, b) => a - b);
+      if (got.join(",") !== want.join(",")) allMatch = false;
+    }
+    check("Gochara auspicious houses derived from VEDHA_TABLE match the classical table", allMatch);
+    check(
+      "The nodes are given upachaya houses only, and no vedha of their own",
+      NODE_AUSPICIOUS_HOUSES.join(",") === "3,6,10,11" &&
+        AUSPICIOUS_HOUSES.Ra === undefined &&
+        AUSPICIOUS_HOUSES.Ke === undefined
+    );
+  }
+
+  // --- saturnStanceAt agrees with the existing Sade Sati detector ----------
+  // Two independent paths to the same fact (transits.ts samples the sky and
+  // counts from the Moon; gochara.ts recomputes the longitude) — they must not
+  // be able to disagree.
+  {
+    let agree = true;
+    for (let y = 1995; y <= 2045; y += 5) {
+      const at = new Date(Date.UTC(y, 5, 15));
+      const stance = saturnStanceAt(chart, "lahiri", at);
+      const phase = sadeSatiPhase(currentTransits(chart, "lahiri", at));
+      const fromStance =
+        stance && stance.startsWith("sadeSati") ? stance.slice("sadeSati-".length) : null;
+      if (fromStance !== phase) agree = false;
+    }
+    check("saturnStanceAt and sadeSatiPhase agree on every sampled year", agree);
+  }
+
+  // --- Vedha is a cancellation, never a reversal --------------------------
+  {
+    let neverNegative = true;
+    for (let y = 1992; y <= 2060; y += 3) {
+      for (const r of gocharaAt(chart, "lahiri", new Date(Date.UTC(y, 0, 10)))) {
+        if (r.auspicious && r.value < 0) neverNegative = false;
+        if (r.vedhaBy && r.value !== 0) neverNegative = false;
+      }
+    }
+    check("A vedha cancels an auspicious transit to zero rather than reversing it", neverNegative);
+  }
+
+  // --- contactCoverage takes a union, not a sum ---------------------------
+  {
+    const mk = (a: string, b: string): TransitContact => ({
+      id: "Ju", sign: 0, start: new Date(a), end: new Date(b), houseFromLagna: 1, houseFromMoon: 1,
+    });
+    const ws = new Date("2020-01-01");
+    const we = new Date("2021-01-01");
+    // Two contacts covering the same half-year must read as one half-year.
+    const overlapping = [mk("2020-01-01", "2020-07-01"), mk("2020-02-01", "2020-06-01")];
+    const cov = contactCoverage(overlapping, ws, we);
+    check("contactCoverage unions overlapping contacts", approx(cov, 0.4986, 0.01), cov.toFixed(4));
+    check(
+      "contactCoverage never exceeds 1 however many contacts overlap",
+      contactCoverage([...overlapping, ...overlapping, ...overlapping], ws, we) <= 1
+    );
+    check(
+      "contactCoverage clips contacts to the window",
+      approx(contactCoverage([mk("2019-01-01", "2022-01-01")], ws, we), 1, 1e-9)
+    );
+  }
+
+  // --- transitContacts and the precomputed path give the same answer -------
+  // The whole timeline's performance rests on that split; a divergence would
+  // mean the fast path silently reads a different sky from the slow one.
+  {
+    const from = new Date("2010-01-01");
+    const to = new Date("2030-01-01");
+    const targets = [0, 4, 8];
+    const direct = transitContacts(chart, "lahiri", ["Ju"], targets, from, to);
+    const viaOccupancy = contactsFromOccupancy(
+      chart, "Ju", occupancyIntervals("Ju", "lahiri", from, to, 3, "mean"), targets
+    );
+    check(
+      "transitContacts and contactsFromOccupancy agree exactly",
+      direct.length === viaOccupancy.length &&
+        direct.every(
+          (c, i) =>
+            c.start.getTime() === viaOccupancy[i].start.getTime() && c.sign === viaOccupancy[i].sign
+        ),
+      `${direct.length} contacts`
+    );
+  }
+
+  // --- compositeScore saturates instead of clamping -----------------------
+  {
+    const at = (support: number) => compositeScore([{ text: "", weight: support }]);
+    check("compositeScore is monotone in support", at(10) < at(30) && at(30) < at(60) && at(60) < at(120));
+    check(
+      "compositeScore leaves headroom — no amount of support reaches 100",
+      at(500) < 95 && at(1e6) < 95,
+      `${at(500)} at extreme support`
+    );
+    check("compositeScore floors an unsupported window at the neutral base", at(0) === 30);
+    check(
+      "Adversity drags the score down without taking it below zero",
+      compositeScore([{ text: "", weight: -500 }]) >= 0 &&
+        compositeScore([{ text: "", weight: -500 }]) < 30
+    );
+  }
+
+  // --- The catalogue itself ------------------------------------------------
+  {
+    let housesValid = true;
+    let bandsOrdered = true;
+    let hasPrimary = true;
+    for (const def of LIFE_EVENTS) {
+      const primary = resolveHouses(def.rule.primaryHouses);
+      for (const h of primary) {
+        if (!Number.isInteger(h) || h < 1 || h > 12) housesValid = false;
+      }
+      if (primary.length === 0) hasPrimary = false;
+      const b = def.band;
+      if (b && !(b.start <= b.peakStart && b.peakStart <= b.peakEnd && b.peakEnd <= b.end)) {
+        bandsOrdered = false;
+      }
+    }
+    check("Every catalogued event resolves to houses in 1-12", housesValid);
+    check("Every catalogued event carries at least one primary house", hasPrimary);
+    check("Every age band is ordered start <= peakStart <= peakEnd <= end", bandsOrdered);
+    check(
+      "Event keys are unique",
+      new Set(LIFE_EVENTS.map((e) => e.key)).size === LIFE_EVENTS.length,
+      `${LIFE_EVENTS.length} events`
+    );
+
+    // The catalogue must SHARE the rectification rules, not copy them: a copy
+    // would let the two directions drift apart on doctrine with no test
+    // noticing.
+    check(
+      "Shared events reference the rectification rule by identity, not by copy",
+      LIFE_EVENT_BY_KEY.marriage.rule === EVENT_RULES.marriage &&
+        LIFE_EVENT_BY_KEY.childbirth.rule === EVENT_RULES.childbirth &&
+        LIFE_EVENT_BY_KEY.illness.rule === EVENT_RULES.illness
+    );
+
+    // Bhavat Bhavam in the authored rules resolves the way their comments claim.
+    check(
+      "Breakup reads the 6th and 12th FROM THE 5TH - the 10th and 4th of the chart",
+      resolveHouses(LIFE_EVENT_BY_KEY.breakup.rule.primaryHouses)
+        .sort((a, b) => a - b)
+        .join(",") === "4,10"
+    );
+    check(
+      "Retirement reads the 12th from the 10th - the 9th - alongside the 12th itself",
+      resolveHouses(LIFE_EVENT_BY_KEY.retirement.rule.primaryHouses)
+        .sort((a, b) => a - b)
+        .join(",") === "9,12"
+    );
+    check(
+      "Adversity events carry no age band",
+      (["illness", "accident", "litigation"] as const).every(
+        (k) => LIFE_EVENT_BY_KEY[k].band === null
+      )
+    );
+    check(
+      "Parental death is not forecast, though the rectification rules for it exist",
+      !LIFE_EVENTS.some((e) => e.rule.type === "fatherDeath" || e.rule.type === "motherDeath")
+    );
+  }
+
+  // --- The engine ----------------------------------------------------------
+  {
+    const ctx = buildTimingContext({
+      chart, tree, ayanamsha: "lahiri", av, shadbala: sb, bhavaBala: bb, strengths, now: NOW,
+    })!;
+    check(
+      "buildTimingContext scans every slow body once",
+      SLOW_BODIES.every((id) => (ctx.occupancy[id] ?? []).length > 0)
+    );
+    check(
+      "A chart with no birth anchor yields no timing context",
+      buildTimingContext({
+        chart: { ...chart, birthUtc: null }, tree, ayanamsha: "lahiri", av,
+        shadbala: sb, bhavaBala: bb, strengths, now: NOW,
+      }) === null
+    );
+
+    const marriage = LIFE_EVENT_BY_KEY.marriage;
+    const spec = {
+      primaryHouses: resolveHouses(marriage.rule.primaryHouses),
+      supportingHouses: resolveHouses(marriage.rule.supportingHouses),
+      negatingHouses: resolveHouses(marriage.rule.negatingHouses),
+      karakas: marriage.rule.karakas,
+      rule: marriage.rule,
+      saturnStance: marriage.rule.transit.sadeSati,
+      nodeContact: marriage.rule.transit.nodeContact,
+      agePriorAt: (t: number) =>
+        agePrior(marriage.band!, (t - chart.birthUtc!.getTime()) / (365.2425 * 86400000)),
+    };
+    const promise = natalPromise(ctx, spec);
+    check("Natal promise stays in 0-100", promise.score >= 0 && promise.score <= 100, `${promise.score}`);
+    check("Natal promise cites its evidence", promise.evidence.length > 0);
+    check("Natal promise is deterministic", natalPromise(ctx, spec).score === promise.score);
+
+    const windows = findEventWindows(ctx, spec, promise);
+    check("Windows are returned chronologically", windows.every((w, i) => i === 0 || w.start >= windows[i - 1].start));
+    check("Every window clears the reporting floor", windows.every((w) => w.score >= DEFAULT_MIN_SCORE));
+    check(
+      "Every window confidence stays in 5-95",
+      windows.every((w) => w.confidence >= 5 && w.confidence <= 95)
+    );
+    check("No window starts before birth", windows.every((w) => w.start >= chart.birthUtc!));
+    check(
+      "No window falls outside its age band",
+      windows.every((w) => {
+        const midAge =
+          ((w.start.getTime() + w.end.getTime()) / 2 - chart.birthUtc!.getTime()) /
+          (365.2425 * 86400000);
+        return midAge >= marriage.band!.start && midAge <= marriage.band!.end;
+      })
+    );
+    const perMaha = new Map<PlanetId, number>();
+    for (const w of windows) perMaha.set(w.dasha.maha, (perMaha.get(w.dasha.maha) ?? 0) + 1);
+    check("At most two windows per Mahadasha survive deduplication", [...perMaha.values()].every((n) => n <= 2));
+    check(
+      "A named peak is never shorter than three weeks",
+      windows.every((w) => !w.peak || w.peak.end.getTime() - w.peak.start.getTime() >= 21 * 86400000)
+    );
+    check(
+      "Every contact explains which natal point it stands on",
+      windows.every((w) => w.contacts.every((c) => c.note.length > 0))
+    );
+
+    // Nothing in window generation may read "now": the same context scanned
+    // against a different instant must yield the same windows, only re-phased.
+    const shifted = findEventWindows({ ...ctx, now: new Date("2005-01-01") }, spec, promise);
+    check(
+      "Window generation is independent of now - only the phase labels move",
+      shifted.length === windows.length &&
+        shifted.every(
+          (w, i) => w.start.getTime() === windows[i].start.getTime() && w.score === windows[i].score
+        )
+    );
+    check("...and the phase labels do move", shifted.some((w, i) => w.phase !== windows[i].phase));
+  }
+
+  // --- The assembled timeline ---------------------------------------------
+  {
+    const timeline = buildLifeEventTimeline({
+      chart, dashaTree: tree, ayanamsha: "lahiri", ashtakavarga: av, shadbala: sb,
+      bhavaBala: bb, strengths, jaimini: computeJaimini(chart), now: NOW,
+    });
+    check(
+      "The timeline populates for a chart with a birth anchor",
+      timeline.hasDasha && timeline.entries.length > 0,
+      `${timeline.entries.length} windows`
+    );
+    check(
+      "Timeline entries are chronological",
+      timeline.entries.every((e, i) => i === 0 || e.window.start >= timeline.entries[i - 1].window.start)
+    );
+    check("Entry ids are unique", new Set(timeline.entries.map((e) => e.id)).size === timeline.entries.length);
+    check("Every catalogued event gets a promise summary", timeline.promises.length === LIFE_EVENTS.length);
+    check("Every entry carries a doctrine line", timeline.entries.every((e) => e.reasoning.doctrine.length > 20));
+    check(
+      "Every entry names the houses it read",
+      timeline.entries.every((e) => e.reasoning.houses.primary.length > 0)
+    );
+    check(
+      "Mahadasha groups only list events that fall inside them",
+      timeline.groups.every((g) =>
+        g.eventIds.every((id) => {
+          const e = timeline.entries.find((x) => x.id === id)!;
+          return e.window.start < g.end && e.window.end > g.start;
+        })
+      )
+    );
+    check(
+      "A chart without a birth anchor degrades to a caveat rather than a crash",
+      (() => {
+        const t = buildLifeEventTimeline({
+          chart: { ...chart, birthUtc: null }, dashaTree: null, ayanamsha: "lahiri",
+          ashtakavarga: av, shadbala: sb, bhavaBala: bb, strengths, jaimini: null, now: NOW,
+        });
+        return !t.hasDasha && t.entries.length === 0 && t.caveats.length > 0;
+      })()
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase: the two adult-scope sections — reveal gate and the deeper tests.
+// ---------------------------------------------------------------------------
+{
+  const NOW = new Date("2026-06-15T00:00:00.000Z");
+  // Cast the way a reader who has reached these sections would have: the
+  // sections only exist for a chart that satisfies the gate.
+  const base = { ...CANONICAL_INPUT, name: "AU-Canonical", gender: "other" as const };
+
+  // --- The reveal gate -----------------------------------------------------
+  // Both conditions, and each is pinned separately: a case-sensitive `AU-`
+  // name prefix AND `gender === "other"`. The case sensitivity is the part
+  // most likely to be softened by accident during a refactor, so it gets its
+  // own checks in both directions.
+  {
+    const cast = (name: string, gender?: "female" | "male" | "other") =>
+      computeAutoChart({ ...CANONICAL_INPUT, name, gender }, "lahiri", "mean");
+
+    check("The gate stays shut with no chart at all", isAdvancedUnlocked(null) === false);
+    check(
+      "The AU- prefix alone does not open the sections",
+      isAdvancedUnlocked(cast("AU-Someone")) === false
+    );
+    check(
+      "Gender 'other' alone does not open the sections",
+      isAdvancedUnlocked(cast("Someone", "other")) === false
+    );
+    check(
+      "AU- with the wrong gender does not open them — female",
+      isAdvancedUnlocked(cast("AU-Someone", "female")) === false
+    );
+    check(
+      "AU- with the wrong gender does not open them — male",
+      isAdvancedUnlocked(cast("AU-Someone", "male")) === false
+    );
+    check(
+      "AU- plus gender 'other' opens them",
+      isAdvancedUnlocked(cast("AU-Someone", "other")) === true
+    );
+    check(
+      "The prefix is CASE-SENSITIVE: lowercase au- does not qualify",
+      isAdvancedUnlocked(cast("au-someone", "other")) === false
+    );
+    check(
+      "…nor does mixed-case Au-",
+      isAdvancedUnlocked(cast("Au-Someone", "other")) === false
+    );
+    check(
+      "A leading space is forgiven — the name is trimmed before matching",
+      isAdvancedUnlocked(cast("  AU-Someone ", "other")) === true
+    );
+    check(
+      "A name merely containing AU- does not qualify — it must start with it",
+      isAdvancedUnlocked(cast("BeAU-Someone", "other")) === false
+    );
+    check(
+      "An empty name does not qualify",
+      isAdvancedUnlocked(cast("", "other")) === false
+    );
+  }
+
+  // --- The deeper classical tests -----------------------------------------
+  {
+    const chart = computeAutoChart(base, "lahiri", "mean")!;
+    const avSigns: Partial<Record<PlanetId, number>> = {};
+    for (const id of PLANETS) {
+      const q = chart.planets.find((r) => r.id === id);
+      if (q) avSigns[id] = q.sign;
+    }
+    const av = computeAshtakavarga(avSigns, chart.ascendant.sign);
+    const sb = computeShadbala(chart);
+    const bb = sb ? computeBhavaBala(chart, sb) : null;
+    const strengths = allStrengths(chart, av);
+    const vargas = computeVargaSet(chart);
+    const jaimini = computeJaimini(chart);
+    const yogas = detectYogas(chart);
+
+    const sd = buildSpeculationDepth(chart, vargas, jaimini, bb, yogas);
+    const idp = buildIntimacyDepth(chart, vargas, jaimini, av, bb, yogas);
+
+    for (const [label, d] of [["Speculation", sd], ["Intimacy", idp]] as const) {
+      check(`${label} depth: the adjustment stays inside ±10`, Math.abs(d.adjustment) <= 10, `${d.adjustment}`);
+      check(`${label} depth: it produced prose for its block`, d.paragraphs.length > 0, `${d.paragraphs.length} paragraphs`);
+    }
+
+    const specRows = [...sd.positives, ...sd.negatives];
+    const intRows = [...idp.strengths, ...idp.frictions];
+    check("Speculation depth emits evidence rows", specRows.length > 0, `${specRows.length} rows`);
+    check("Intimacy depth emits evidence rows", intRows.length > 0, `${intRows.length} rows`);
+    check(
+      "Every depth row carries a classical citation",
+      [...specRows, ...intRows].every((r) => Boolean(r.source?.work))
+    );
+    check(
+      "Positive rows carry positive weights and negative rows negative ones",
+      sd.positives.every((r) => r.weight >= 0) &&
+        sd.negatives.every((r) => r.weight < 0) &&
+        idp.strengths.every((r) => r.weight >= 0) &&
+        idp.frictions.every((r) => r.weight < 0)
+    );
+    check(
+      "No depth row leaks undefined or NaN into its prose",
+      ![...specRows, ...intRows, ...sd.paragraphs.map((t) => ({ text: t })), ...idp.paragraphs.map((t) => ({ text: t }))]
+        .some((r) => /undefined|NaN|\[object Object\]/.test(r.text))
+    );
+    check(
+      "Both depth modules are deterministic",
+      buildSpeculationDepth(chart, vargas, jaimini, bb, yogas).adjustment === sd.adjustment &&
+        buildIntimacyDepth(chart, vargas, jaimini, av, bb, yogas).adjustment === idp.adjustment
+    );
+
+    // Graceful degradation: every optional input dropped at once.
+    const sdBare = buildSpeculationDepth(chart, null, null, null, []);
+    const idpBare = buildIntimacyDepth(chart, null, null, null, null, []);
+    check(
+      "Speculation depth degrades without vargas, Jaimini or Bhava Bala",
+      Math.abs(sdBare.adjustment) <= 10
+    );
+    check(
+      "Intimacy depth degrades without Ashtakavarga, vargas, Jaimini or Bhava Bala",
+      Math.abs(idpBare.adjustment) <= 10
+    );
+
+    // --- The sections that consume them ------------------------------------
+    const spec = buildSpeculationReport(chart, vargas, jaimini, sb, strengths, av, yogas, bb);
+    const int = buildIntimacyReport(chart, vargas, jaimini, sb, strengths, yogas, av, bb);
+    check("Speculation score stays in 5–95", spec.score! >= 5 && spec.score! <= 95, `${spec.score}`);
+    check("Intimacy score stays in 5–95", int.score! >= 5 && int.score! <= 95, `${int.score}`);
+    check(
+      "Both sections render a Deeper classical tests block",
+      Boolean(spec.blocks.find((b) => b.heading === "Deeper classical tests")) &&
+        Boolean(int.blocks.find((b) => b.heading === "Deeper classical tests"))
+    );
+    check(
+      "The depth rows actually reach the sections' evidence lists",
+      spec.worksBecause.length + spec.failsBecause.length > specRows.length &&
+        int.strengths.length + int.frictions.length > intRows.length
+    );
+
+    // Ashtakavarga was absent from the intimacy section entirely before this,
+    // and the source notes already claimed Vimshopaka and the D-60 for it.
+    const intText = [...int.strengths, ...int.frictions].map((r) => r.text).join(" ");
+    check(
+      "Intimacy now consults Ashtakavarga, Vimshopaka and the D-60",
+      intText.includes("Ashtakavarga") && intText.includes("Vimshopaka") && intText.includes("Shashtiamsa")
+    );
+
+    // The section's ethical boundaries are structural, not incidental: no row
+    // may reference the gender selection that reveals the tab.
+    check(
+      "No intimacy row references gender or the reveal condition",
+      !/\b(male|female|man|woman|his|her\b|gender)\b/i.test(intText)
+    );
+
+    // --- Intimacy timing: dated output, and the one age constraint --------
+    {
+      const tree2 = vimshottariTree(chart.planets.find((q) => q.id === "Mo")!.longitude, chart.birthUtc!);
+      const timing = buildIntimacyTiming({
+        chart, dashaTree: tree2, ayanamsha: "lahiri", ashtakavarga: av,
+        shadbala: sb, bhavaBala: bb, strengths, now: NOW,
+      });
+      const windows = timing.themes.flatMap((t) => t.windows);
+      check("Intimacy timing produces dated windows", timing.hasDasha && windows.length > 0, `${windows.length} windows`);
+      check("Intimacy timing reads both themes", timing.themes.length === 2);
+      check(
+        "No intimacy window opens before 18 — the adults-only floor",
+        windows.every((w) => w.ageRange.from >= 18),
+        `earliest ${Math.min(...windows.map((w) => w.ageRange.from))}`
+      );
+      check("Intimacy windows are chronological within a theme",
+        timing.themes.every((t) => t.windows.every((w, i) => i === 0 || w.start >= t.windows[i - 1].start)));
+      check("Intimacy window confidence stays in 5–95",
+        windows.every((w) => w.confidence >= 5 && w.confidence <= 95));
+      check("Intimacy timing reads the sky today from the Moon", timing.currentGochara.length === 6);
+      check(
+        "Intimacy timing is deterministic",
+        buildIntimacyTiming({
+          chart, dashaTree: tree2, ayanamsha: "lahiri", ashtakavarga: av,
+          shadbala: sb, bhavaBala: bb, strengths, now: NOW,
+        }).themes.every((t, i) => t.windows.length === timing.themes[i].windows.length)
+      );
+      // The refusal that stands: no age *band*. A band has a peak and a taper
+      // and reweights windows by age; the 18 floor does none of that, and
+      // AGE_BANDS must stay at its five existing entries.
+      check(
+        "Intimacy acquires no age band — AGE_BANDS still holds exactly its five entries",
+        Object.keys(AGE_BANDS).length === 5 &&
+          !Object.keys(AGE_BANDS).some((k) => /intim|desire|sex/i.test(k)),
+        Object.keys(AGE_BANDS).join(",")
+      );
+      // Degradation: the transit half must survive without a dasha tree.
+      const bare = buildIntimacyTiming({
+        chart, dashaTree: null, ayanamsha: "lahiri", ashtakavarga: av,
+        shadbala: sb, bhavaBala: bb, strengths, now: NOW,
+      });
+      check(
+        "Without a dasha tree the transit reading survives and the windows degrade to a caveat",
+        !bare.hasDasha && bare.themes.length === 0 &&
+          bare.currentGochara.length === 6 && bare.caveats.length > 0
+      );
+    }
+
+    // --- The Trimsamsa claim: reported, never pronounced ------------------
+    {
+      const t30 = buildTrimsamsaClaim(chart)!;
+      check("Trimsamsa claim reads the Lagna, the Moon and Venus", t30.rows.length === 3,
+        t30.rows.map((r) => `${r.point}=${r.lord}`).join(" "));
+      check(
+        "Every Trimsamsa lord is one of the five the division can produce",
+        t30.rows.every((r) => ["Ma", "Sa", "Ju", "Me", "Ve"].includes(r.lord))
+      );
+      check("Every Trimsamsa row names its presiding deity",
+        t30.rows.every((r) => ["Agni", "Vayu", "Indra", "Kubera", "Varuna"].includes(r.deity)));
+      // The rule is gender-blind by construction; the asymmetry in the
+      // tradition is in reception, not mathematics. Pin that it stays so.
+      const forGender = (g: "female" | "male" | "other") =>
+        buildTrimsamsaClaim(computeAutoChart({ ...CANONICAL_INPUT, gender: g }, "lahiri", "mean")!)!
+          .rows.map((r) => `${r.point}:${r.lord}`).join("|");
+      check(
+        "The Trimsamsa reading is identical for every gender",
+        forGender("female") === forGender("male") && forGender("male") === forGender("other")
+      );
+      // The verdict form is what is refused: the source's moral vocabulary
+      // must not reach the reader.
+      const t30Text = [...t30.preamble, ...t30.rows.map((r) => r.text)].join(" ");
+      const MORAL = /\b(chaste|unchaste|promiscuous|immoral|adulter\w*|impure|loose\s+(?:woman|character)|of\s+bad\s+character|corrupt)\b/i;
+      check("The Trimsamsa rows do not reproduce the source's moral vocabulary", !MORAL.test(t30Text));
+      check(
+        "…and every row is framed as the text's claim rather than as a finding",
+        t30.rows.every((r) => r.text.includes("The classical claim") && r.text.includes("not as a conclusion"))
+      );
+      check(
+        "The preamble states that the rule is contested and how it was applied",
+        /contested/i.test(t30Text) && /women's charts/i.test(t30Text)
+      );
+      check(
+        "The claim reaches the section as its own block",
+        Boolean(int.blocks.find((b) => b.heading === "A contested classical claim, reported for testing"))
+      );
+    }
+
+    // The Tajika annual point reaches the year engine.
+    const tree = vimshottariTree(chart.planets.find((q) => q.id === "Mo")!.longitude, chart.birthUtc!);
+    const year = speculationYearWindows(
+      chart, tree, "lahiri", av,
+      new Date(Date.UTC(2026, 0, 1)), new Date(Date.UTC(2027, 0, 1)), NOW, strengths
+    );
+    check("The year engine still produces a full month table", year.months.length === 12, `${year.months.length} months`);
+    check(
+      "…and it is deterministic",
+      speculationYearWindows(
+        chart, tree, "lahiri", av,
+        new Date(Date.UTC(2026, 0, 1)), new Date(Date.UTC(2027, 0, 1)), NOW, strengths
+      ).months.every((m, i) => m.score === year.months[i].score)
+    );
+    // Muntha advances one house per completed year, so a scan of two adjacent
+    // years must see two different houses named.
+    const munthaHouse = (y: number) =>
+      munthaAt(chart, new Date(Date.UTC(y, 5, 1)))!.house;
+    check(
+      "Muntha advances exactly one house per completed year",
+      ((munthaHouse(2027) - munthaHouse(2026) + 12) % 12) === 1,
+      `${munthaHouse(2026)} → ${munthaHouse(2027)}`
+    );
   }
 }
 

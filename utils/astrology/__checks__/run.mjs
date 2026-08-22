@@ -29,6 +29,8 @@ const SHORTHANDS = {
   verify: path.join(here, "verify.ts"),
   golden: path.join(here, "golden.ts"),
   rectify: path.join(here, "rectifyDemo.ts"),
+  lifeEvents: path.join(here, "lifeEventsDemo.ts"),
+  adult: path.join(here, "adultSectionsDemo.ts"),
 };
 
 const [target, ...rest] = process.argv.slice(2);

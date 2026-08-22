@@ -22,6 +22,7 @@ import {
   type PersonalityProfile,
 } from "@/data/interpretations/personality";
 import { PLANETS } from "@/utils/astrology/constants";
+import { isAdvancedUnlocked } from "./advancedAccess";
 import type {
   AutoInputState,
   AyanamshaId,
@@ -79,6 +80,11 @@ interface ChartContextValue {
   /** Classical six-fold strength; null when the chart lacks a real birth anchor. */
   shadbala: ShadbalaSet | null;
   bhavaBala: BhavaBala[] | null;
+  /**
+   * Whether the two adult-scope sections (Speculation, Intimacy) are revealed.
+   * See `advancedAccess.ts` for the rule and why it lives in one place.
+   */
+  advancedUnlocked: boolean;
   now: Date;
 }
 
@@ -182,6 +188,8 @@ export function ChartProvider({ children }: { children: ReactNode }) {
     [chart, shadbala]
   );
 
+  const advancedUnlocked = useMemo(() => isAdvancedUnlocked(chart), [chart]);
+
   const personality = useMemo(
     () => (chart ? buildPersonalityProfile(chart, strengths, yogas, { vargas, jaimini, shadbala }) : null),
     [chart, strengths, yogas, vargas, jaimini, shadbala]
@@ -222,6 +230,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
       jaimini,
       shadbala,
       bhavaBala,
+      advancedUnlocked,
       now,
     }),
     [
@@ -229,12 +238,15 @@ export function ChartProvider({ children }: { children: ReactNode }) {
       speculationYear, speculationWindow,
       chart, dashaTree, activeDasha, transits, sadeSati, panchang, ashtakavarga,
       yogas, strengths, houseReadings, personality, vargas, jaimini, shadbala,
-      bhavaBala, now,
+      bhavaBala, advancedUnlocked, now,
     ]
   );
 
   return <ChartContext.Provider value={value}>{children}</ChartContext.Provider>;
 }
+
+/** Re-exported so consumers have a single import site for the context. */
+export { isAdvancedUnlocked };
 
 export function useChart(): ChartContextValue {
   const ctx = useContext(ChartContext);
