@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Compass } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Compass, Link2 } from "lucide-react";
 import { useChart } from "@/components/context/ChartContext";
 import { PLANETS, PLANET_NAMES, SIGNS, SIGNS_SANSKRIT } from "@/utils/astrology/constants";
 import type { Gender, GeoPlace, ManualPlanetInput } from "@/utils/astrology/types";
 import CitySearch from "./CitySearch";
+import ValidationNotes from "./ValidationNotes";
+import {
+  checkBirthDate,
+  DATE_MAX,
+  DATE_MIN,
+  ketuFromRahu,
+  validateManualChart,
+} from "@/utils/astrology/validate";
 
 const DEFAULT_PLANETS: ManualPlanetInput[] = PLANETS.map((id) => ({
   id,
@@ -16,19 +24,56 @@ const DEFAULT_PLANETS: ManualPlanetInput[] = PLANETS.map((id) => ({
 
 /** Mode 1: direct astrological configuration. */
 export default function ManualInput() {
-  const { commitManual } = useChart();
-  const [lagnaSign, setLagnaSign] = useState(0);
-  const [ascDeg, setAscDeg] = useState(15);
-  const [planets, setPlanets] = useState<ManualPlanetInput[]>(DEFAULT_PLANETS);
-  const [dateISO, setDateISO] = useState("");
-  const [time, setTime] = useState("");
-  const [place, setPlace] = useState<GeoPlace | null>(null);
-  const [name, setName] = useState("");
-  const [gender, setGender] = useState<Gender | "">("");
+  const { commitManual, committed } = useChart();
+  // Seed from a restored session — see the note in AutoInput.
+  const saved = committed?.kind === "manual" ? committed.data : null;
+  const [lagnaSign, setLagnaSign] = useState(saved?.lagnaSign ?? 0);
+  const [ascDeg, setAscDeg] = useState(saved?.ascDeg ?? 15);
+  const [planets, setPlanets] = useState<ManualPlanetInput[]>(saved?.planets ?? DEFAULT_PLANETS);
+  const [dateISO, setDateISO] = useState(saved?.anchor.dateISO ?? "");
+  const [time, setTime] = useState(saved?.anchor.time ?? "");
+  const [place, setPlace] = useState<GeoPlace | null>(saved?.anchor.place ?? null);
+  const [name, setName] = useState(saved?.name ?? "");
+  const [gender, setGender] = useState<Gender | "">(saved?.gender ?? "");
 
   function update(idx: number, patch: Partial<ManualPlanetInput>) {
     setPlanets((prev) => prev.map((p, i) => (i === idx ? { ...p, ...patch } : p)));
   }
+
+  /** Snap Ketu onto the opposite end of Rahu's axis. */
+  function deriveKetu() {
+    setPlanets((prev) => {
+      const ra = prev.find((p) => p.id === "Ra");
+      if (!ra) return prev;
+      const ke = ketuFromRahu(ra.house, ra.deg);
+      return prev.map((p) => (p.id === "Ke" ? { ...p, ...ke } : p));
+    });
+  }
+
+  /**
+   * Plausibility of the hand-entered chart, recomputed as it is edited.
+   *
+   * These are warnings rather than blocks: a chart copied from a printed
+   * almanac can legitimately disagree with the ephemeris by a degree or two,
+   * and refusing to compute it would break a real workflow. Only structurally
+   * impossible input (a duplicate graha, a degree outside its sign, a date
+   * outside the ayanamsha's validity) is treated as an error.
+   */
+  const issues = useMemo(() => {
+    const out = validateManualChart({
+      lagnaSign,
+      ascDeg,
+      planets,
+      anchor: { dateISO, time, place },
+      name: name || undefined,
+      gender: gender || undefined,
+    });
+    if (dateISO) out.push(...checkBirthDate(dateISO));
+    return out;
+  }, [lagnaSign, ascDeg, planets, dateISO, time, place, name, gender]);
+
+  const nodalBroken = issues.some((i) => i.field === "Ke" && i.message.includes("apart"));
+  const blocked = issues.some((i) => i.severity === "error");
 
   return (
     <form
@@ -146,6 +191,8 @@ export default function ManualInput() {
             type="date"
             value={dateISO}
             onChange={(e) => setDateISO(e.target.value)}
+            min={DATE_MIN}
+            max={DATE_MAX}
             className="w-full rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-sm text-fg-strong outline-none focus:border-primary-border"
           />
           <input
@@ -180,9 +227,23 @@ export default function ManualInput() {
         </div>
       </fieldset>
 
+      <ValidationNotes issues={issues} />
+
+      {nodalBroken && (
+        <button
+          type="button"
+          onClick={deriveKetu}
+          className="flex items-center gap-1.5 rounded-lg border border-primary-border-soft bg-primary-wash px-3 py-1.5 text-xs font-semibold text-heading transition hover:bg-primary-soft"
+        >
+          <Link2 className="h-3.5 w-3.5" />
+          Derive Ketu from Rahu (opposite house, same degree)
+        </button>
+      )}
+
       <button
         type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cta-from to-cta-to px-4 py-2.5 text-sm font-semibold text-cta-fg shadow-lg shadow-cta-shadow transition hover:from-cta-from-hover hover:to-cta-to-hover"
+        disabled={blocked}
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cta-from to-cta-to px-4 py-2.5 text-sm font-semibold text-cta-fg shadow-lg shadow-cta-shadow transition hover:from-cta-from-hover hover:to-cta-to-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Compass className="h-4 w-4" />
         Cast Chart

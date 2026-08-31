@@ -10,8 +10,12 @@ import { activeDashaAt } from "@/utils/astrology/dasha";
 import { allStrengths } from "@/utils/astrology/strength";
 import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import type { ChartData, DashaPeriod, PlanetId, YogaFinding } from "@/utils/astrology/types";
+import type { JaiminiInfo } from "@/utils/astrology/jaimini";
+import type { BhavaBala, ShadbalaSet } from "@/utils/astrology/shadbala";
+import type { VargaSet } from "@/utils/astrology/varga";
 import { ownedHouses } from "@/utils/astrology/yogas";
 import { FUNCTIONAL_ROLES } from "./lordships";
+import { buildAreaOptions, type AreaLever, type AreaPossibility } from "./lifeAreaOptions";
 // Verdict thresholds shared with the scored Interpretation sections.
 import { verdictOf } from "./report";
 import { ordinal } from "./synthesis";
@@ -150,6 +154,24 @@ export interface LifeAreaReport {
   activationNow: string[];
   windows: ActivationWindow[];
   hasDasha: boolean;
+  /** Ranked, chart-derived directions this area can actually take. */
+  possibilities: AreaPossibility[];
+  /** The practical levers: what to lead with, what to pair, what to repair. */
+  levers: AreaLever[];
+  /** Divisional / Bhava Bala / Shadbala second opinion for the area. */
+  corroboration: string[];
+}
+
+/**
+ * The classical layers the possibilities engine reads. All optional: a manual
+ * chart with no birth anchor has no Shadbala and therefore no Bhava Bala, and
+ * the ranking simply rests on fewer sources.
+ */
+export interface LifeAreaDepth {
+  vargas?: VargaSet | null;
+  shadbala?: ShadbalaSet | null;
+  bhavaBala?: BhavaBala[] | null;
+  jaimini?: JaiminiInfo | null;
 }
 
 const DUSTHANA = [6, 8, 12];
@@ -196,7 +218,8 @@ export function buildLifeAreaReports(
   dashaTree: DashaPeriod[] | null,
   ashtakavarga: AshtakavargaResult | null,
   yogaFindings: YogaFinding[],
-  now: Date
+  now: Date,
+  depth: LifeAreaDepth = {}
 ): LifeAreaReport[] {
   const lagna = chart.ascendant.sign;
   const strengths = allStrengths(chart, ashtakavarga);
@@ -392,12 +415,29 @@ export function buildLifeAreaReports(
       }
     }
 
+    const optionSet = buildAreaOptions({
+      chart,
+      key: cfg.key,
+      primary: cfg.primary,
+      supporting: cfg.supporting,
+      karakas: cfg.karakas,
+      strengths,
+      vargas: depth.vargas ?? null,
+      shadbala: depth.shadbala ?? null,
+      bhavaBala: depth.bhavaBala ?? null,
+      ashtakavarga,
+      jaimini: depth.jaimini ?? null,
+    });
+
     return {
       key: cfg.key,
       name: cfg.name,
       blurb: cfg.blurb,
       score,
       verdict: verdictOf(score),
+      possibilities: optionSet.possibilities,
+      levers: optionSet.levers,
+      corroboration: optionSet.corroboration,
       houses,
       karakas: karakaLines,
       nakshatra: nakshatraLines,

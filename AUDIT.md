@@ -1,6 +1,12 @@
 # Codebase Audit — Jyotisha Studio
 
-**Date:** 2026-08-21 · **Branch:** `age-banded-windows-and-voice` @ `28148fc` · **Mode:** read-only, no code changed.
+**Original audit:** 2026-08-21 · read-only, `age-banded-windows-and-voice` @ `28148fc`
+**Last revised:** 2026-08-31 · **Mode:** revised after implementation — §8c/§8d/§9 now record shipped code, not proposals.
+
+> **Revision note (2026-08-31).** Three things changed since the original audit, and they change how the rest of this document should be read:
+> 1. **The audience decision was reversed.** This is a *personal tool*, not a consumer product (§9a). That retires the entire SEO section (§6) and demotes the consumer-onboarding items — depth is now the goal rather than something to hide behind an "Advanced" toggle.
+> 2. **Kundali Milan is out of scope by decision** (§8f), not merely unbuilt.
+> 3. **Panchang day-parts and the Raman ayanamsha shipped**, along with a depth layer on the Interpretation and Life Areas panels (§10). Findings they resolve are struck through rather than deleted, so the reasoning stays auditable.
 
 ---
 
@@ -14,7 +20,8 @@ All 96 source files (~22,000 lines) across `app/`, `components/`, `data/`, `util
 
 | Check | Command | Result |
 |---|---|---|
-| Numeric verification harness | `verify.ts` via jiti | **228 checks, ALL PASS** |
+| Numeric verification harness | `verify.ts` via jiti | **463 checks, ALL PASS** (228 at first audit; +42 for the day-parts/Raman phase, +36 for the depth/options phase, remainder from interim work) |
+| Golden snapshot | `golden.ts` via jiti | **Identical to `golden.snapshot.txt`** — the depth layer added fields without perturbing any existing output |
 | Type check | `npx tsc --noEmit` | **Clean, exit 0** |
 | Production build | `npx next build` | **Clean, exit 0** |
 | Compute benchmarks | custom harness | see §4 |
@@ -22,7 +29,7 @@ All 96 source files (~22,000 lines) across `app/`, `components/`, `data/`, `util
 
 ### Baseline judgement
 
-**This is a strong codebase.** The astronomy is correct and pinned by 228 regression checks. Every interpretive rule is cited in `SOURCES.md`, and the disagreement log documents ~40 convention choices with reasoning. `ENGINE.md §19` is itself a 20-item self-audit of known precision decisions.
+**This is a strong codebase.** The astronomy is correct and pinned by 463 regression checks. Every interpretive rule is cited in `SOURCES.md`, and the disagreement log documents ~40 convention choices with reasoning. `ENGINE.md §19` is itself a 20-item self-audit of known precision decisions.
 
 **This audit therefore deliberately does not repeat what is already documented.** Items already recorded in `ENGINE.md §19` or the `SOURCES.md` disagreement log are referenced, not re-litigated. Everything below is either (a) not documented anywhere, or (b) documented as a scope boundary but worth re-costing now that the product ambition has grown.
 
@@ -34,22 +41,31 @@ The **calculation layer is production-grade; the delivery layer is a developer t
 
 ## 1. Executive summary
 
-| # | Finding | Severity | Effort |
-|---|---|---|---|
-| 1 | Zero SEO surface — no indexable content, no metadata, no sitemap/robots/OG | **Critical** | M |
-| 2 | No chart persistence or URL state — refresh destroys everything, nothing is shareable | **Critical** | M |
-| 3 | No PDF/print/export path — the primary deliverable of every competitor | **High** | M |
-| 4 | Gender-gated content (151 KB source) ships to 100% of visitors | **High** | S |
-| 5 | Birth date accepted with no bounds, silently exceeding ayanamsha validity | **High** | S |
-| 6 | No "birth time unknown" path — excludes the majority of real Indian users | **High** | M |
-| 7 | Geocoding API is a single point of failure with no fallback and a silent catch | **High** | S |
-| 8 | Manual mode accepts astronomically impossible charts with no warning | **Medium** | S |
-| 9 | Chart failure is a silent `catch → null` — user sees an empty page, no error | **Medium** | S |
-| 10 | Only South Indian chart style; no North or East Indian | **Medium** | M |
-| 11 | Mobile: 9-tab bar wraps to 3 rows; chart cells ~80 px on a 360 px screen | **Medium** | S |
-| 12 | Accessibility: no landmarks, no focus-visible, 11 aria attributes total, no tab semantics | **Medium** | M |
-| 13 | 11 dead exports; `predictions.ts` is 74% unreachable | **Low** | S |
-| 14 | Vedic coverage gaps — see §8 (matching, Panchang day-parts, dashas, Ashtakavarga refinements) | **Varies** | — |
+**Re-ranked 2026-08-31** after the audience reversal (§9a). The original table assumed a public product; two of its findings existed only because of that assumption and are struck through below. The severity column now answers *"how much does this cost the one person using it?"*
+
+| # | Finding | Severity | Effort | Status |
+|---|---|---|---|---|
+| 1 | ~~Sixteen divisional charts computed, none rendered~~ | ~~High~~ | M | **fixed** — Vargas tab (§11a) |
+| 2 | ~~Full Shadbala computed, no table renders it~~ | ~~High~~ | S | **fixed** — Strength tab (§11a) |
+| 3 | ~~Jaimini layer computed, surfaced only inside prose~~ | ~~Medium~~ | S | **fixed** — Jaimini tab (§11a) |
+| 4 | ~~Birth date accepted with no bounds~~ | ~~High~~ | S | **fixed** — 1850–2150 bound + soft band (§11c) |
+| 5 | ~~Geocoding single point of failure with no fallback~~ | ~~High~~ | S | **fixed** — error state, cache, manual lat/lon (§11c) |
+| 6 | ~~Gender-gated content ships in the main bundle~~ | ~~Medium~~ | S | **fixed** — 244→205 kB route (§11b) |
+| 7 | ~~No chart persistence — refresh destroys the chart~~ | ~~Medium~~ | M | **fixed** — localStorage session (§11d) |
+| 8 | ~~Manual mode accepts impossible charts~~ | ~~Medium~~ | S | **fixed** — elongation + nodal-axis checks (§11c) |
+| 9 | ~~Chart failure is a silent `catch → null`~~ | ~~Medium~~ | S | **fixed** — error state distinguished (§11c) |
+| 10 | No PDF/print/export path | ~~High~~ **Medium** | M | demoted — no client to deliver to |
+| 11 | Only South Indian chart style; no North or East Indian | **Medium** | M | **open — largest remaining UI item** |
+| 12 | No "birth time unknown" path | ~~High~~ **Low** | M | demoted — the operator knows their own data |
+| 13 | Mobile: 9-tab bar wraps to 3 rows; chart cells ~80 px on a 360 px screen | **Low** | S | demoted — single known device |
+| 14 | Accessibility: no landmarks, no focus-visible, no tab semantics | **Low** | M | demoted — single known user |
+| 15 | ~~`predictions.ts` 74% unreachable~~; 9 micro-exports remain | ~~Low~~ | S | **mostly fixed** (§11e) |
+| 16 | ~~Zero SEO surface~~ | ~~Critical~~ | — | **retired** — no audience (§9a) |
+| 17 | ~~No compatibility matching (Kundali Milan)~~ | ~~Critical~~ | — | **retired** — decided against (§8f) |
+| 18 | ~~Panchang day-parts absent~~ | ~~High~~ | — | **resolved 2026-08-31** (§8d, §10b) |
+| 19 | Remaining Vedic coverage gaps — upagraha longitudes, additional dashas, Ashtakavarga refinements (§8) | **Varies** | — | open |
+
+**The through-line has changed.** The original audit's one-sentence diagnosis was *"the calculation layer is production-grade; the delivery layer is a developer tool."* For a public product that was the central problem. For a personal tool it is mostly fine — except in one specific way that now tops the list: **the engine computes three major classical layers (all sixteen vargas, full Shadbala, the whole Jaimini apparatus) that no component renders.** That is not a delivery-polish issue; it is analysis the owner has already paid for and cannot look at.
 
 ---
 
@@ -88,12 +104,24 @@ Several of these are *latent assets rather than junk* — `VARGA_SIGNIFICATIONS`
 - `utils/astrology/__checks__/*` are never imported by the app *by design* (documented in the file header). Keep.
 - The `GET` handler returns a 405 with a schema hint. Keep.
 
-### 2d. Machinery built but never surfaced
+### 2d. ~~Machinery built but never surfaced~~ · **RESOLVED 2026-08-31**
 
-Not dead code, but valuable work reachable from only one panel:
+Not dead code — worse. This is complete, correct, tested analysis that no pixel displays.
 
-- **Sudarshana Chakra** and **Muntha** are fully implemented in [rectify.ts:365-411](utils/astrology/rectification/rectify.ts#L365-L411) but are only used as rectification evidence. Both are standard natal/annual features on every competitor site. Near-zero cost to surface.
-- **Yoni-kuta tables** exist in [nakshatraTraits.ts](data/interpretations/nakshatraTraits.ts) — half the input needed for compatibility matching (see §8f).
+| Layer | Computed in | Rendered by | Reaches the reader as |
+|---|---|---|---|
+| **All 16 divisional charts** (D-1…D-60, vargottama, four Vimshopaka schemes) | `varga.ts`, on every chart via `ChartContext` | **nothing** | prose sentences only |
+| **Full Shadbala** (six limbs in rupas, Ishta/Kashta, minimum-requirement table) | `shadbala.ts` | **nothing** | prose sentences only |
+| **Jaimini** (chara karakas AK…DK, Karakamsa, Arudha Lagna, Upapada, Argala) | `jaimini.ts` | **nothing** | prose sentences only |
+| Bhava Bala | `shadbala.ts` | `BhavaBalaTable.tsx` | ✅ a real table |
+
+`README.md` advertises all three as headline features (*"Shodasavarga divisional charts — all sixteen vargas…"*, *"Full classical Shadbala… with Ishta/Kashta and the minimum-requirement table"*, *"Jaimini layer — chara karakas, Karakamsa, Arudha Lagna and Upapada, Argala"*). **A reader following the README will look for tables that do not exist.** That is a documentation defect as much as a UI one, and it should be fixed in whichever direction is chosen.
+
+**All three now render.** `VargaPanel` (with `VargaChartGrid`), `ShadbalaTable` and `JaiminiPanel` were built in the second pass — see §11a. The table above is kept as the record of what was wrong, not as an open finding; the "Rendered by" column now reads `VargaPanel.tsx`, `ShadbalaTable.tsx` and `JaiminiPanel.tsx` respectively. `README.md` no longer points at tables that do not exist.
+
+**Resolved since the original audit:** ~~Sudarshana Chakra and Muntha reachable only as rectification evidence~~ — both are now surfaced.
+
+Still standing: **Yoni-kuta tables** in [nakshatraTraits.ts](data/interpretations/nakshatraTraits.ts) are half the input for compatibility matching, which is now decided against (§8f). They continue to earn their place feeding the single-chart marriage reading.
 
 ---
 
@@ -275,7 +303,13 @@ IntimacyPanel        : 2
 
 ---
 
-## 6. SEO
+## 6. SEO · **RETIRED 2026-08-31**
+
+> **This entire section no longer applies.** The site is a personal tool with an audience of one (§9a), so there is no organic traffic to win and nothing here is worth acting on. It is kept verbatim rather than deleted because the analysis is accurate and would become relevant again if the audience decision were ever reversed — but **nothing in §6 should appear on any work list.**
+>
+> The one item worth rescuing is §6d's *client-side URL state*, which survives on its own merit — not for shareability, but so a chart outlives a page refresh. It is tracked as finding #7 in §1 at Medium.
+
+*Original assessment, for the record:*
 
 **This is the largest gap in the audit, and it is close to total.**
 
@@ -382,25 +416,40 @@ Two things deserve explicit praise because they are unusual: the **rectification
 - **Conditional dashas** (Shashtihayani, Dwadashottari, etc.) — low priority
 - **Sookshma / Prana levels** — `dasha.ts` stops at Pratyantar (level 3). `ENGINE.md §20` notes extending `buildSubPeriods` is a small change.
 
-### 8c. Missing — Upagrahas (shadow planets) · notable gap
+### 8c. Partly resolved — Upagrahas (shadow planets)
 
 **Completely absent.** No `Gulika`, `Mandi`, `Dhuma`, `Vyatipata`, `Parivesha`, `Indrachapa`, `Upaketu`, `Kala`, `Mrityu`, `Ardhaprahara`, `Yamaghantaka`.
 
-**Gulika/Mandi in particular** is not an exotic technique — it is used routinely for maraka analysis, longevity, and event timing, and appears on every major Indian astrology site. It is computable from data the engine already has: the sunrise/sunset arcs (`sunriseFor`, `sunsetFor`, `nextSunrise` all exist in `ephemeris.ts`) divided into eighths by weekday. **Low effort, high classical credibility.**
+**Gulika/Mandi in particular** is not an exotic technique — it is used routinely for maraka analysis, longevity, and event timing, and appears on every major Indian astrology site.
 
-### 8d. Missing — Panchang day-parts · notable gap
+**Partially resolved 2026-08-31.** `utils/astrology/dayParts.ts` now computes the **Gulika *kaala*** — the Saturn-ruled eighth of the day arc, and its night counterpart — derived rather than tabulated, and verified against the published weekday tables for all seven days. What is still missing is the step from that window to the **Gulika *longitude***: the classical upagraha is the Ascendant computed at the start (or, by the competing convention, the end) of that eighth, which is what makes Gulika usable as a chart point in maraka and longevity analysis. That is now a genuinely small addition — the window is computed, `tropicalAscMc` exists, and the only open question is which end of the window to take, which is a documented convention split rather than a calculation problem.
 
-`computePanchang` returns the five limbs correctly (Tithi, Vara, Nakshatra, Yoga, Karana) — but the *practical* Panchang that users actually consult daily is absent:
+The other ten upagrahas (Dhuma, Vyatipata, Parivesha, Indrachapa, Upaketu, Kala, Mrityu, Ardhaprahara, Yamaghantaka) remain absent. They are simple arithmetic on the Sun's longitude and the day divisions, and would be a coherent single addition alongside the Gulika longitude.
 
-- **Rahu Kaal**, **Gulika Kaal**, **Yamaganda** (the three inauspicious day-eighths)
-- **Abhijit Muhurta** (the auspicious mid-day window)
-- **Choghadiya** (8 day + 8 night segments)
-- **Hora** (planetary hours)
-- **Dur Muhurtam**, **Varjyam**, **Amrit Kaal**
-- **Tithi/Nakshatra/Yoga end-times** — the panel shows only the value at birth, not when each began or ends
-- **Sunrise/sunset/moonrise/moonset** — sunrise is computed but only used internally for Vara
+### 8d. ~~Missing~~ **Resolved 2026-08-31** — Panchang day-parts
 
-All of these derive from the sunrise/sunset arcs already computed. This is the single densest cluster of missing-but-cheap classical features in the repo, and it is also the highest-traffic content category in the entire vertical.
+The original finding: `computePanchang` returned the five limbs correctly but none of the *practical* panchang — the part actually consulted daily.
+
+**Now implemented** in `utils/astrology/dayParts.ts` (+ a rewritten `PanchangPanel.tsx`), covered by 42 checks in the harness:
+
+| Item | Status | How it is derived |
+|---|---|---|
+| Rahu Kaal | ✅ | Tabulated by weekday — Rahu holds no weekday lordship, so it cannot be derived |
+| Gulika Kaal (day + night) | ✅ | **Derived** as Saturn's eighth under the classical lordship rule; reproduces the published table for all 7 weekdays |
+| Yamaganda | ✅ | **Derived** as Jupiter's eighth, same rule, same verification |
+| Abhijit Muhurta | ✅ | 8th of the day's 15 muhurtas; asserted to be centred on the arc midpoint. Withheld on Wednesday per the common convention |
+| Choghadiya (8 day + 8 night) | ✅ | Cycle entered at the weekday lord; all 14 published sequence-openings reproduced |
+| Hora (24 planetary hours) | ✅ | Descending Chaldean from the weekday lord — **the same sequence `shadbala.ts` uses**, so the two can never disagree |
+| Tithi / Nakshatra / Yoga / Karana **end-times** | ✅ | Coarse walk + bisection to the minute on the monotonic quantity behind each limb |
+| Sunrise / sunset / moonrise / moonset | ✅ | Moon rise/set added to `ephemeris.ts`; a null moonrise is treated as a real astronomical answer, not an error |
+| **Dur Muhurtam, Varjyam, Amrit Kaal** | ❌ **deliberately not implemented** | These need per-nakshatra vishaghati fractions, and published tables disagree on several nakshatras. Guessing them would put invented numbers beside derived ones — the one thing this engine does not do. Recorded here so the omission stays a decision rather than an oversight |
+
+Two design points worth recording:
+
+- **Every division is of the sunrise→sunset (or sunset→next-sunrise) arc, never of the civil clock.** That is the classical construction, and it is why these times drift through the year and differ by latitude.
+- **Polar degradation is explicit.** Above the Arctic circle in midsummer there is no day arc to divide, so `computeDayParts` returns `null` and the panel says why, rather than inventing an eighth of a day that never ends. Asserted in the harness.
+
+The panel also gained a **birth / today** scope switch, so the same machinery answers both "what was this native born into?" and "what is usable this afternoon?".
 
 ### 8e. Missing — Ashtakavarga refinements
 
@@ -414,11 +463,11 @@ BAV grid and SAV row are correct (total 337 verified). Absent:
 
 `ENGINE.md §20` already anticipates this as a layer over existing `bav`/`sav`.
 
-### 8f. Missing — Compatibility matching (Kundali Milan) · **the largest feature gap**
+### 8f. ~~Missing~~ **Out of scope by decision 2026-08-31** — Compatibility matching (Kundali Milan)
 
-**Absent entirely.** No two-chart input, no synastry, no matching.
+**Not being built.** The owner has ruled it out (§9a). The finding is kept because the reasoning behind it is still sound and the decision should be visible as a *choice* rather than as a gap nobody noticed.
 
-This is worth calling out separately because it is (a) the single highest-traffic feature on every Indian astrology site, and (b) **half-built already**:
+The original argument for it was that it is (a) the single highest-traffic feature on every Indian astrology site, and (b) **half-built already**:
 
 - Yoni-kuta tables exist in `nakshatraTraits.ts` (27-row assignment + 7 enemy pairs)
 - Gana classification exists
@@ -427,7 +476,9 @@ This is worth calling out separately because it is (a) the single highest-traffi
 
 What is missing is the eight-kuta scoring (Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot, Nadi = 36 guna), Nadi dosha with exceptions, Bhakoot dosha, and a two-chart input path.
 
-`SOURCES.md` correctly records the current refusal ("Yoni kuta is a *pair* technique; running it against a hypothetical partner would be inventing the other half of the input") — that refusal is right for *single-chart* mode and dissolves the moment a second chart is a real input.
+`SOURCES.md` correctly records the current refusal ("Yoni kuta is a *pair* technique; running it against a hypothetical partner would be inventing the other half of the input") — that refusal is right for *single-chart* mode and would dissolve the moment a second chart became a real input.
+
+**Consequence of the decision:** point (a) — the traffic argument — was the whole weight behind ranking this "the largest feature gap", and it evaporates for a personal tool with an audience of one. Point (b) still stands: the half-built pieces (Yoni-kuta tables, Gana classification, Mangal Dosha with cancellations) remain in the codebase and are used by the single-chart marriage reading, so nothing is stranded. **No further action.**
 
 ### 8g. Missing — Transit (Gochara) technique
 
@@ -475,35 +526,48 @@ Gemstones (`PLANET_GEMSTONES`) and colours (`PLANET_COLOURS`) exist as constants
 
 ## 9. Scope decisions and what carries forward
 
-### 9a. Decisions taken 2026-08-21
+### 9a. Decisions — current as of 2026-08-31
 
-These were confirmed after the audit and constrain Phases 2–4.
+| Decision | Taken | Consequence for this audit |
+|---|---|---|
+| **Personal tool, not consumer-facing** | 2026-08-31 · *supersedes the 2026-08-21 "consumer-first with expert toggle" decision* | **Retires §6 (SEO) entirely** — there is no audience to acquire. Also retires the plain-English-by-default plan and the Advanced toggle: depth is now the product rather than something to hide. §8's classical depth work becomes the main line, not an expert tier. Onboarding, first-run explanation and shareability drop to low priority. |
+| **Kundali Milan out of scope** | 2026-08-31 | §8f closed as a decision. The half-built pieces stay where they are, feeding the single-chart marriage reading. |
+| **Speculation & Intimacy stay silently gated** | 2026-08-21 | Unchanged. Excluded from benchmarking and voice work. The §4c lazy-loading fix still applies — it changes no visibility behaviour. |
+| **No monetisation planned** | 2026-08-21 | Unchanged. Paywalls, booking and report-purchase flows are benchmark context only. |
+| **Stays a single-page app** | 2026-08-21 | Unchanged, and now moot for SEO purposes. Client-side URL state is still worth having — not for sharing, but so a chart survives a refresh. |
 
-| Decision | Consequence for this audit |
-|---|---|
-| **Consumer-first, with an expert-mode toggle** | Plain-English output becomes the default; the existing technical surfaces (Shadbala virupas, varga tables, evidence weights, Jaimini, rectification) move behind "Advanced" rather than being removed. Nothing in §8's depth work is wasted — it becomes the expert tier. |
-| **Speculation & Intimacy stay silently gated** | Excluded from the Phase 2 benchmark and the Phase 3 voice rewrite. The §4c bundle fix still applies — lazy-loading them changes no visibility behaviour. |
-| **No monetisation planned** | Paywalls, consultation booking, stores and report-purchase flows are benchmarked for context only and are **never Tier 1**. |
-| **Stays a single-page app** | §6a–§6c content routes are out of scope. §6e's ~190 static pages are recorded as forgone. Metadata, OG, favicon, robots/sitemap, JSON-LD and **client-side URL state remain in scope** — none need server rendering. |
+**What the audience reversal actually costs:** the original audit ranked "zero SEO surface" and "no shareability" as its two Critical findings. Both were downstream of an assumed public audience. For a tool with one user, the honest re-ranking puts **chart persistence across refresh** as the only surviving item from that pair — and it drops from Critical to Medium, because losing a chart costs a re-entry of three fields rather than a lost visitor.
 
-### 9b. Carried forward
+### 9b. Carried forward — re-ranked for a personal tool
 
-**Cheap and high-value (engine already has the inputs):**
-1. Panchang day-parts — Rahu Kaal / Gulika Kaal / Choghadiya / Hora / Abhijit (§8d)
-2. Gulika & Mandi upagrahas (§8c)
-3. Sunapha / Anapha / Durudhara + Parivartana yoga reporting (§8i) — fixes a genuine interpretive imbalance
-4. Surface Muntha + Sudarshana Chakra from `rectify.ts` (§2d)
-5. `next/dynamic` on the two gated panels (§4c)
-6. Birth-date bounds (§3a)
-7. Metadata / OG / favicon / JSON-LD — SPA-compatible subset of §6
+**Done since the original audit:**
+- ~~Panchang day-parts (§8d)~~ — shipped 2026-08-31
+- ~~Gulika *kaala* (§8c)~~ — shipped; the Gulika *longitude* is still open
+- ~~Sunapha / Anapha / Durudhara + Parivartana yoga reporting (§8i)~~ — shipped in earlier work
+- ~~Surface Muntha + Sudarshana Chakra (§2d)~~ — shipped in earlier work
 
-**Expensive but decisive:**
-8. **Client-side URL state + chart persistence + share links (§6d)** — now the highest-value non-astrology item on the list, since it is the only shareability mechanism left once SSR is off the table
-9. Kundali Milan / two-chart matching (§8f)
-10. "Birth time unknown" mode (§3b)
-11. PDF / print report (§1)
-12. North & East Indian chart styles (§1)
-13. Mobile pass — tab bar, chart legibility, sticky table columns (§5)
+**Completed in the second pass (§11):**
+- ~~Divisional-chart viewer~~ · ~~Shadbala table~~ · ~~Jaimini panel~~ — all three shipped
+- ~~Birth-date bounds~~ · ~~geocoding fallback~~ · ~~manual-chart plausibility~~ · ~~silent chart failure~~ · ~~DST detection~~
+- ~~`next/dynamic` on the gated panels~~ — route down 244 → 205 kB
+- ~~Chart persistence across refresh~~
+- ~~`predictions.ts` dead code~~
+
+**Now top of the list:**
+1. **North & East Indian chart styles** — the largest remaining astrologer-facing gap. The North Indian diamond is a different geometry (fixed houses, moving signs), so it is a real build rather than a restyle.
+2. **Gulika/Mandi longitude + the remaining upagrahas (§8c)** — small now that the day-parts ship, but it needs a deliberate convention decision (start vs end of Saturn's eighth).
+3. **Additional dasha systems (§8b)** — Yogini and Chara would change readings most; Vimshottari sookshma/prana levels would sharpen rectification.
+4. Ashtakavarga refinements — Trikona/Ekadhipatya shodhana and the Kakshya subdivision (§8e).
+
+**Lower priority:**
+5. PDF / print report (§1).
+6. "Birth time unknown" mode (§3b).
+7. Mobile pass (§5) — slightly worse than before: the two new tabs make the tab bar wrap sooner.
+
+**Retired:**
+- Everything in §6 (SEO, metadata for discovery, sitemap/robots/JSON-LD, the ~190 static pages) — no audience.
+- Kundali Milan (§8f) — decided against.
+- The consumer voice rewrite and the Advanced toggle — the audience reversal removed the reason for both.
 
 **Do not touch:**
 - The astronomy in `utils/astrology/` beyond additive modules — 228 checks pass and the conventions are documented and deliberate.
@@ -513,11 +577,158 @@ These were confirmed after the audit and constrain Phases 2–4.
 
 ---
 
+## 10. Implementation log — 2026-08-31
+
+What changed in the repo since the original audit, with the findings each item closes.
+
+### 10a. Raman ayanamsha
+
+`AyanamshaId` gains `"raman"`; `ramanAyanamsha()` is Lahiri offset by a constant **1.446704°**, the Swiss Ephemeris epoch gap (Lahiri 22.460148° − Raman 21.013444° at 1900 Jan 0.5). Both are anchored at the same instant and carried by the same precession, so the offset is constant by construction — the same reasoning the existing Pushya implementation uses, and the harness asserts it holds to 1e-9 across 1800–2200.
+
+Practical effect: every sidereal longitude moves ~1°26' relative to Lahiri, which is enough to change a Lagna, a Moon nakshatra (and therefore the **Vimshottari starting lord**), or a varga sign for any body near a boundary. On the canonical chart it moves the Moon from Dhanishta p4 to Shatabhisha p1 — a different dasha sequence, not a cosmetic shift.
+
+**Ordering matters and is easy to get backwards:** Raman < Pushya < Lahiri. Raman is ~0.32° *beyond* Pushya, not between the two. The rectification panel's copy was written to say this explicitly, because the rectifier is a deliberate two-way Lahiri-vs-Pushya sweep and a reader could otherwise assume Raman sat inside the tested span.
+
+**Not changed:** the rectifier still sweeps exactly two ayanamshas. `RectifyResult` has named `lahiri`/`pushya` fields and the A/B comparison is the design, not an accident of two being available.
+
+**Inherited caveat:** Raman carries the same sub-arcminute bias as `lahiriAyanamsha` (~13" against the Swiss Ephemeris value at 1900). That is the documented precision budget of this layer, and correcting it would move every existing chart — a separate decision, deliberately not taken here.
+
+### 10b. Panchang day-parts
+
+See §8d for the full table. Design points that are audit-relevant:
+
+- **Derived over tabulated wherever the derivation is sound.** Gulika and Yamaganda are computed as Saturn's and Jupiter's eighths under the classical lordship rule, not copied from a table — and then *checked against* the published tables for all seven weekdays, day and night. Rahu Kaal stays tabulated because Rahu holds no weekday lordship and the derivation genuinely does not exist.
+- **One hora sequence, two consumers.** `dayParts.ts` uses the same descending-Chaldean run as the Hora sub-bala in `shadbala.ts`. The harness asserts the 25th hora lands on the next weekday's lord, which is the property that would break first if the two ever drifted.
+- **Refusals recorded.** Varjyam, Amrit Kaal and Dur Muhurtam are not implemented, and the panel says so in reader-facing copy rather than only in a code comment.
+
+### 10c. Interpretation depth layer
+
+`interpretHouse` now takes an optional context bundle (vargas, Shadbala, Bhava Bala, Ashtakavarga, Jaimini) and emits a separate **`depth[]`** array alongside the existing Rashi prose. Per house it reports:
+
+1. **Sarvashtakavarga** bindus on the house's sign, against the classical 25/30 thresholds
+2. **Bhava Bala** in rupas, *ranked against the other eleven houses*, with the lord/drishti split called out when the two disagree
+3. The lord's **Shadbala** against its classical minimum, with Ishta/Kashta
+4. **Navamsa corroboration** — and, where the tradition assigns one, the house's own varga (D-2 for the 2nd, D-10 for the 10th, D-4 for the 4th, and so on)
+5. **Argala** and its virodha
+6. A **convergence line** stating how many of the independent measures agree and which one dissents
+
+The convergence line is the point of the whole layer. A 10th house strong in the D-1 and collapsed in the D-10 is a different life from one strong in both, and the previous prose could not distinguish them.
+
+**Everything degrades independently.** Remove the varga set and no house claims a Navamsa reading; remove Shadbala and no house quotes a rupa figure; supply nothing and `depth` is empty and the Rashi prose is byte-identical. All three are asserted in the harness — which is what let the golden snapshot stay unchanged.
+
+**Ordering fix required in `ChartContext`:** `houseReadings` was computed *before* `vargas`/`shadbala`/`bhavaBala`, so it had to be moved after them. Worth recording because that memo's dependency array is now what keeps the depth layer in sync with an ayanamsha change.
+
+### 10d. Life Areas — possibilities and best options
+
+New module `data/interpretations/lifeAreaOptions.ts`. It generalises the weighted-vote pattern `career.ts` already used for professions and applies it to all eight areas:
+
+- **Votes** come from the area's primary and supporting house lords, its occupants, its karakas, drishti onto its houses, the divisional chart the tradition reads for that subject, and the relevant Jaimini karaka.
+- **Each graha's vote is scaled by its composite strength** (±35%), so a graha with a strong claim and no capacity to act on it cannot top the ranking.
+- **The winner's own classical signification for that area** is then read off a table — so a ranked possibility is never a guess; it is a named graha's documented signification, surfaced because that graha won the vote.
+- **Levers** turn the ranking into action: what to lead with, what to pair it with, what to repair first, and where transits will actually pay (from Sarvashtakavarga on the area's own houses).
+- **Corroboration** gives the divisional / Bhava Bala / Shadbala second opinion for the area as a whole.
+
+**One honest judgement call, recorded in the code and in the rendered output:** the 5th house's own varga is the D-7, but the D-7's subject is progeny rather than romance, so the **love** area substitutes the D-9 and says so in the text. Similarly **health** uses the D-30, since the Shodasavarga has no dedicated health varga.
+
+**Vote weights are policy, not doctrine.** They are this engine's own ranking heuristic, and the UI surfaces the reasons behind every score for exactly that reason — a reader can see *why* a graha ranked where it did, and disagree with the weighting without disagreeing with the astrology.
+
+### 10e. Verification
+
+| Check | Result |
+|---|---|
+| `verify.ts` | **463 checks, ALL PASS** at the end of the first pass; **496** after the second (§11g) |
+| `golden.ts` | **Identical** to the committed snapshot |
+| `npx tsc --noEmit` | Clean, exit 0 |
+| `npx next build` | Clean, exit 0 — `/` at 244 kB, 346 kB first-load JS |
+
+The bundle grew with the new prose tables. §4b's finding stands and is now marginally worse, which moves **§4c (lazy-loading the two gated panels)** up as the cheapest remaining bundle win.
+
+---
+
+## 11. Implementation log — 2026-08-31 (second pass)
+
+The §1 re-ranking was acted on immediately. This records what was built, what it closes, and the two places the fix differed from the recommendation.
+
+### 11a. The three unsurfaced layers — §2d, findings #1–#3
+
+The top finding was analysis the engine already produced and no component rendered. All three now have a surface.
+
+| Layer | New component | What it shows |
+|---|---|---|
+| **Sixteen vargas** | `components/panels/VargaPanel.tsx` + `charts/VargaChartGrid.tsx` | Any of the sixteen as a South Indian grid, **always beside the D-1** — a varga read without the Rashi next to it is not a reading. Plus a per-graha D-1↔varga movement table, the vargottama set, and all four Vimshopaka schemes with their classical bands. |
+| **Shadbala** | `components/charts/ShadbalaTable.tsx` | Six limbs in rupas, expandable per graha to every sub-bala, Ishta/Kashta, and — the column usually missing from published tables — the **ratio against each graha's own minimum**, since BPHS requires 7 rupas of Mercury and only 5 of Saturn. |
+| **Jaimini** | `components/panels/JaiminiPanel.tsx` | Chara karakas with degrees, Karakamsa, Arudha Lagna, Upapada, and the full 12-house Argala table with its virodha and a net verdict per house. |
+
+Two new tabs (**Vargas**, **Jaimini**); the old *Ashtakavarga* tab became **Strength** and now hosts Shadbala, Ashtakavarga and Bhava Bala together — they are three answers to the same question from different directions, and the disagreements between them are the finding.
+
+**Side effect worth noting:** this also fixed a documentation defect. `README.md` advertised all three as headline features, so a reader following it was looking for tables that did not exist.
+
+### 11b. Bundle — §4c, finding #6
+
+`next/dynamic` on `SpeculationPanel` and `IntimacyPanel`. The gate is untouched and still decides whether the tabs exist at all; splitting only stops the payload being downloaded by sessions that can never open it.
+
+| | Route size | First Load JS |
+|---|---|---|
+| Before this pass | 244 kB | 346 kB |
+| After | **205 kB** | **308 kB** |
+
+That is a 39 kB reduction *while adding three new panels and a validation layer* — the split recovered more than everything added.
+
+### 11c. Validation — §3a, §3c, §3d, §3e, §3f, findings #4, #5, #8, #9
+
+New module `utils/astrology/validate.ts`, covered by 33 harness checks. The design rule is that everything is a **warning** except structurally impossible input, because a chart hand-copied from an almanac can legitimately disagree with the ephemeris and refusing it would break a real workflow.
+
+- **§3a birth-date bounds** — `min`/`max` of 1850–2150 on both date inputs, matching the bounds `PredictionPanel` already used for forecasts, plus a soft warning band outside 1900–2100 where the ayanamsha is no longer sub-arcminute. The same bound now applies in the `/api/rectify` validator, so the API cannot rectify a minute against a zodiac the engine cannot place.
+- **§3c geocoding** — the silent `catch` is gone. Failures are now distinct from "no match" and say so; successful lookups are cached in `localStorage` so a previously-used place still resolves offline; and there is a **manual latitude/longitude/IANA-timezone panel** that bypasses the network entirely. The zone field is validated against the runtime's own zone database, because an abbreviation or a raw offset silently discards the historical rules a birth chart depends on.
+- **§3d silent failure** — `ChartContext` now returns `{ chart, error }`. "Nothing submitted" and "submitted and failed" no longer render the same placeholder.
+- **§3e impossible manual charts** — Mercury beyond 28° and Venus beyond 48° from the Sun are flagged, as are duplicate grahas and degrees outside their sign. The broken nodal axis — the worst of the set, because `detectYogas` will evaluate Kala Sarpa against a nonsense arc — gets a one-click **"derive Ketu from Rahu"** fix.
+- **§3f DST** — `checkLocalTime` detects both a clock change near the recorded time and a civil time that does not exist. `tzOffsetMinutes` already existed for this and was used by rectification's `timezoneWarnings`; it had simply never been called on the main input path.
+- **§3f polar** — a latitude past the polar circle now warns at input, naming which surfaces degrade, rather than only appearing in the chart centre block and only in Chalit mode.
+
+### 11d. Persistence — §6d, finding #7
+
+The input (never the computed chart) plus the ayanamsha, node mode, chart style and entry mode are stored in `localStorage`. The engine is deterministic, so re-deriving on load is cheaper than serialising a `ChartData` full of `Date`s — and immune to a stored chart going stale against an engine change. The restored payload is field-validated on read so an older shape cannot inject a bad ayanamsha id.
+
+Both entry forms seed from the restored input: showing a restored chart beside a form full of defaults would have been worse than not restoring at all. A "Clear" control is offered beside the mode switch.
+
+### 11e. Dead code — §2a, §2b, finding #15
+
+**Two of the eleven dead exports resolved themselves:** `VARGA_SIGNIFICATIONS` and `CHARA_KARAKA_NAMES` are the glosses the new Varga and Jaimini panels needed — exactly as §2a predicted when it recommended keeping them.
+
+`predictions.ts` is **deleted**. It was 128 lines of which 95 were unreachable; its one live export, `dashaLordAssessment`, moved into `yearForecast.ts` beside its only caller. `ENGINE.md` §17 has been rewritten as a tombstone and its index row, which routed "new prediction cadence" work at the dead file, now points at `yearForecast.ts`.
+
+**Deliberately not done:** the remaining nine micro-exports (`HIGH_RESOLUTION_VARGAS`, `MEAN_DAILY_MOTION`, `NOCTURNAL_PLANETS`, `RiseInfo`, `fmtLongitude`, `naturalMalefics`, `primaryHousesFor`) are left in place. They are sourced constant tables and obvious complements to symbols that *are* used; deleting them costs nothing at runtime (they tree-shake) and risks losing referenced classical data to save nothing.
+
+### 11f. What is still open
+
+| Finding | Why it was not done |
+|---|---|
+| **North & East Indian chart styles** (#11) | Genuine astrologer-facing want and the largest remaining UI item, but a real piece of work — the North Indian diamond is a different geometry (fixed houses, moving signs), not a restyle of the existing grid. |
+| **PDF / print report** (#10) | Medium effort, and demoted anyway once there is no client to hand a report to. |
+| **"Birth time unknown" mode** (#12) | Demoted to Low: the operator knows their own birth data. The rectifier already covers the harder version of the problem. |
+| **Mobile (#13) and accessibility (#14)** | Both demoted to Low by the audience decision. The two new tabs make the tab-bar wrap worse on a narrow screen — noted rather than fixed. |
+| **Gulika/Mandi longitude and the other upagrahas** (§8c) | Small now that the day-parts ship, but it needs a convention decision (Gulika is the Ascendant at the *start* or the *end* of Saturn's eighth — sources differ) that should be made deliberately rather than by me picking one. |
+| **`/api/rectify` rate limiting** (§3f) | Correctly a non-issue for a personal tool; it becomes real only if the site is ever exposed. |
+
+### 11g. Verification
+
+| Check | Result |
+|---|---|
+| `verify.ts` | **496 checks, ALL PASS** (+33 for the validation phase) |
+| `golden.ts` | **Identical** to the committed snapshot |
+| `npx tsc --noEmit` | Clean, exit 0 |
+| `npx next build` | Clean, exit 0 — 205 kB route, 308 kB first load |
+
+---
+
 ## Appendix — reproduction
 
 ```bash
-# Verification harness (228 checks)
-npx tsx utils/astrology/__checks__/verify.ts
+# Verification harness (496 checks)
+node utils/astrology/__checks__/run.mjs verify
+
+# Golden snapshot (regression on rendered output)
+node utils/astrology/__checks__/run.mjs golden
 
 # Type check
 npx tsc --noEmit
@@ -529,4 +740,4 @@ npx next build
 grep -c "shayana sukha" .next/static/chunks/app/page-*.js   # → 1
 ```
 
-*Note: `tsx` is not installed in this repo. The harness was run via the bundled `jiti` with an `@` → repo-root alias. Adding `tsx` as a devDependency, or a `"verify"` npm script, would make the documented command work as written.*
+*Note: `tsx` is not installed in this repo, so the `npx tsx ...` command in `README.md` does not work as written. The working entry point is `run.mjs`, which drives the same files through the bundled `jiti` with an `@` → repo-root alias. **`README.md` should be corrected to match** — or better, `"verify"` and `"golden"` npm scripts added, since the harness is this repo's only test suite and is currently reachable only by a path nobody would guess.*

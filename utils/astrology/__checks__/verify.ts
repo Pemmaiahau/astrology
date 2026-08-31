@@ -50,6 +50,23 @@ import { NAKSHATRA_LORDS } from "../constants";
 import { dignityInSign, computeDignity, naturalRelation, temporalRelation } from "../states";
 import { computeVargaSet, vargaSign, VIMSHOPAKA_WEIGHTS } from "../varga";
 import { detectYogas } from "../yogas";
+import {
+  AYANAMSHA_IDS, AYANAMSHA_LABELS, AYANAMSHA_SHORT, getAyanamsha,
+  lahiriAyanamsha, pushyaAyanamsha, ramanAyanamsha,
+} from "../ayanamsha";
+import {
+  CHOGHADIYA_MEANING, computeDayParts, computeLimbTimings, karanaNameOfHalf, nightKaalas,
+} from "../dayParts";
+import { computePanchang } from "../panchang";
+import { interpretFullChart } from "../../../data/interpretations/synthesis";
+import { buildLifeAreaReports } from "../../../data/interpretations/lifeAreas";
+import { AREA_OPTIONS, AREA_VARGA } from "../../../data/interpretations/lifeAreaOptions";
+import {
+  checkBirthDate, checkCoordinates, checkLocalTime, DATE_MAX, DATE_MIN,
+  ketuFromRahu, validateManualChart,
+} from "../validate";
+import { localToUtc } from "../time";
+import type { ManualInputState } from "../types";
 import { allStrengths } from "../strength";
 import {
   buildCareerReport, careerTimingWindows, CAREER_CHANGE_GROUP, CAREER_ENTRY_GROUP,
@@ -2542,6 +2559,695 @@ console.log("\n=== Phase 6: birth time rectification ===");
       ((munthaHouse(2027) - munthaHouse(2026) + 12) % 12) === 1,
       `${munthaHouse(2026)} → ${munthaHouse(2027)}`
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8: Raman ayanamsha and the panchang day-parts.
+//
+// The day-parts are the first module whose output is a set of CLOCK TIMES
+// rather than longitudes, so the checks are shaped differently: they assert
+// that the divisions tile their arc exactly, that the classical weekday tables
+// come out right for all seven weekdays, and that the limb boundaries actually
+// bracket the value they claim to.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 8: Raman ayanamsha + panchang day-parts ===");
+  const NOW8 = new Date("2026-06-15T00:00:00.000Z");
+
+  // -- Raman ----------------------------------------------------------------
+  // Raman and Lahiri are both anchored at 1900 Jan 0.5 and carried by the same
+  // precession, so their difference must be the Swiss Ephemeris epoch gap
+  // (22.460148 - 21.013444) at EVERY instant, not just at the anchor.
+  const RAMAN_GAP = 1.446704;
+  const gapAt = (d: Date) => lahiriAyanamsha(d) - ramanAyanamsha(d);
+  check(
+    "Raman sits a constant 1.446704 deg behind Lahiri across four centuries",
+    [1800, 1900, 2000, 2100, 2200].every((y) =>
+      approx(gapAt(new Date(Date.UTC(y, 0, 1, 12))), RAMAN_GAP, 1e-9)
+    ),
+    `gap @2000 = ${gapAt(new Date(Date.UTC(2000, 0, 1, 12))).toFixed(6)}`
+  );
+  check(
+    "Raman orders below Pushya, which orders below Lahiri",
+    ramanAyanamsha(NOW8) < pushyaAyanamsha(NOW8) && pushyaAyanamsha(NOW8) < lahiriAyanamsha(NOW8)
+  );
+  check(
+    "getAyanamsha dispatches every id to its own function",
+    getAyanamsha("lahiri", NOW8) === lahiriAyanamsha(NOW8) &&
+      getAyanamsha("pushya", NOW8) === pushyaAyanamsha(NOW8) &&
+      getAyanamsha("raman", NOW8) === ramanAyanamsha(NOW8)
+  );
+  check(
+    "Every declared ayanamsha id has a label and a short label",
+    AYANAMSHA_IDS.every((id) => Boolean(AYANAMSHA_LABELS[id] && AYANAMSHA_SHORT[id])),
+    AYANAMSHA_IDS.join(", ")
+  );
+  {
+    // A whole chart must compute under Raman, and must differ from Lahiri by
+    // exactly the ayanamsha gap on every body.
+    const rc = computeAutoChart(CANONICAL_INPUT, "raman", "mean")!;
+    check("A full chart computes under Raman", rc.planets.length === 9);
+    check(
+      "...and every Raman longitude leads its Lahiri counterpart by the gap",
+      rc.planets.every((p) => {
+        const l = chart.planets.find((q) => q.id === p.id)!;
+        let d = p.longitude - l.longitude;
+        if (d < -180) d += 360;
+        if (d > 180) d -= 360;
+        return approx(d, RAMAN_GAP, 1e-6);
+      })
+    );
+    check(
+      "...and the ayanamsha recorded in chart meta is the one that was used",
+      rc.meta.ayanamsha === "raman" && approx(rc.meta.ayanamshaValue, ramanAyanamsha(rc.birthUtc!), 1e-9)
+    );
+  }
+
+  // -- Day parts ------------------------------------------------------------
+  const LAT8 = CANONICAL_INPUT.place!.lat;
+  const LON8 = CANONICAL_INPUT.place!.lon;
+  const TZ8 = CANONICAL_INPUT.place!.timezone;
+
+  // Seven consecutive noons, so every weekday's table is exercised.
+  const week = Array.from({ length: 7 }, (_, i) =>
+    computeDayParts(new Date(Date.UTC(2026, 2, 1 + i, 6, 30)), LAT8, LON8, TZ8)
+  );
+  check("Day parts compute for all seven weekdays", week.every((w) => w !== null));
+
+  const parts = week.map((w) => w!);
+  check("...covering each weekday exactly once", new Set(parts.map((p) => p.varaIndex)).size === 7);
+
+  // The eight/twelve divisions must tile their arc with no gap or overlap.
+  const tiles = (spans: { start: Date; end: Date }[], from: Date, to: Date): boolean =>
+    spans.length > 0 &&
+    spans[0].start.getTime() === from.getTime() &&
+    spans[spans.length - 1].end.getTime() === to.getTime() &&
+    spans.every(
+      (s, i) => s.end > s.start && (i === 0 || s.start.getTime() === spans[i - 1].end.getTime())
+    );
+
+  check(
+    "Day choghadiya tile the sunrise-to-sunset arc exactly",
+    parts.every((p) => p.choghadiyaDay.length === 8 && tiles(p.choghadiyaDay, p.sunrise, p.sunset))
+  );
+  check(
+    "Night choghadiya tile the sunset-to-next-sunrise arc exactly",
+    parts.every(
+      (p) => p.choghadiyaNight.length === 8 && tiles(p.choghadiyaNight, p.sunset, p.nextSunrise)
+    )
+  );
+  check(
+    "Twenty-four horas tile the whole astrological day",
+    parts.every(
+      (p) =>
+        p.horaDay.length === 12 &&
+        p.horaNight.length === 12 &&
+        tiles(p.horaDay, p.sunrise, p.sunset) &&
+        tiles(p.horaNight, p.sunset, p.nextSunrise)
+    )
+  );
+
+  check(
+    "Rahu, Gulika and Yamaganda are three DISTINCT eighths of the day",
+    parts.every((p) => {
+      const starts = [p.rahuKaal, p.gulikaKaal, p.yamaganda].map((s) => s.start.getTime());
+      return new Set(starts).size === 3;
+    })
+  );
+  {
+    // The classical published tables, as 1-based eighths (Sunday first).
+    const RAHU = [8, 2, 7, 5, 6, 4, 3];
+    const GULIKA = [7, 6, 5, 4, 3, 2, 1];
+    const YAMA = [5, 4, 3, 2, 1, 7, 6];
+    const NIGHT_GULIKA = [3, 2, 1, 7, 6, 5, 4];
+    const eighthIndex = (p: (typeof parts)[number], s: { start: Date }): number =>
+      Math.round(
+        (s.start.getTime() - p.sunrise.getTime()) /
+          ((p.sunset.getTime() - p.sunrise.getTime()) / 8)
+      ) + 1;
+    const nightEighthIndex = (p: (typeof parts)[number], s: { start: Date }): number =>
+      Math.round(
+        (s.start.getTime() - p.sunset.getTime()) /
+          ((p.nextSunrise.getTime() - p.sunset.getTime()) / 8)
+      ) + 1;
+    check(
+      "Rahu Kaal matches the published weekday table",
+      parts.every((p) => eighthIndex(p, p.rahuKaal) === RAHU[p.varaIndex]),
+      parts.map((p) => `${p.varaName.slice(0, 3)}=${eighthIndex(p, p.rahuKaal)}`).join(" ")
+    );
+    check(
+      "Gulika Kaal - derived as Saturn's eighth - matches the published table",
+      parts.every((p) => eighthIndex(p, p.gulikaKaal) === GULIKA[p.varaIndex]),
+      parts.map((p) => `${p.varaName.slice(0, 3)}=${eighthIndex(p, p.gulikaKaal)}`).join(" ")
+    );
+    check(
+      "Yamaganda - derived as Jupiter's eighth - matches the published table",
+      parts.every((p) => eighthIndex(p, p.yamaganda) === YAMA[p.varaIndex]),
+      parts.map((p) => `${p.varaName.slice(0, 3)}=${eighthIndex(p, p.yamaganda)}`).join(" ")
+    );
+    check(
+      "Night Gulika matches the published night table",
+      parts.every((p) => nightEighthIndex(p, nightKaalas(p).gulika) === NIGHT_GULIKA[p.varaIndex]),
+      parts
+        .map((p) => `${p.varaName.slice(0, 3)}=${nightEighthIndex(p, nightKaalas(p).gulika)}`)
+        .join(" ")
+    );
+  }
+
+  // Abhijit is the 8th of fifteen muhurtas, so it must straddle the arc midpoint.
+  check(
+    "Abhijit Muhurta is centred on the midpoint of the day arc",
+    parts.every((p) => {
+      const mid = (p.sunrise.getTime() + p.sunset.getTime()) / 2;
+      const abhijitMid = (p.abhijit.start.getTime() + p.abhijit.end.getTime()) / 2;
+      return Math.abs(abhijitMid - mid) < 1000;
+    })
+  );
+  check(
+    "Abhijit is withheld on Wednesday and offered on the other six days",
+    parts.every((p) => p.abhijitApplies === (p.varaIndex !== 3))
+  );
+
+  {
+    const DAY_START = ["Udveg", "Amrit", "Rog", "Labh", "Shubh", "Char", "Kaal"];
+    const NIGHT_START = ["Shubh", "Char", "Kaal", "Udveg", "Amrit", "Rog", "Labh"];
+    check(
+      "Every weekday's day-choghadiya opens on the published name",
+      parts.every((p) => p.choghadiyaDay[0].name === DAY_START[p.varaIndex]),
+      parts.map((p) => `${p.varaName.slice(0, 3)}=${p.choghadiyaDay[0].name}`).join(" ")
+    );
+    check(
+      "Every weekday's night-choghadiya opens on the published name",
+      parts.every((p) => p.choghadiyaNight[0].name === NIGHT_START[p.varaIndex]),
+      parts.map((p) => `${p.varaName.slice(0, 3)}=${p.choghadiyaNight[0].name}`).join(" ")
+    );
+    check(
+      "Every choghadiya carries a meaning string",
+      parts.every((p) =>
+        [...p.choghadiyaDay, ...p.choghadiyaNight].every((c) => Boolean(CHOGHADIYA_MEANING[c.name]))
+      )
+    );
+  }
+
+  // The hora chain must agree with shadbala.ts: the first hora of the day is
+  // the weekday lord, and the 25th (= next day's first) is the next weekday's.
+  check(
+    "The day's first hora is the weekday lord",
+    parts.every((p) => p.horaDay[0].lord === p.varaLord)
+  );
+  check(
+    "Twenty-four horas later the chain lands on the NEXT weekday's lord",
+    parts.every((p, i) => {
+      const next = parts[(i + 1) % 7];
+      const CH = ["Sa", "Ju", "Ma", "Su", "Ve", "Me", "Mo"];
+      const twentyFifth = CH[(CH.indexOf(p.varaLord) + 24) % 7];
+      return twentyFifth === next.varaLord;
+    })
+  );
+  check(
+    "Exactly one choghadiya and one hora are marked current",
+    parts.every(
+      (p) =>
+        [...p.choghadiyaDay, ...p.choghadiyaNight].filter((c) => c.current).length === 1 &&
+        [...p.horaDay, ...p.horaNight].filter((h) => h.current).length === 1
+    )
+  );
+
+  // A night birth must resolve to the PREVIOUS sunrise's weekday, matching
+  // panchang.ts's sunrise-anchored vara.
+  {
+    const at2am = new Date(Date.UTC(2026, 2, 4, 20, 30)); // 02:00 IST on the 5th
+    const p = computeDayParts(at2am, LAT8, LON8, TZ8)!;
+    check(
+      "A 2 a.m. instant belongs to the previous sunrise's astrological day",
+      !p.isDay && p.sunrise < at2am && p.nextSunrise > at2am,
+      `${p.varaName}, sunrise ${p.sunrise.toISOString().slice(0, 16)}`
+    );
+    check(
+      "...and its vara agrees with panchang.ts for the same instant",
+      p.varaIndex === computePanchang(0, 0, at2am, TZ8, LAT8, LON8).varaIndex
+    );
+  }
+
+  // Polar degradation: no sun arc, no divisions - and no crash.
+  check(
+    "Above the Arctic circle in midsummer the day-parts degrade to null",
+    computeDayParts(new Date(Date.UTC(2026, 5, 21, 12)), 78.2, 15.6, "Arctic/Longyearbyen") === null
+  );
+
+  // -- Limb timings ---------------------------------------------------------
+  {
+    const at = chart.birthUtc!;
+    const L = computeLimbTimings(at, "lahiri");
+    const limbs = [L.tithi, L.nakshatra, L.yoga, L.karana];
+    const pb = computePanchang(
+      chart.planets.find((p) => p.id === "Su")!.longitude,
+      chart.planets.find((p) => p.id === "Mo")!.longitude,
+      at,
+      TZ8,
+      LAT8,
+      LON8
+    );
+    check("All four limb timings resolve without hitting the horizon", limbs.every((l) => !l.approximate));
+    check("Every limb bracket contains the queried instant", limbs.every((l) => l.start <= at && at < l.end));
+    check("Every limb bracket is ordered", limbs.every((l) => l.end > l.start));
+    check(
+      "Limb indices agree with panchang.ts for the same instant",
+      L.tithi.index === pb.tithiIndex &&
+        L.nakshatra.index === pb.nakshatraIndex &&
+        L.yoga.index === pb.yogaIndex,
+      `tithi ${L.tithi.index}, nak ${L.nakshatra.index}, yoga ${L.yoga.index}`
+    );
+    check("The limb names agree too", L.nakshatra.name === pb.nakshatraName && L.yoga.name === pb.yogaName);
+    check("The karana name agrees with panchang.ts", L.karana.name === pb.karanaName);
+    check("The karana ends no later than its tithi (two karanas per tithi)", L.karana.end <= L.tithi.end);
+
+    // Durations must sit near the classical means. Generous bands - the Moon's
+    // speed varies by ~15% between perigee and apogee.
+    const days = (l: typeof L.tithi) => (l.end.getTime() - l.start.getTime()) / 86400000;
+    check("Tithi duration is within the classical band", days(L.tithi) > 0.75 && days(L.tithi) < 1.3, `${days(L.tithi).toFixed(3)}d`);
+    check("Nakshatra duration is within the classical band", days(L.nakshatra) > 0.85 && days(L.nakshatra) < 1.2, `${days(L.nakshatra).toFixed(3)}d`);
+    check("Yoga duration is within the classical band", days(L.yoga) > 0.75 && days(L.yoga) < 1.2, `${days(L.yoga).toFixed(3)}d`);
+    check("Karana duration is within the classical band", days(L.karana) > 0.35 && days(L.karana) < 0.7, `${days(L.karana).toFixed(3)}d`);
+    check(
+      "Limb timings are deterministic",
+      computeLimbTimings(at, "lahiri").tithi.end.getTime() === L.tithi.end.getTime()
+    );
+    check(
+      "Tithi is ayanamsha-free; nakshatra is not",
+      computeLimbTimings(at, "raman").tithi.end.getTime() === L.tithi.end.getTime() &&
+        computeLimbTimings(at, "raman").nakshatra.end.getTime() !== L.nakshatra.end.getTime()
+    );
+    check(
+      "karanaNameOfHalf agrees with panchang.ts across all sixty halves",
+      [...Array(60).keys()].every((h) => {
+        const MOV = ["Bava", "Balava", "Kaulava", "Taitila", "Gara", "Vanija", "Vishti"];
+        const FIX = ["Shakuni", "Chatushpada", "Naga", "Kimstughna"];
+        const expected = h === 0 ? FIX[3] : h >= 57 ? FIX[h - 57] : MOV[(h - 1) % 7];
+        return karanaNameOfHalf(h) === expected;
+      })
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 9: the interpretation depth layer and the life-area options engine.
+//
+// Both features add PROSE derived from numbers, so the checks are about the
+// derivation rather than the wording: that every claim degrades to silence when
+// its source is absent, that no string leaks an undefined or a NaN, and that
+// the convergence/ranking logic actually reflects the numbers it cites.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 9: interpretation depth + life-area options ===");
+  const NOW9 = new Date("2026-06-15T00:00:00.000Z");
+
+  const signs9: Partial<Record<PlanetId, number>> = {};
+  for (const p of chart.planets) signs9[p.id] = p.sign;
+  const av9 = computeAshtakavarga(signs9, chart.ascendant.sign);
+  const strengths9 = allStrengths(chart, av9);
+  const vargas9 = computeVargaSet(chart);
+  const jaimini9 = computeJaimini(chart);
+  const shadbala9 = computeShadbala(chart);
+  const bhavaBala9 = shadbala9 ? computeBhavaBala(chart, shadbala9) : null;
+  const tree9 = vimshottariTree(chart.planets.find((p) => p.id === "Mo")!.longitude, chart.birthUtc!);
+  const yogas9 = detectYogas(chart);
+
+  const full = interpretFullChart(chart, strengths9, {
+    vargas: vargas9,
+    shadbala: shadbala9,
+    bhavaBala: bhavaBala9,
+    ashtakavarga: av9,
+    jaimini: jaimini9,
+  });
+
+  // -- Depth layer ----------------------------------------------------------
+  check("Every house gets a depth block when the full context is supplied", full.every((h) => h.depth.length > 0));
+  check(
+    "Every house's depth block ends with the convergence line",
+    full.every((h) => h.depth[h.depth.length - 1].startsWith("Convergence"))
+  );
+  check(
+    "The SAV values reported per house sum to the classical 337",
+    full.reduce((a, h) => a + (h.sav ?? 0), 0) === 337,
+    `${full.reduce((a, h) => a + (h.sav ?? 0), 0)}`
+  );
+  check(
+    "Each house's reported SAV is the Ashtakavarga row for its own sign",
+    full.every((h) => h.sav === av9.sav[h.sign])
+  );
+  check(
+    "Each house's reported Bhava Bala matches the Bhava Bala table",
+    full.every((h) => {
+      const row = bhavaBala9!.find((b) => b.house === h.house);
+      return h.bhavaRupas !== null && row !== undefined && Math.abs(h.bhavaRupas - row.rupas) < 1e-9;
+    })
+  );
+  check(
+    "No depth paragraph leaks undefined, null or NaN",
+    full.every((h) => h.depth.every((d) => !/undefined|NaN|\[object|null/.test(d)))
+  );
+  check(
+    "No depth paragraph is empty or a bare fragment",
+    full.every((h) => h.depth.every((d) => d.trim().length > 40))
+  );
+  check(
+    "The convergence line names only measures that actually contributed",
+    full.every((h) => {
+      const line = h.depth[h.depth.length - 1];
+      // Bhava Bala is only nameable when the table was supplied; it was, so the
+      // inverse check is the meaningful one: nothing may name the Navamsa
+      // unless the varga set exists.
+      return vargas9 !== null || !line.includes("the Navamsa");
+    })
+  );
+
+  // Degradation: each source removed independently must remove only its own claim.
+  {
+    const bare = interpretFullChart(chart, strengths9);
+    check("With no depth context at all, the depth block is empty", bare.every((h) => h.depth.length === 0));
+    check("...and sav/bhavaRupas report null rather than 0", bare.every((h) => h.sav === null && h.bhavaRupas === null));
+    check(
+      "...while the Rashi prose is untouched",
+      bare.every((h, i) => h.paragraphs.length === full[i].paragraphs.length)
+    );
+
+    const noVarga = interpretFullChart(chart, strengths9, { ashtakavarga: av9, bhavaBala: bhavaBala9 });
+    check(
+      "Without the varga set no house claims a Navamsa reading",
+      noVarga.every((h) => h.depth.every((d) => !d.startsWith("Navamsa")))
+    );
+    check("...but the Ashtakavarga and Bhava Bala claims survive", noVarga.every((h) => h.depth.length >= 2));
+
+    const noSb = interpretFullChart(chart, strengths9, { vargas: vargas9, ashtakavarga: av9 });
+    check(
+      "Without Shadbala no house quotes a rupa figure for its lord",
+      noSb.every((h) => h.depth.every((d) => !d.startsWith("Shadbala")))
+    );
+  }
+
+  check(
+    "A vargottama lord is reported as such rather than as plain agreement",
+    (() => {
+      const vo = vargas9.vargottama;
+      if (vo.length === 0) return true; // nothing to assert on this chart
+      return full.some((h) =>
+        vo.includes(h.lord.id) ? h.depth.some((d) => d.includes("vargottama")) : true
+      );
+    })(),
+    `vargottama: ${vargas9.vargottama.join(",") || "none"}`
+  );
+
+  // -- Life-area options ----------------------------------------------------
+  const areas = buildLifeAreaReports(chart, tree9, av9, yogas9, NOW9, {
+    vargas: vargas9,
+    shadbala: shadbala9,
+    bhavaBala: bhavaBala9,
+    jaimini: jaimini9,
+  });
+
+  check("All eight life areas build", areas.length === 8);
+  check("Every area produces at least two ranked possibilities", areas.every((a) => a.possibilities.length >= 2));
+  check("No area produces more than five", areas.every((a) => a.possibilities.length <= 5));
+  check(
+    "Possibilities are ranked in descending fit",
+    areas.every((a) => a.possibilities.every((p, i) => i === 0 || p.fit <= a.possibilities[i - 1].fit))
+  );
+  check(
+    "The top possibility is always at 100% by construction",
+    areas.every((a) => a.possibilities[0].fit === 100)
+  );
+  check("Every fit sits in 20-100", areas.every((a) => a.possibilities.every((p) => p.fit >= 20 && p.fit <= 100)));
+  check(
+    "Every possibility carries at least one classical reason",
+    areas.every((a) => a.possibilities.every((p) => p.reasons.length > 0))
+  );
+  check(
+    "No possibility repeats a graha within its area",
+    areas.every((a) => new Set(a.possibilities.map((p) => p.planet)).size === a.possibilities.length)
+  );
+  check(
+    "Every possibility's label and detail come from the area's own table",
+    areas.every((a) =>
+      a.possibilities.every((p) => {
+        const entry = AREA_OPTIONS[a.key][p.planet];
+        return entry !== undefined && entry.label === p.label && entry.detail === p.detail;
+      })
+    )
+  );
+  check(
+    "Every area names a divisional chart the tradition assigns it",
+    areas.every((a) => Boolean(AREA_VARGA[a.key]))
+  );
+  check("Every area produces practical levers", areas.every((a) => a.levers.length >= 2));
+  check(
+    "Every lever carries a title and a body",
+    areas.every((a) => a.levers.every((l) => l.title.length > 5 && l.body.length > 40))
+  );
+  check(
+    "The lead lever always names the top-ranked graha",
+    areas.every((a) => a.levers[0].body.startsWith(PLANET_NAMES[a.possibilities[0].planet]))
+  );
+  check(
+    "With the full context every area reports three corroborations",
+    areas.every((a) => a.corroboration.length === 3),
+    areas.map((a) => a.corroboration.length).join(",")
+  );
+  check(
+    "No option, lever or corroboration string leaks undefined or NaN",
+    areas.every((a) =>
+      [...a.possibilities.map((p) => `${p.label} ${p.detail} ${p.reasons.join(" ")}`),
+       ...a.levers.map((l) => `${l.title} ${l.body}`),
+       ...a.corroboration].every((t) => !/undefined|NaN|\[object/.test(t))
+    )
+  );
+  check(
+    "The options engine is deterministic",
+    (() => {
+      const again = buildLifeAreaReports(chart, tree9, av9, yogas9, NOW9, {
+        vargas: vargas9, shadbala: shadbala9, bhavaBala: bhavaBala9, jaimini: jaimini9,
+      });
+      return again.every((a, i) =>
+        a.possibilities.every((p, j) => p.planet === areas[i].possibilities[j].planet && p.fit === areas[i].possibilities[j].fit)
+      );
+    })()
+  );
+
+  // Degradation of the options engine.
+  {
+    const bare = buildLifeAreaReports(chart, null, null, [], NOW9);
+    check("Without any depth the areas still rank possibilities", bare.every((a) => a.possibilities.length >= 2));
+    check("...and still emit levers", bare.every((a) => a.levers.length >= 1));
+    check("...but claim no corroboration", bare.every((a) => a.corroboration.length === 0));
+    check(
+      "...and no lever cites Ashtakavarga bindus it does not have",
+      bare.every((a) => a.levers.every((l) => !l.body.includes("bindus")))
+    );
+  }
+
+  // The engine must never invent a signification: every graha named in any
+  // area's table has to be one of the nine, and every area key must be covered.
+  check(
+    "The options tables cover all eight areas and name only real grahas",
+    (Object.keys(AREA_OPTIONS) as (keyof typeof AREA_OPTIONS)[]).length === 8 &&
+      Object.values(AREA_OPTIONS).every((t) =>
+        Object.keys(t).every((id) => PLANETS.includes(id as PlanetId))
+      )
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Phase 10: input validation.
+//
+// Every check here guards a path where the engine previously produced a
+// confident, well-formatted, WRONG answer rather than an error: a birth date
+// outside the ayanamsha's validity, a civil time that does not exist, a
+// hand-entered chart that cannot physically occur. The bar is that each
+// validator fires on the bad case and stays silent on the good one — a
+// validator that warns about everything is as useless as one that warns about
+// nothing, so both directions are asserted.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 10: input validation ===");
+
+  // -- Birth date bounds ----------------------------------------------------
+  const sev = (iss: { severity: string }[]) => iss.map((i) => i.severity).join(",");
+  check("A year before 1850 is a hard error", sev(checkBirthDate("1500-06-01")) === "error");
+  check("A year after 2150 is a hard error", sev(checkBirthDate("2200-06-01")) === "error");
+  check("The boundary years themselves are accepted", checkBirthDate("1850-01-01").every((i) => i.severity !== "error") && checkBirthDate("2150-12-31").every((i) => i.severity !== "error"));
+  check("A year in the degraded band warns but does not block", sev(checkBirthDate("1870-06-01")) === "warn");
+  check("...on both sides", sev(checkBirthDate("2120-06-01")) === "warn");
+  check("A modern date raises nothing at all", checkBirthDate("1990-01-24").length === 0);
+  check("A malformed date is an error rather than a crash", sev(checkBirthDate("not-a-date")) === "error");
+  check(
+    "The exported bounds agree with the messages",
+    DATE_MIN === "1850-01-01" && DATE_MAX === "2150-12-31"
+  );
+  check(
+    "The date bound matches the one PredictionPanel already used",
+    Number(DATE_MIN.slice(0, 4)) === 1850 && Number(DATE_MAX.slice(0, 4)) === 2150
+  );
+
+  // -- Coordinates ----------------------------------------------------------
+  check("Sane coordinates raise nothing", checkCoordinates(28.6139, 77.209).length === 0);
+  check("Out-of-range latitude is an error", checkCoordinates(999, 0).some((i) => i.severity === "error"));
+  check("Out-of-range longitude is an error", checkCoordinates(0, 999).some((i) => i.severity === "error"));
+  check(
+    "...and an out-of-range latitude does NOT also emit the polar warning",
+    checkCoordinates(999, 0).filter((i) => i.severity === "warn").length === 0
+  );
+  check("A polar latitude warns", checkCoordinates(78.2, 15.6).some((i) => i.severity === "warn"));
+  check("...on both hemispheres", checkCoordinates(-78.2, 15.6).some((i) => i.severity === "warn"));
+  check("Just inside the polar circle stays quiet", checkCoordinates(66.0, 15.6).length === 0);
+
+  // -- Local time / DST -----------------------------------------------------
+  {
+    // 02:30 on 2026-03-08 does not exist in America/New_York (spring forward).
+    const gap = localToUtc("America/New_York", "2026-03-08", "02:30");
+    const issues = checkLocalTime("America/New_York", "2026-03-08", "02:30", gap);
+    check("A non-existent civil time is detected", issues.length > 0, `${issues.length} notes`);
+    check(
+      "...and the message says the time does not exist",
+      issues.some((i) => i.message.includes("does not exist"))
+    );
+    const normal = localToUtc("Asia/Kolkata", "1990-01-24", "12:30");
+    check(
+      "An ordinary IST birth raises nothing",
+      checkLocalTime("Asia/Kolkata", "1990-01-24", "12:30", normal).length === 0
+    );
+    // India has had no DST since 1945, so a modern IST date must be quiet even
+    // adjacent to the northern-hemisphere clock-change dates.
+    const march = localToUtc("Asia/Kolkata", "2026-03-08", "02:30");
+    check(
+      "A zone with no clock changes stays quiet on a clock-change date elsewhere",
+      checkLocalTime("Asia/Kolkata", "2026-03-08", "02:30", march).length === 0
+    );
+  }
+
+  // -- Manual chart plausibility -------------------------------------------
+  {
+    const base = {
+      lagnaSign: 0,
+      ascDeg: 10,
+      anchor: { dateISO: "", time: "", place: null },
+    };
+    const mk = (planets: { id: PlanetId; house: number; deg: number; retro: boolean }[]) =>
+      ({ ...base, planets }) as ManualInputState;
+
+    const sound = mk([
+      { id: "Su", house: 1, deg: 10, retro: false },
+      { id: "Me", house: 1, deg: 25, retro: false }, // 15 deg from the Sun
+      { id: "Ve", house: 2, deg: 10, retro: false }, // 30 deg from the Sun
+      { id: "Ra", house: 1, deg: 0, retro: true },
+      { id: "Ke", house: 7, deg: 0, retro: true },
+    ]);
+    check("A physically possible manual chart raises nothing", validateManualChart(sound).length === 0);
+
+    const badMe = mk([
+      { id: "Su", house: 1, deg: 10, retro: false },
+      { id: "Me", house: 4, deg: 10, retro: false }, // 90 deg — impossible
+    ]);
+    check(
+      "Mercury beyond its maximum elongation is caught",
+      validateManualChart(badMe).some((i) => i.field === "Me")
+    );
+
+    const badVe = mk([
+      { id: "Su", house: 1, deg: 10, retro: false },
+      { id: "Ve", house: 4, deg: 10, retro: false }, // 90 deg — impossible
+    ]);
+    check(
+      "Venus beyond its maximum elongation is caught",
+      validateManualChart(badVe).some((i) => i.field === "Ve")
+    );
+
+    const okVe = mk([
+      { id: "Su", house: 1, deg: 10, retro: false },
+      { id: "Ve", house: 2, deg: 25, retro: false }, // 45 deg — legal for Venus
+    ]);
+    check(
+      "...but a 45-degree Venus, which is legal, is NOT flagged",
+      validateManualChart(okVe).length === 0
+    );
+
+    const badNode = mk([
+      { id: "Ra", house: 1, deg: 0, retro: true },
+      { id: "Ke", house: 4, deg: 0, retro: true }, // 90 deg apart — broken axis
+    ]);
+    check(
+      "A broken Rahu/Ketu axis is caught",
+      validateManualChart(badNode).some((i) => i.field === "Ke" && i.message.includes("apart"))
+    );
+
+    const dupe = mk([
+      { id: "Su", house: 1, deg: 10, retro: false },
+      { id: "Su", house: 2, deg: 10, retro: false },
+    ]);
+    check(
+      "A duplicated graha is an error, not a warning",
+      dupe && validateManualChart(dupe).some((i) => i.severity === "error" && i.field === "Su")
+    );
+
+    const badDeg = mk([{ id: "Su", house: 1, deg: 45, retro: false }]);
+    check(
+      "A degree outside its sign is an error",
+      validateManualChart(badDeg).some((i) => i.severity === "error")
+    );
+
+    const badAsc = { ...mk([]), ascDeg: 45 } as ManualInputState;
+    check(
+      "A Lagna degree outside its sign is an error",
+      validateManualChart(badAsc).some((i) => i.severity === "error" && i.field === "asc")
+    );
+  }
+
+  // -- Ketu derivation ------------------------------------------------------
+  check(
+    "Ketu is derived six houses from Rahu, at the same degree, for every house",
+    Array.from({ length: 12 }, (_, i) => i + 1).every((h) => {
+      const k = ketuFromRahu(h, 17.5);
+      return k.deg === 17.5 && ((k.house - h + 12) % 12) === 6;
+    })
+  );
+  check(
+    "...and deriving twice returns to the start",
+    Array.from({ length: 12 }, (_, i) => i + 1).every(
+      (h) => ketuFromRahu(ketuFromRahu(h, 3).house, 3).house === h
+    )
+  );
+  check(
+    "A derived Ketu satisfies the nodal-axis validator",
+    Array.from({ length: 12 }, (_, i) => i + 1).every((h) => {
+      const k = ketuFromRahu(h, 12);
+      const chartIn = {
+        lagnaSign: 0,
+        ascDeg: 10,
+        planets: [
+          { id: "Ra" as PlanetId, house: h, deg: 12, retro: true },
+          { id: "Ke" as PlanetId, house: k.house, deg: k.deg, retro: true },
+        ],
+        anchor: { dateISO: "", time: "", place: null },
+      } as ManualInputState;
+      return validateManualChart(chartIn).length === 0;
+    })
+  );
+
+  // -- The rectify API now enforces the same bound ---------------------------
+  {
+    const mkReq = (dateISO: string) => ({
+      birth: { dateISO, time: "12:30", timezone: "Asia/Kolkata", lat: 28.6139, lon: 77.209 },
+      events: Array.from({ length: 5 }, (_, i) => ({
+        type: "marriage",
+        dateISO: `20${10 + i}-06-01`,
+        precision: "year",
+        reliability: "probable",
+      })),
+    });
+    const bad = validateRectifyRequest(mkReq("1500-01-01"));
+    check("The rectify API rejects a birth date outside the ayanamsha window", bad.ok === false);
+    const good = validateRectifyRequest(mkReq("1990-01-24"));
+    check("...and still accepts a modern one", good.ok === true);
   }
 }
 

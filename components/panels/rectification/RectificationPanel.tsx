@@ -338,6 +338,13 @@ export default function RectificationPanel() {
                 ))}
               </div>
             </div>
+            <p className="mb-3 text-[11px] leading-relaxed text-fg-faint">
+              The sweep is a deliberate two-way Lahiri-vs-Pushya comparison, unchanged by the Raman option in
+              the header. The three run in the order Raman &lt; Pushya &lt; Lahiri: Raman sits ~1.45° behind
+              Lahiri, which is a further ~0.32° beyond Pushya rather than between the two. A candidate minute
+              that survives this pair is therefore well tested, but Raman lies just outside the tested span —
+              treat a Raman reading of the surviving minute as one step less confirmed.
+            </p>
             <ResultDetail result={detail === "lahiri" ? result.lahiri : result.pushya} events={dated} />
           </section>
 

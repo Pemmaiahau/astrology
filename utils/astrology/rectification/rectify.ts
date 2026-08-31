@@ -7,6 +7,7 @@ import { solarReturn } from "../scan";
 import { localToUtc, tzOffsetMinutes, utcOffsetLabel } from "../time";
 import { computeVargaSet, vargaSign, type VargaSet } from "../varga";
 import type { AutoInputState, AyanamshaId, ChartData, DashaPeriod, PlanetId } from "../types";
+import { checkBirthDate } from "../validate";
 import { EVENT_RULES, resolveHouses } from "./eventRules";
 import { dashaShiftDaysPerMinute } from "./dashaFitness";
 import {
@@ -125,6 +126,15 @@ export function validateRectifyRequest(
   const lon = typeof br.lon === "number" ? br.lon : NaN;
 
   if (!dateISO || !/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) errors.push("`birth.dateISO` must be YYYY-MM-DD.");
+  else {
+    // Same ayanamsha-validity bound the UI enforces on the birth date input:
+    // a rectification sweep outside it would refine a minute against a zodiac
+    // this engine cannot place accurately.
+    for (const issue of checkBirthDate(dateISO)) {
+      if (issue.severity === "error") errors.push(`\`birth.dateISO\`: ${issue.message}`);
+      else warnings.push(issue.message);
+    }
+  }
   if (!time || !/^\d{2}:\d{2}$/.test(time)) errors.push("`birth.time` must be HH:mm.");
   if (!timezone) errors.push("`birth.timezone` must be an IANA zone name.");
   if (!Number.isFinite(lat) || lat < -90 || lat > 90) errors.push("`birth.lat` must be a number in −90…90.");

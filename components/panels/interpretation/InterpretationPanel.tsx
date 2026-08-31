@@ -1,8 +1,10 @@
 "use client";
 
-import { Eye, ScrollText, Star, UserRound } from "lucide-react";
+import { useState } from "react";
+import { Eye, Layers, ScrollText, Star, UserRound } from "lucide-react";
 import { useChart } from "@/components/context/ChartContext";
 import { PLANET_NAMES } from "@/utils/astrology/constants";
+import type { HouseInterpretation } from "@/data/interpretations/synthesis";
 import CareerCard from "./CareerCard";
 import CautionsCard from "./CautionsCard";
 import ForeignCard from "./ForeignCard";
@@ -11,9 +13,68 @@ import MarriageCard from "./MarriageCard";
 import WealthCard from "./WealthCard";
 
 /**
+ * The classical corroboration block for one house.
+ *
+ * Kept collapsed by default and visually separated from the Rashi prose above,
+ * because it answers a different question: the paragraphs above say what the
+ * birth chart promises, and this says how many of the other classical accounts
+ * back that promise. Merging them would let a reader mistake corroboration for
+ * a second, independent claim about the same thing.
+ */
+function DepthBlock({ reading }: { reading: HouseInterpretation }) {
+  const [open, setOpen] = useState(false);
+  const chips: string[] = [];
+  if (reading.sav !== null) chips.push(`SAV ${reading.sav}`);
+  if (reading.bhavaRupas !== null) chips.push(`Bhava Bala ${reading.bhavaRupas.toFixed(1)} rupas`);
+
+  return (
+    <div className="mt-3 rounded-lg border border-line-soft bg-surface-soft">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full flex-wrap items-center gap-2 px-3 py-2 text-left transition hover:bg-inset"
+      >
+        <Layers className="h-3.5 w-3.5 shrink-0 text-eyebrow" />
+        <span className="text-xs font-bold uppercase tracking-wider text-eyebrow">
+          Classical corroboration
+        </span>
+        {chips.map((c) => (
+          <span
+            key={c}
+            className="rounded-full bg-inset-2 px-2 py-0.5 font-mono text-[10px] font-semibold text-fg-muted"
+          >
+            {c}
+          </span>
+        ))}
+        <span className="ml-auto text-[11px] font-medium text-fg-subtle">
+          {open ? "hide" : `${reading.depth.length} checks`}
+        </span>
+      </button>
+      {open && (
+        <div className="space-y-2 border-t border-line-soft px-3 py-2.5">
+          {reading.depth.map((d, i) => (
+            <p
+              key={i}
+              className={`text-xs leading-relaxed ${
+                i === reading.depth.length - 1 && d.startsWith("Convergence")
+                  ? "rounded-md bg-primary-wash p-2 font-medium text-heading-soft"
+                  : "text-fg-muted"
+              }`}
+            >
+              {d}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * The Interpretation tab: personality profile, detected yogas, the scored
  * life-question cards (career, wealth, marriage, foreign, cautions, lucky —
- * added as collapsible SectionCards), then the house-by-house reading.
+ * added as collapsible SectionCards), then the house-by-house reading with its
+ * classical corroboration block.
  */
 export default function InterpretationPanel() {
   const { chart, yogas, houseReadings, personality } = useChart();
@@ -74,7 +135,11 @@ export default function InterpretationPanel() {
         </h3>
         <p className="mt-1 text-xs leading-relaxed text-fg-muted">
           All twelve houses are judged. Houses with no occupant are read the classical way — by the
-          condition of their lord and by the drishti (aspects) they receive.
+          condition of their lord and by the drishti (aspects) they receive. Each house also carries a
+          <span className="font-semibold text-fg-2"> Classical corroboration </span>
+          block: the Navamsa and the house&apos;s own divisional chart, its Bhava Bala in rupas, its
+          Sarvashtakavarga bindus, the lord&apos;s Shadbala against the classical minimum, and Jaimini
+          argala — ending in a convergence line saying how many of those independent measures agree.
         </p>
       </section>
 
@@ -119,6 +184,7 @@ export default function InterpretationPanel() {
               {p}
             </p>
           ))}
+          {h.depth.length > 0 && <DepthBlock reading={h} />}
         </section>
       ))}
     </div>

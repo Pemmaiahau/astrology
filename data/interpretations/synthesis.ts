@@ -23,6 +23,17 @@ import type {
   PlanetPosition,
 } from "@/utils/astrology/types";
 import { ownedHouses } from "@/utils/astrology/yogas";
+import type { AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
+import type { JaiminiInfo } from "@/utils/astrology/jaimini";
+import type { BhavaBala, ShadbalaSet } from "@/utils/astrology/shadbala";
+import {
+  houseInVarga,
+  vargaPositionOf,
+  VARGA_NAMES,
+  VARGA_SIGNIFICATIONS,
+  type VargaId,
+  type VargaSet,
+} from "@/utils/astrology/varga";
 import { ASPECT_ON_HOUSE, drishtiCharacter } from "./aspectTexts";
 import { CONJUNCTION_TEXT, conjunctionKey } from "./conjunctions";
 import { FUNCTIONAL_ROLES, marakasFor } from "./lordships";
@@ -294,6 +305,286 @@ const GROUP_TIER_NOTE: Record<ConjunctionStrength["tier"], string> = {
 };
 
 /* ------------------------------------------------------------------ *
+ * Depth layer: the classical corroborations
+ *
+ * Everything above reads the Rashi chart. A practitioner does not stop there —
+ * a promise made in the D-1 is confirmed, qualified or withdrawn by four other
+ * accounts, all of which this engine already computes and none of which used to
+ * reach the prose:
+ *
+ *   1. the DIVISIONAL chart that owns the house's subject (BPHS Ch.6: each
+ *      varga is read for its own bhava, and the D-9 for everything),
+ *   2. the house's own BHAVA BALA in rupas (BPHS Bhava-bala adhyaya),
+ *   3. the house's SARVASHTAKAVARGA bindus (the classical 25/30 thresholds),
+ *   4. the lord's SHADBALA against its classical minimum requirement,
+ *   5. ARGALA — which planets intervene in the house and which obstruct that
+ *      intervention (Jaimini Sutras 1.1).
+ *
+ * The point of the layer is not more adjectives; it is that a reader can see
+ * WHERE the accounts agree and where they contradict each other. A 10th house
+ * strong in the D-1 and collapsed in the D-10 is a genuinely different life
+ * from one strong in both, and the old prose could not tell them apart.
+ * ------------------------------------------------------------------ */
+
+/** Optional classical corroborations. Every field degrades to silence when absent. */
+export interface HouseDepthContext {
+  vargas?: VargaSet | null;
+  shadbala?: ShadbalaSet | null;
+  bhavaBala?: BhavaBala[] | null;
+  ashtakavarga?: AshtakavargaResult | null;
+  jaimini?: JaiminiInfo | null;
+}
+
+/**
+ * The divisional chart classically read for each house, beyond the universal
+ * D-9. BPHS Ch.6 assigns each varga a subject; these are the pairings where the
+ * varga's subject IS the house's subject, so the varga is the second opinion
+ * that actually counts.
+ *
+ * Houses with no specialised varga (the 1st, 8th, 11th) fall back to the D-9
+ * alone, which is the classical position rather than a gap: the Navamsa is the
+ * general strength test for every graha.
+ */
+const HOUSE_VARGA: Partial<Record<number, VargaId>> = {
+  2: "D2",   // wealth and sustenance
+  3: "D3",   // siblings, courage, effort
+  4: "D4",   // property, home, fortune
+  5: "D7",   // children and lineage
+  6: "D30",  // misfortune and its sources
+  7: "D9",   // marriage (the D-9's own subject)
+  9: "D12",  // fortune, father, ancestry
+  10: "D10", // career and public deeds
+  12: "D20", // spiritual practice, and the moksha house
+};
+
+/** Classical Sarvashtakavarga thresholds: the 12 signs share 337 bindus, mean ~28. */
+function savVerdict(bindus: number): { word: string; gloss: string } {
+  if (bindus >= 30)
+    return {
+      word: "strong",
+      gloss:
+        "Above the 30-bindu mark the house is classically held to prosper on its own account: transits through it tend to give their better results, and the significations hold up under pressure.",
+    };
+  if (bindus <= 24)
+    return {
+      word: "weak",
+      gloss:
+        "Below the 25-bindu mark the classical reading is that the house cannot fund itself: even benefic transits through it under-deliver, and its affairs need support imported from elsewhere in the chart.",
+    };
+  return {
+    word: "middling",
+    gloss:
+      "Between 25 and 29 bindus the house sits near the 28-bindu average — it neither subsidises nor taxes what passes through it, so results here follow the dasha and the lord rather than the field itself.",
+  };
+}
+
+/** The Bhava Bala paragraph: the house's own strength, ranked against its eleven peers. */
+function bhavaBalaSentence(house: number, table: BhavaBala[]): string {
+  const mine = table.find((b) => b.house === house);
+  if (!mine) return "";
+  const ranked = [...table].sort((a, b) => b.rupas - a.rupas);
+  const rank = ranked.findIndex((b) => b.house === house) + 1;
+  const lordShare = mine.factors.find((f) => f.label.startsWith("Bhavadhipati"))?.virupas ?? 0;
+  const drishtiShare = mine.factors.find((f) => f.label.startsWith("Bhava Drishti"))?.virupas ?? 0;
+
+  const band =
+    mine.rupas >= 8
+      ? "a genuinely well-funded house — it can carry its significations without borrowing"
+      : mine.rupas >= 5
+        ? "adequately funded: the house holds, but it does not have reserves to spend on crises"
+        : "under-funded — the classical reading is that its affairs will need conscious, repeated support";
+
+  // The rupa band is absolute and the rank is relative, so on a chart with an
+  // even spread the two can look like they disagree ("12th of twelve, but
+  // adequately funded"). Saying which reading is doing the work removes that.
+  const rankNote =
+    rank === 1
+      ? " Being the best-funded house in the chart, it is where this native has the most to work with."
+      : rank === 12
+        ? " Last of the twelve: even where the absolute figure is respectable, this is still the house with the least backing relative to the rest of the chart, and it is the first to give way when several are stressed at once."
+        : "";
+
+  const composition =
+    drishtiShare < -15
+      ? ` Note the composition: the lord contributes ${(lordShare / 60).toFixed(2)} rupas while net drishti takes ${Math.abs(drishtiShare / 60).toFixed(2)} back out — this house is strong at the lord and besieged at the field, which shows up as capable people in an obstructive environment.`
+      : drishtiShare > 10
+        ? ` The composition is favourable on both counts: ${(lordShare / 60).toFixed(2)} rupas from the lord and a further ${(drishtiShare / 60).toFixed(2)} added by net benefic drishti.`
+        : "";
+
+  return (
+    `Bhava Bala: the ${ordinal(house)} musters ${mine.rupas.toFixed(2)} rupas, ranking ${ordinal(rank)} of the twelve houses in this chart — ${band}.${rankNote}${composition}`
+  );
+}
+
+/** Shadbala of the house lord against the classical per-planet minimum. */
+function shadbalaSentence(lordId: PlanetId, house: number, sb: ShadbalaSet): string {
+  const entry = (sb.planets as Record<string, ShadbalaSet["planets"][keyof ShadbalaSet["planets"]]>)[lordId];
+  if (!entry) return "";
+  const name = PLANET_NAMES[lordId];
+  const pct = Math.round(entry.ratio * 100);
+  const strongest = sb.strongest === lordId;
+  const weakest = sb.weakest === lordId;
+
+  const verdict =
+    entry.ratio >= 1.2
+      ? `comfortably clear of what the tradition demands of it, so ${name} has the authority to enforce the ${ordinal(house)}'s promises rather than merely hold them`
+      : entry.ratio >= 1
+        ? `only just over the line, so ${name} is sufficient for the ${ordinal(house)} but has no surplus to spend when the house is tested`
+        : `short of its classical minimum, which is the strict Parashari signal that the ${ordinal(house)}'s significations are promised but under-guaranteed`;
+
+  const rank = strongest
+    ? ` It is also the strongest graha in the chart, which makes the ${ordinal(house)} one of this life's load-bearing walls.`
+    : weakest
+      ? ` It is also the weakest graha in the chart, so of the twelve houses this one is the least able to defend itself.`
+      : "";
+
+  return `Shadbala: ${name} totals ${entry.rupas.toFixed(2)} rupas against a requirement of ${(entry.required / 60).toFixed(2)} (${pct}% of minimum) — ${verdict}.${rank} Ishta ${entry.ishta.toFixed(1)} / Kashta ${entry.kashta.toFixed(1)} sets the ratio of benefic to malefic capacity it brings to the house.`;
+}
+
+/**
+ * The divisional second opinion. Reports the lord's and the occupants' fate in
+ * the D-9 (universal) and in the house's own varga where one exists, and — the
+ * part that actually matters — says explicitly whether the accounts agree.
+ */
+function vargaParagraphs(
+  chart: ChartData,
+  house: number,
+  lordId: PlanetId,
+  lordPos: PlanetPosition | null,
+  occupants: PlanetPosition[],
+  vargas: VargaSet
+): string[] {
+  const out: string[] = [];
+  const specialised = HOUSE_VARGA[house];
+
+  const describe = (id: PlanetId, vid: VargaId): { text: string; strong: boolean; weak: boolean } | null => {
+    const vc = vargas.charts[vid];
+    const pos = vargaPositionOf(vc, id);
+    if (!pos) return null;
+    const strong = ["exalted", "moolatrikona", "own", "greatFriend"].includes(pos.dignity);
+    const weak = ["debilitated", "greatEnemy", "enemy"].includes(pos.dignity);
+    const h = houseInVarga(vc, pos.sign);
+    return {
+      text: `${SIGNS[pos.sign]} (${DIGNITY_INLINE[pos.dignity]}), the ${ordinal(h)} house of that chart`,
+      strong,
+      weak,
+    };
+  };
+
+  // 1. The lord in the Navamsa — the universal strength test.
+  if (lordPos) {
+    const d9 = describe(lordId, "D9");
+    if (d9) {
+      const rashiStrong = STRONG_DIGNITIES.includes(lordPos.dignity);
+      const rashiWeak = WEAK_DIGNITIES.includes(lordPos.dignity);
+      const vargottama = vargas.vargottama.includes(lordId);
+
+      let agreement: string;
+      if (vargottama) {
+        agreement = `${PLANET_NAMES[lordId]} is vargottama — it holds the same sign in the Rashi and the Navamsa. This is the strongest corroboration the divisional system offers: whatever the D-1 says about the ${ordinal(house)}, the D-9 says it twice, and the promise is unusually reliable.`;
+      } else if (rashiStrong && d9.strong) {
+        agreement = `Both accounts agree and both are favourable — a promise made in the D-1 and confirmed in the D-9 is one that actually delivers, rather than one that merely looks good on the birth chart.`;
+      } else if (rashiWeak && d9.weak) {
+        agreement = `Both accounts agree and both are unfavourable. This is the honest case where the difficulty is structural rather than a single bad placement, and the ${ordinal(house)} should be planned around rather than counted on.`;
+      } else if (rashiStrong && d9.weak) {
+        agreement = `The accounts contradict each other: strong in the Rashi, weak in the Navamsa. Classically this is the "promise without delivery" signature — the ${ordinal(house)}'s affairs look well-set and repeatedly fail to consolidate, and the D-9 is the account to trust for the outcome.`;
+      } else if (rashiWeak && d9.strong) {
+        agreement = `The accounts contradict each other in the native's favour: weak in the Rashi, strong in the Navamsa. This is the classical late-blooming signature — the ${ordinal(house)} disappoints early and matures well, typically from the second half of life or from this lord's own dasha onward.`;
+      } else if (d9.strong) {
+        agreement = `The Rashi is non-committal and the Navamsa is favourable. The D-9 is the account that governs delivery, so this reads as more than the birth chart alone suggests — the ${ordinal(house)} tends to be quietly under-rated on paper and to perform better than expected in practice.`;
+      } else if (d9.weak) {
+        agreement = `The Rashi is non-committal and the Navamsa is unfavourable. Since the D-9 governs delivery, this is the case where an unremarkable-looking house turns out to be the harder one — the ${ordinal(house)} costs more effort than its birth-chart placement implies.`;
+      } else {
+        agreement = `Neither account is emphatic, so the ${ordinal(house)} is governed by the dasha sequence and the native's own effort rather than by structural promise.`;
+      }
+
+      out.push(
+        `Navamsa (D-9), the classical test of whether a placement holds: the lord ${PLANET_NAMES[lordId]} goes to ${d9.text}. ${agreement}`
+      );
+    }
+  }
+
+  // 2. The house's own varga, where the tradition assigns one.
+  if (specialised && specialised !== "D9") {
+    const vc = vargas.charts[specialised];
+    const lines: string[] = [
+      `${VARGA_NAMES[specialised]} (${specialised}) is the divisional chart read for ${VARGA_SIGNIFICATIONS[specialised]} — which is this house's own subject, so it is the second opinion that counts most here.`,
+    ];
+    const ld = lordPos ? describe(lordId, specialised) : null;
+    if (ld) {
+      lines.push(
+        `The ${ordinal(house)} lord ${PLANET_NAMES[lordId]} occupies ${ld.text}${
+          ld.strong
+            ? " — well dignified, so the specialised account backs the Rashi's reading"
+            : ld.weak
+              ? " — poorly dignified, so the specialised account withholds what the Rashi promises"
+              : ""
+        }.`
+      );
+    }
+    // The varga lagna's own lord matters as much as the D-1 lord's placement.
+    const vLagnaLord = SIGN_LORDS[vc.ascendant];
+    const vll = describe(vLagnaLord, specialised);
+    if (vll) {
+      lines.push(
+        `That chart rises in ${SIGNS[vc.ascendant]}, whose lord ${PLANET_NAMES[vLagnaLord]} sits in ${vll.text} — the divisional lagna lord is what carries the whole varga, so its condition sets the ceiling for everything the ${specialised} promises.`
+      );
+    }
+    out.push(lines.join(" "));
+  }
+
+  // 3. Occupants that are vargottama — worth naming individually.
+  const vo = occupants.filter((p) => vargas.vargottama.includes(p.id));
+  if (vo.length > 0) {
+    out.push(
+      `${vo.map((p) => PLANET_NAMES[p.id]).join(" and ")} ${vo.length === 1 ? "is" : "are"} vargottama, holding the same sign in the Rashi and the Navamsa. A vargottama occupant is the most dependable thing in a house: it behaves the same way in both accounts, so its results arrive in the form the birth chart describes rather than in some altered version of it.`
+    );
+  }
+
+  return out;
+}
+
+/** Argala — Jaimini's intervention rule, and the obstruction that answers it. */
+function argalaSentence(house: number, jaimini: JaiminiInfo): string {
+  const a = jaimini.argala[house - 1];
+  if (!a) return "";
+  const names = (ids: PlanetId[]) => ids.map((id) => PLANET_NAMES[id]).join(", ");
+  if (a.intervening.length === 0) {
+    return `Argala (Jaimini): no graha occupies the 2nd, 4th or 11th from the ${ordinal(house)}, so nothing intervenes in its affairs from outside. The house is left to its own lord and its own drishti — quieter, and more predictable, than a house under argala.`;
+  }
+  const net =
+    a.obstructing.length === 0
+      ? `Nothing stands in the 12th, 10th or 3rd to obstruct it, so the intervention lands unopposed — these planets genuinely steer the ${ordinal(house)}'s outcomes, and their dashas are when that steering happens.`
+      : `${names(a.obstructing)} ${a.obstructing.length === 1 ? "stands" : "stand"} in the obstructing houses (virodha argala), so the intervention is contested rather than decisive: the ${ordinal(house)}'s affairs get pulled in two directions, and which way they go depends on which side is running its dasha.`;
+  return `Argala (Jaimini): ${names(a.intervening)} ${a.intervening.length === 1 ? "exerts" : "exert"} argala on the ${ordinal(house)} from the 2nd, 4th or 11th from it. ${net}`;
+}
+
+/**
+ * One closing sentence that puts the accounts side by side.
+ *
+ * Deliberately the last paragraph of every house: a reader who takes nothing
+ * else from the section should still be able to see how many of the five
+ * independent measures agree, and which of them is the dissenter.
+ */
+function convergenceSentence(
+  house: number,
+  signals: { label: string; positive: boolean | null }[]
+): string {
+  const scored = signals.filter((s) => s.positive !== null);
+  if (scored.length < 2) return "";
+  const good = scored.filter((s) => s.positive);
+  const bad = scored.filter((s) => !s.positive);
+
+  if (bad.length === 0) {
+    return `Convergence: all ${scored.length} independent measures of the ${ordinal(house)} (${scored.map((s) => s.label).join(", ")}) point the same, favourable way. Agreement across separate accounts is the strongest verdict this system produces — treat this house as genuinely reliable.`;
+  }
+  if (good.length === 0) {
+    return `Convergence: all ${scored.length} independent measures of the ${ordinal(house)} (${scored.map((s) => s.label).join(", ")}) point the same, unfavourable way. Unanimity is as meaningful here as it is when positive — this is a structural weakness, not a single unlucky placement, and it should be planned around rather than argued with.`;
+  }
+  return `Convergence: the measures split — ${good.map((s) => s.label).join(", ")} ${good.length === 1 ? "supports" : "support"} the ${ordinal(house)} while ${bad.map((s) => s.label).join(", ")} ${bad.length === 1 ? "does" : "do"} not. A split verdict is the normal case and it means the house is conditional: it delivers in the periods of the planets backing it and stalls in the others, so timing matters here more than in a house where everything agrees.`;
+}
+
+/* ------------------------------------------------------------------ *
  * House interpretation
  * ------------------------------------------------------------------ */
 
@@ -307,12 +598,24 @@ export interface HouseInterpretation {
   conjunctions: ConjunctionStrength[];
   title: string;
   paragraphs: string[];
+  /**
+   * The classical corroborations (Navamsa and the house's own varga, Bhava
+   * Bala, Sarvashtakavarga, the lord's Shadbala, Argala) plus the convergence
+   * verdict. Empty when no depth context was supplied, so the panel can render
+   * the Rashi reading alone without a special case.
+   */
+  depth: string[];
+  /** Sarvashtakavarga bindus on this house's sign, when Ashtakavarga was supplied. */
+  sav: number | null;
+  /** Bhava Bala in rupas, when Shadbala was available to build it. */
+  bhavaRupas: number | null;
 }
 
 export function interpretHouse(
   chart: ChartData,
   house: number,
-  strengths: Partial<Record<PlanetId, PlanetStrength>> = {}
+  strengths: Partial<Record<PlanetId, PlanetStrength>> = {},
+  ctx: HouseDepthContext = {}
 ): HouseInterpretation {
   const lagnaSign = chart.ascendant.sign;
   const sign = (lagnaSign + house - 1) % 12;
@@ -437,6 +740,86 @@ export function interpretHouse(
     );
   }
 
+  // 8. The classical corroborations, and whether they agree with each other.
+  const depth: string[] = [];
+  const signals: { label: string; positive: boolean | null }[] = [];
+
+  // The Rashi verdict itself is the first signal, so the convergence line is
+  // comparing the depth layer AGAINST the reading above rather than only
+  // against itself.
+  signals.push({
+    label: "the Rashi lord",
+    positive: lordPos
+      ? STRONG_DIGNITIES.includes(lordPos.dignity)
+        ? true
+        : WEAK_DIGNITIES.includes(lordPos.dignity)
+          ? false
+          : null
+      : null,
+  });
+  signals.push({
+    label: "drishti balance",
+    positive: beneficCount === maleficCount ? null : beneficCount > maleficCount,
+  });
+
+  const sav = ctx.ashtakavarga ? ctx.ashtakavarga.sav[sign] : null;
+  if (sav !== null) {
+    const v = savVerdict(sav);
+    depth.push(
+      `Sarvashtakavarga: ${SIGNS[sign]} holds ${sav} bindus, which reads as ${v.word} against the classical 25/30 thresholds (the twelve signs share 337, so 28 is the average). ${v.gloss}`
+    );
+    signals.push({ label: "Sarvashtakavarga", positive: sav >= 30 ? true : sav <= 24 ? false : null });
+  }
+
+  if (ctx.bhavaBala) {
+    const line = bhavaBalaSentence(house, ctx.bhavaBala);
+    if (line) depth.push(line);
+    const mine = ctx.bhavaBala.find((b) => b.house === house);
+    if (mine) {
+      signals.push({
+        label: "Bhava Bala",
+        positive: mine.rupas >= 8 ? true : mine.rupas < 5 ? false : null,
+      });
+    }
+  }
+
+  if (ctx.shadbala && lordPos) {
+    const line = shadbalaSentence(lordId, house, ctx.shadbala);
+    if (line) depth.push(line);
+    const entry = (ctx.shadbala.planets as Record<string, { ratio: number }>)[lordId];
+    if (entry) {
+      signals.push({
+        label: "the lord's Shadbala",
+        positive: entry.ratio >= 1.2 ? true : entry.ratio < 1 ? false : null,
+      });
+    }
+  }
+
+  if (ctx.vargas) {
+    depth.push(...vargaParagraphs(chart, house, lordId, lordPos, occupants, ctx.vargas));
+    const d9 = vargaPositionOf(ctx.vargas.charts.D9, lordId);
+    if (d9) {
+      signals.push({
+        label: "the Navamsa",
+        positive: ["exalted", "moolatrikona", "own", "greatFriend"].includes(d9.dignity)
+          ? true
+          : ["debilitated", "greatEnemy", "enemy"].includes(d9.dignity)
+            ? false
+            : null,
+      });
+    }
+  }
+
+  if (ctx.jaimini) {
+    const line = argalaSentence(house, ctx.jaimini);
+    if (line) depth.push(line);
+  }
+
+  if (depth.length > 0) {
+    const convergence = convergenceSentence(house, signals);
+    if (convergence) depth.push(convergence);
+  }
+
   return {
     house,
     sign,
@@ -447,15 +830,19 @@ export function interpretHouse(
     conjunctions,
     title: `${ordinal(house)} House — ${SIGNS[sign]}`,
     paragraphs,
+    depth,
+    sav,
+    bhavaRupas: ctx.bhavaBala?.find((b) => b.house === house)?.rupas ?? null,
   };
 }
 
 /** All twelve houses, in order. Vacant houses are read by lord and drishti, never skipped. */
 export function interpretFullChart(
   chart: ChartData,
-  strengths: Partial<Record<PlanetId, PlanetStrength>> = {}
+  strengths: Partial<Record<PlanetId, PlanetStrength>> = {},
+  ctx: HouseDepthContext = {}
 ): HouseInterpretation[] {
   const out: HouseInterpretation[] = [];
-  for (let h = 1; h <= 12; h++) out.push(interpretHouse(chart, h, strengths));
+  for (let h = 1; h <= 12; h++) out.push(interpretHouse(chart, h, strengths, ctx));
   return out;
 }

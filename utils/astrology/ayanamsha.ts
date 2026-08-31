@@ -28,11 +28,56 @@ export function pushyaAyanamsha(date: Date): number {
   return lahiriAyanamsha(date) + PUSHYA_OFFSET_FROM_LAHIRI;
 }
 
+/**
+ * Raman ayanamsha (B. V. Raman).
+ *
+ * Raman anchors the zodiac ~1°26' behind Lahiri. Both are defined by an epoch
+ * value at the same instant (1900 Jan 0.5 ET, JD 2415020.0) carried forward by
+ * the same general precession, so — exactly as with Pushya above — the offset
+ * between them is a constant and Raman needs no separate polynomial:
+ *
+ *   Lahiri @ 1900 = 22.460148° (22°27'37.7")
+ *   Raman  @ 1900 = 21.013444° (21°00'48.4")
+ *   difference    =  1.446704°
+ *
+ * (Epoch constants per the Swiss Ephemeris ayanamsha table, SE_SIDM_LAHIRI and
+ * SE_SIDM_RAMAN.) Raman inherits the same sub-arcminute bias as `lahiriAyanamsha`,
+ * which is the documented precision budget of this layer — see SOURCES.md.
+ *
+ * Raman's practical effect: every sidereal longitude moves ~1°26' forward
+ * relative to Lahiri, which is enough to change a Lagna, a Moon nakshatra (and
+ * therefore the Vimshottari starting lord), or a varga sign for any body within
+ * that distance of a boundary. It is a genuinely different chart, not a nudge.
+ */
+const RAMAN_OFFSET_FROM_LAHIRI = -1.446704;
+
+export function ramanAyanamsha(date: Date): number {
+  return lahiriAyanamsha(date) + RAMAN_OFFSET_FROM_LAHIRI;
+}
+
 export function getAyanamsha(id: AyanamshaId, date: Date): number {
-  return id === "pushya" ? pushyaAyanamsha(date) : lahiriAyanamsha(date);
+  switch (id) {
+    case "pushya":
+      return pushyaAyanamsha(date);
+    case "raman":
+      return ramanAyanamsha(date);
+    default:
+      return lahiriAyanamsha(date);
+  }
 }
 
 export const AYANAMSHA_LABELS: Record<AyanamshaId, string> = {
   lahiri: "Lahiri (Chitra Paksha)",
   pushya: "Pushya Paksha",
+  raman: "Raman",
 };
+
+/** Short label for tight UI (the header toggle). */
+export const AYANAMSHA_SHORT: Record<AyanamshaId, string> = {
+  lahiri: "Lahiri",
+  pushya: "Pushya",
+  raman: "Raman",
+};
+
+/** Every ayanamsha the chart engine can be switched to, in display order. */
+export const AYANAMSHA_IDS: AyanamshaId[] = ["lahiri", "pushya", "raman"];

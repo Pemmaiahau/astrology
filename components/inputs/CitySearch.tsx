@@ -1,13 +1,66 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, MapPin } from "lucide-react";
+import { Loader2, MapPin, PencilLine, WifiOff } from "lucide-react";
 import type { GeoPlace } from "@/utils/astrology/types";
+import { checkCoordinates } from "@/utils/astrology/validate";
+import ValidationNotes from "./ValidationNotes";
 
 interface Props {
   value: GeoPlace | null;
   onSelect: (p: GeoPlace | null) => void;
   placeholder?: string;
+}
+
+const CACHE_KEY = "jyotisha.geocache.v1";
+
+/**
+ * Remember successful lookups so a place used before still resolves when the
+ * geocoder is unreachable. Keyed by the lowercased query prefix; capped so the
+ * store cannot grow without bound. Every access is wrapped because
+ * `localStorage` throws outright in some privacy modes rather than returning
+ * null.
+ */
+function cacheResults(q: string, results: OpenMeteoResult[]): void {
+  if (results.length === 0) return;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    const store: Record<string, OpenMeteoResult[]> = raw ? JSON.parse(raw) : {};
+    store[q.trim().toLowerCase()] = results.slice(0, 8);
+    const keys = Object.keys(store);
+    if (keys.length > 60) for (const k of keys.slice(0, keys.length - 60)) delete store[k];
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(store));
+  } catch {
+    /* storage unavailable — the cache is a convenience, never a requirement */
+  }
+}
+
+function readCache(q: string): OpenMeteoResult[] {
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    if (!raw) return [];
+    const store: Record<string, OpenMeteoResult[]> = JSON.parse(raw);
+    const needle = q.trim().toLowerCase();
+    const exact = store[needle];
+    if (exact) return exact;
+    // Any cached query that starts with, or is a prefix of, this one.
+    for (const [k, v] of Object.entries(store)) {
+      if (k.startsWith(needle) || needle.startsWith(k)) return v;
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+/** Does the runtime recognise this IANA zone? */
+function isKnownTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 interface OpenMeteoResult {
@@ -19,12 +72,38 @@ interface OpenMeteoResult {
   timezone: string;
 }
 
-/** City autocomplete via the Open-Meteo geocoding API (no key required). */
+/**
+ * City autocomplete via the Open-Meteo geocoding API (no key required),
+ * with a manual coordinate fallback.
+ *
+ * The geocoder is this app's only external runtime dependency, and it used to
+ * fail silently: the catch reset the results to an empty array, which renders
+ * identically to "no city matched". Because `place` is required before a chart
+ * can be cast, an outage, a proxy or a blocked host made the entire ephemeris
+ * mode unusable with no diagnosis and no workaround.
+ *
+ * Two changes: the error state is now distinct from the empty state and says
+ * what failed, and there is a manual latitude/longitude/timezone panel that
+ * bypasses the network entirely. Successful lookups are cached in
+ * `localStorage`, so a place used before keeps working offline.
+ */
 export default function CitySearch({ value, onSelect, placeholder }: Props) {
   const [query, setQuery] = useState(value ? value.name : "");
   const [results, setResults] = useState<OpenMeteoResult[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [manual, setManual] = useState(false);
+  const [mLat, setMLat] = useState("");
+  const [mLon, setMLon] = useState("");
+  const [mTz, setMTz] = useState(() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    } catch {
+      return "UTC";
+    }
+  });
+  const [mName, setMName] = useState("");
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -47,19 +126,62 @@ export default function CitySearch({ value, onSelect, placeholder }: Props) {
     }
     debounce.current = setTimeout(async () => {
       setLoading(true);
+      setFailed(false);
       try {
         const res = await fetch(
           `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`
         );
+        if (!res.ok) throw new Error(`geocoder returned ${res.status}`);
         const json = await res.json();
-        setResults(json.results ?? []);
+        const found: OpenMeteoResult[] = json.results ?? [];
+        setResults(found);
         setOpen(true);
+        cacheResults(q, found);
       } catch {
-        setResults([]);
+        // Fall back to anything this browser has seen before for the same
+        // prefix, so a previously-used place still resolves offline.
+        const cached = readCache(q);
+        setResults(cached);
+        setOpen(cached.length > 0);
+        setFailed(true);
       } finally {
         setLoading(false);
       }
     }, 300);
+  }
+
+  const manualIssues = manual
+    ? [
+        ...checkCoordinates(Number(mLat), Number(mLon)),
+        ...(mTz.trim() && !isKnownTimeZone(mTz.trim())
+          ? [
+              {
+                severity: "error" as const,
+                field: "tz",
+                message:
+                  `"${mTz}" is not an IANA timezone this browser recognises. Use a zone name such as ` +
+                  `Asia/Kolkata, Europe/London or America/New_York — an abbreviation like IST or a raw ` +
+                  `offset will not carry the historical rules that a birth chart depends on.`,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
+  function commitManual() {
+    const lat = Number(mLat);
+    const lon = Number(mLon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    if (manualIssues.some((i) => i.severity === "error")) return;
+    const place: GeoPlace = {
+      name: mName.trim() || `${lat.toFixed(3)}, ${lon.toFixed(3)}`,
+      lat,
+      lon,
+      timezone: mTz.trim() || "UTC",
+    };
+    setQuery(place.name);
+    setManual(false);
+    onSelect(place);
   }
 
   function pick(r: OpenMeteoResult) {
@@ -114,6 +236,100 @@ export default function CitySearch({ value, onSelect, placeholder }: Props) {
           ))}
         </ul>
       )}
+      {failed && (
+        <p className="mt-1 flex items-start gap-1.5 rounded-lg border border-warn-ring bg-warn-soft p-2 text-[11px] leading-relaxed text-fg">
+          <WifiOff className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warn" />
+          <span>
+            The place lookup could not be reached
+            {results.length > 0 ? " — showing previously cached matches for this search" : ""}. This is the
+            app&apos;s only network dependency; everything else computes locally. Enter the coordinates by
+            hand below to carry on.
+          </span>
+        </p>
+      )}
+
+      {!manual ? (
+        <button
+          type="button"
+          onClick={() => setManual(true)}
+          className="mt-1 flex items-center gap-1 text-[11px] font-medium text-eyebrow underline-offset-2 hover:underline"
+        >
+          <PencilLine className="h-3 w-3" />
+          Enter coordinates manually
+        </button>
+      ) : (
+        <div className="mt-2 space-y-2 rounded-lg border border-line-2 bg-surface-2 p-2.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-eyebrow">Manual coordinates</p>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="mb-0.5 block text-[10px] text-fg-subtle">Latitude (+N)</span>
+              <input
+                type="number"
+                step="any"
+                value={mLat}
+                onChange={(e) => setMLat(e.target.value)}
+                placeholder="28.6139"
+                className="w-full rounded-md border border-line-2 bg-surface px-2 py-1.5 text-xs text-fg-strong outline-none focus:border-primary-border"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-0.5 block text-[10px] text-fg-subtle">Longitude (+E)</span>
+              <input
+                type="number"
+                step="any"
+                value={mLon}
+                onChange={(e) => setMLon(e.target.value)}
+                placeholder="77.2090"
+                className="w-full rounded-md border border-line-2 bg-surface px-2 py-1.5 text-xs text-fg-strong outline-none focus:border-primary-border"
+              />
+            </label>
+          </div>
+          <label className="block">
+            <span className="mb-0.5 block text-[10px] text-fg-subtle">IANA timezone</span>
+            <input
+              type="text"
+              value={mTz}
+              onChange={(e) => setMTz(e.target.value)}
+              placeholder="Asia/Kolkata"
+              className="w-full rounded-md border border-line-2 bg-surface px-2 py-1.5 text-xs text-fg-strong outline-none focus:border-primary-border"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-0.5 block text-[10px] text-fg-subtle">Place label (optional)</span>
+            <input
+              type="text"
+              value={mName}
+              onChange={(e) => setMName(e.target.value)}
+              placeholder="New Delhi"
+              className="w-full rounded-md border border-line-2 bg-surface px-2 py-1.5 text-xs text-fg-strong outline-none focus:border-primary-border"
+            />
+          </label>
+          <ValidationNotes issues={manualIssues} />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={commitManual}
+              disabled={!mLat || !mLon || manualIssues.some((i) => i.severity === "error")}
+              className="rounded-md bg-primary-soft px-3 py-1.5 text-xs font-semibold text-heading ring-1 ring-inset ring-primary-ring transition disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Use these coordinates
+            </button>
+            <button
+              type="button"
+              onClick={() => setManual(false)}
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg-2"
+            >
+              Cancel
+            </button>
+          </div>
+          <p className="text-[10px] leading-relaxed text-fg-faint">
+            The timezone must be an IANA name, not an offset: historical rules matter. Asia/Kolkata carries
+            the +05:53 Calcutta local mean time used before 1906 and the 1942–45 wartime changes, and a raw
+            &ldquo;+5:30&rdquo; would silently discard both.
+          </p>
+        </div>
+      )}
+
       {value && (
         <p className="mt-1 text-xs text-good-strong">
           ✓ {value.lat.toFixed(4)}°, {value.lon.toFixed(4)}° — {value.timezone} (historical DST handled)

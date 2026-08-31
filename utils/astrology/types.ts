@@ -2,7 +2,7 @@
 
 export type PlanetId = "Su" | "Mo" | "Ma" | "Me" | "Ju" | "Ve" | "Sa" | "Ra" | "Ke";
 
-export type AyanamshaId = "lahiri" | "pushya";
+export type AyanamshaId = "lahiri" | "pushya" | "raman";
 
 /** Rahu/Ketu computation: mean node (classical convention, default) or true (osculating) node. */
 export type NodeMode = "mean" | "true";

@@ -274,7 +274,7 @@ This is a **static lookup table**, not a formula — if the requirement is "add 
 
 `sadeSatiPhase(transits)` — Saturn's house-from-natal-Moon mapped to rising (12th)/peak (1st)/setting (2nd)/`null` otherwise. This 3-state phase feeds both `PredictionPanel` copy and the dasha-independent transit narrative.
 
-**To extend to more transiting bodies** (e.g. transiting Venus/Mercury for finer monthly work, or transiting Lagna itself for horary-style techniques): add the id to `TRANSIT_BODIES` and make sure `TRANSIT_TABLES`/copy exists for it in `transitTexts.ts`, or the prediction text silently skips it (see `predictions.ts` — `if (t && table)`).
+**To extend to more transiting bodies** (e.g. transiting Venus/Mercury for finer monthly work, or transiting Lagna itself for horary-style techniques): add the id to `TRANSIT_BODIES` and make sure `TRANSIT_TABLES`/copy exists for it in `transitTexts.ts`, or the prediction text silently skips it (see `yearForecast.ts` — `if (t && table)`).
 
 ### 15a. Date-range scanning — [utils/astrology/scan.ts](utils/astrology/scan.ts)
 
@@ -302,7 +302,7 @@ Rule-based, returns `YogaFinding[]` (key/name/planets/description — descriptio
 - **Yogakaraka in Strength** — the lagna's yogakaraka (from `FUNCTIONAL_ROLES`, see §17) placed in a kendra or trikona (5/9).
 - **Pancha Mahapurusha** (`mahapurusha-<id>`) — Ruchaka (Mars) / Bhadra (Mercury) / Hamsa (Jupiter) / Malavya (Venus) / Sasa (Saturn): the graha in its **own sign, moolatrikona or exaltation** *and* in a **kendra from the Lagna**. Read from the Rashi house like everything else here. Moolatrikona is accepted as own-sign for this test. These are the most personality-defining classical yogas and are consumed by the personality profile (§17c) as well as displayed.
 
-`ownedHouses(id, lagnaSign)` is the shared helper (which houses a planet rules for this Lagna) — reused heavily by `lordships.ts`/`synthesis.ts`/`predictions.ts` too, so it effectively lives at the boundary between "calculation" and "interpretation."
+`ownedHouses(id, lagnaSign)` is the shared helper (which houses a planet rules for this Lagna) — reused heavily by `lordships.ts`/`synthesis.ts`/`yearForecast.ts` too, so it effectively lives at the boundary between "calculation" and "interpretation."
 
 **To add a new yoga**: add a detector function here following the existing pattern (read `chart.planets`/`chart.ascendant`, push a `YogaFinding` with a fully-formed description string), and call it from `detectYogas`. Keep the description-writing inline like the others — don't split it into `data/interpretations` unless the text is unconditional/static.
 
@@ -330,7 +330,7 @@ This layer is **pure text composition** — no astronomy, only conditionals over
 
 ### [transitTexts.ts](data/interpretations/transitTexts.ts)
 - `SATURN_FROM_MOON` / `JUPITER_FROM_MOON` / `RAHU_FROM_MOON` / `KETU_FROM_MOON` — 12 entries each (house-from-Moon 1–12), classical gochara phalam for the four slow/nodal transits, including the Sade Sati narrative baked into the Saturn table's own house-4/1/2/12 entries (`Kantaka Shani` etc.).
-- `DASHA_THEMES[planet]` — one paragraph per planet describing what its Mahadasha/Antardasha "feels like" in general, independent of natal placement (the natal-specific qualifier is layered on separately in `predictions.ts`).
+- `DASHA_THEMES[planet]` — one paragraph per planet describing what its Mahadasha/Antardasha "feels like" in general, independent of natal placement (the natal-specific qualifier is layered on separately by `dashaLordAssessment` in `yearForecast.ts`).
 
 ### [panchangTexts.ts](data/interpretations/panchangTexts.ts)
 - `TITHI_GROUP_TEXT` — the 5 tithi *groups* (Nanda/Bhadra/Jaya/Rikta/Purna; `tithiGroup(tithiIndex)` = `index % 5`), not all 30 tithis individually.
@@ -367,25 +367,18 @@ This layer is **pure text composition** — no astronomy, only conditionals over
 
 This **replaces `lagnaOverview()`**, which is gone from `synthesis.ts` — its content is absorbed into section 1. It is pure text composition; no astronomy, no new computation beyond what `strengths`/`yogas` already carry.
 
-### [predictions.ts](data/interpretations/predictions.ts) — time-bound forecasting
-Two entry points, both pure functions of already-computed state (no new astronomy):
+### ~~predictions.ts~~ — **removed 2026-08-31**
 
-- `buildYearlyPrediction(chart, active, transits, sadeSati, now)`:
-  1. "Dasha Climate" section — `dashaLordAssessment` for the Mahadasha and Antardasha lords: combines `DASHA_THEMES` (generic) + the lord's **natal** house/sign/dignity (chart-specific) + owned-houses-activated sentence + a strength-based outlook sentence (three tiers: strong dignity → "delivers with interest"; weak dignity → "discounted and delayed"; neutral → "earned-outcome").
-  2. "Gochara" section — one paragraph per slow transit body (`Sa/Ju/Ra/Ke`) using `TRANSIT_TABLES[id][houseFromMoon - 1]`, with the Sade Sati phase paragraph prepended when active.
-  3. "Where the Year Concentrates" — names the houses the running dasha lords sit in natally, as the year's thematic focus.
-- `buildMonthlyPrediction(chart, active, transits, now)`:
-  1. "Operative Sub-Periods" — same `dashaLordAssessment` pattern but for the **Pratyantardasha** lord (the finest grain tracked).
-  2. "Fast Transit Currents" — Sun and Mars house-from-Lagna for the month (the two bodies that move fast enough to matter monthly; the four slow ones are handled yearly).
+This file is gone. It held three exports; two of them (`buildYearlyPrediction`, `buildMonthlyPrediction`) were superseded the moment `yearForecast.ts` (§17a) took over the Predictions tab, and had been unreachable ever since — 95 of its 128 lines. This section previously documented those two dead functions in detail and the index at the bottom of this file still routed "new prediction cadence" work to them, which is how a stale pointer outlives the code it points at.
 
-`dashaLordAssessment(chart, lord, role)` is **exported** (not just internal) because the year-forecast engine (§17a) reuses it to describe each Mahadasha/Antardasha lord's natal strength inside a timeline segment.
+The one live export, **`dashaLordAssessment(chart, lord, role)`**, now lives in [yearForecast.ts](data/interpretations/yearForecast.ts) beside its only caller. Its behaviour is unchanged: it combines `DASHA_THEMES` (generic, per-planet) with the lord's **natal** house/sign/dignity (chart-specific), an owned-houses-activated sentence, and a strength-based outlook in three tiers — strong dignity → "delivers with interest", weak dignity → "discounted and delayed", neutral → "earned-outcome".
 
-**To add a new prediction cadence** (e.g. weekly, or a "next 5 years" long view): follow this file's pattern — it is entirely a function of `(chart, activeDasha, transits, sadeSati, now)`, so a new function here just picks a different level of the dasha tree and/or a different transit set.
-**To add a new "kind" of prediction** (e.g. a Saturn-return report, a marriage-timing scan): this is likely a *new* file in `data/interpretations/`, since `predictions.ts` is scoped to "what's active right now," not scanning across time.
+**To add a new prediction cadence** (weekly, a "next 5 years" long view): extend `yearForecast.ts`, which already reasons over an arbitrary `[start, end]` window rather than a fixed one — a new cadence is a different window and a different level of the dasha tree, not a new file.
+**To add a new "kind" of prediction** (a Saturn-return report, a marriage-timing scan): that is a new file in `data/interpretations/`, following the pattern of `career.ts` or `marriage.ts`.
 
 ### 17a. Year forecast (selectable year, past or future) — [data/interpretations/yearForecast.ts](data/interpretations/yearForecast.ts)
 
-This is the **"predict any selected year"** feature. Unlike `predictions.ts` (which snapshots "now"), it reasons over a whole 12-month **window** and tracks how dasha sub-periods and transits *change across* that window. Single entry point:
+This is the **"predict any selected year"** feature. It reasons over a whole 12-month **window** and tracks how dasha sub-periods and transits *change across* that window. Single entry point:
 
 `buildYearForecast(chart, dashaTree, ayanamsha, start, end): YearForecast`, producing three layers:
 
@@ -476,7 +469,7 @@ These were deliberate, verified choices — see also the `aipems-astrology` memo
 | Deeper dasha levels (Sookshma/Prana) | `utils/astrology/dasha.ts` — extend `buildSubPeriods` recursion + `DashaPeriod.level` |
 | New house system (Placidus, Equal, KP) | `utils/astrology/houses.ts` — sibling to `sripatiHouses` |
 | New transiting body tracked | `utils/astrology/transits.ts` (`TRANSIT_BODIES`) + `data/interpretations/transitTexts.ts` |
-| New prediction cadence (weekly, N-year outlook) | `data/interpretations/predictions.ts` |
+| New prediction cadence (weekly, N-year outlook) | `data/interpretations/yearForecast.ts` |
 | Change year-forecast content/structure (selected-year predictions) | `data/interpretations/yearForecast.ts` |
 | Change year-forecast selector/window (calendar vs solar) UI | `components/panels/PredictionPanel.tsx` |
 | Finer/different timeline segmentation, more tracked transit bodies | `data/interpretations/yearForecast.ts` (boundary set) + `utils/astrology/scan.ts` |

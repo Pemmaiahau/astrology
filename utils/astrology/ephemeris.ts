@@ -142,6 +142,45 @@ export function sunsetFor(date: Date, lat: number, lon: number): Date | null {
   }
 }
 
+/** Next sunset strictly after the given instant (mirror of `nextSunrise`). */
+export function nextSunset(date: Date, lat: number, lon: number): Date | null {
+  try {
+    const observer = new Astronomy.Observer(lat, lon, 0);
+    const set = Astronomy.SearchRiseSet(
+      Astronomy.Body.Sun, observer, -1, new Date(date.getTime() + 1000), 2
+    );
+    return set ? set.date : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * First moonrise and moonset at or after `from`, within `limitDays`.
+ *
+ * Unlike the Sun, the Moon does not rise and set once per civil day — it drifts
+ * ~50 minutes later each day, so on roughly one day a month there is no
+ * moonrise (or no moonset) at all between one midnight and the next. Callers
+ * therefore have to tolerate `null` as a real astronomical answer rather than
+ * an error, which is why this returns the next event from an instant instead of
+ * "the event on this date".
+ */
+export function moonRiseSetFrom(
+  from: Date,
+  lat: number,
+  lon: number,
+  limitDays = 2
+): { rise: Date | null; set: Date | null } {
+  try {
+    const observer = new Astronomy.Observer(lat, lon, 0);
+    const rise = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, +1, from, limitDays);
+    const set = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, from, limitDays);
+    return { rise: rise ? rise.date : null, set: set ? set.date : null };
+  } catch {
+    return { rise: null, set: null };
+  }
+}
+
 /** Next sunrise strictly after the given instant (Kala bala needs the enclosing night arc). */
 export function nextSunrise(date: Date, lat: number, lon: number): Date | null {
   try {

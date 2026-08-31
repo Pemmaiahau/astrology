@@ -1,21 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useChart } from "@/components/context/ChartContext";
 import type { Gender, GeoPlace } from "@/utils/astrology/types";
 import CitySearch from "./CitySearch";
+import ValidationNotes from "./ValidationNotes";
+import { localToUtc } from "@/utils/astrology/time";
+import {
+  checkBirthDate,
+  checkCoordinates,
+  checkLocalTime,
+  DATE_MAX,
+  DATE_MIN,
+} from "@/utils/astrology/validate";
 
 /** Mode 2: automatic ephemeris calculation from birth data. */
 export default function AutoInput() {
-  const { commitAuto } = useChart();
-  const [name, setName] = useState("");
-  const [gender, setGender] = useState<Gender | "">("");
-  const [dateISO, setDateISO] = useState("1990-01-01");
-  const [time, setTime] = useState("12:00");
-  const [place, setPlace] = useState<GeoPlace | null>(null);
+  const { commitAuto, committed } = useChart();
+  // Seed from a restored session so a reload shows the form that produced the
+  // chart on screen, not a form full of defaults beside it.
+  const saved = committed?.kind === "auto" ? committed.data : null;
+  const [name, setName] = useState(saved?.name ?? "");
+  const [gender, setGender] = useState<Gender | "">(saved?.gender ?? "");
+  const [dateISO, setDateISO] = useState(saved?.dateISO ?? "1990-01-01");
+  const [time, setTime] = useState(saved?.time ?? "12:00");
+  const [place, setPlace] = useState<GeoPlace | null>(saved?.place ?? null);
 
-  const ready = Boolean(dateISO && time && place);
+  /**
+   * Input validation runs on every keystroke rather than on submit.
+   *
+   * A birth date outside the ayanamsha's validity window used to produce a
+   * confidently-formatted, silently wrong chart; a clock change beside the
+   * recorded time was never mentioned at all. Both are cheap to detect and
+   * useless to report after the fact, so they are reported while the field is
+   * still being edited.
+   */
+  const issues = useMemo(() => {
+    const out = [...checkBirthDate(dateISO)];
+    if (place) {
+      out.push(...checkCoordinates(place.lat, place.lon));
+      if (dateISO && time && out.every((i) => i.severity !== "error")) {
+        try {
+          out.push(...checkLocalTime(place.timezone, dateISO, time, localToUtc(place.timezone, dateISO, time)));
+        } catch {
+          /* an unusable zone is already reported by checkCoordinates/CitySearch */
+        }
+      }
+    }
+    return out;
+  }, [dateISO, time, place]);
+
+  const blocked = issues.some((i) => i.severity === "error");
+  const ready = Boolean(dateISO && time && place) && !blocked;
 
   return (
     <form
@@ -61,6 +98,8 @@ export default function AutoInput() {
             value={dateISO}
             onChange={(e) => setDateISO(e.target.value)}
             required
+            min={DATE_MIN}
+            max={DATE_MAX}
             className="w-full rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-sm text-fg-strong outline-none focus:border-primary-border"
           />
         </div>
@@ -70,6 +109,7 @@ export default function AutoInput() {
           </label>
           <input
             type="time"
+            step="60"
             value={time}
             onChange={(e) => setTime(e.target.value)}
             required
@@ -83,6 +123,7 @@ export default function AutoInput() {
         </label>
         <CitySearch value={place} onSelect={setPlace} />
       </div>
+      <ValidationNotes issues={issues} />
       <button
         type="submit"
         disabled={!ready}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   BookOpen,
   CalendarDays,
@@ -8,9 +9,12 @@ import {
   Compass,
   Dices,
   Flame,
+  Grid2x2,
   Grid3x3,
   Hourglass,
+  Layers,
   Moon,
+  OctagonAlert,
   Settings2,
   Sparkles,
   Target,
@@ -18,24 +22,56 @@ import {
 } from "lucide-react";
 import { ChartProvider, useChart } from "@/components/context/ChartContext";
 import AshtakavargaTable from "@/components/charts/AshtakavargaTable";
+import ShadbalaTable from "@/components/charts/ShadbalaTable";
 import PlanetTable from "@/components/charts/PlanetTable";
 import SouthIndianChart from "@/components/charts/SouthIndianChart";
 import AutoInput from "@/components/inputs/AutoInput";
 import ManualInput from "@/components/inputs/ManualInput";
 import DashaPanel from "@/components/panels/DashaPanel";
 import FunctionalLords from "@/components/panels/FunctionalLords";
-import IntimacyPanel from "@/components/panels/IntimacyPanel";
 import InterpretationPanel from "@/components/panels/interpretation/InterpretationPanel";
 import LifeAreasPanel from "@/components/panels/LifeAreasPanel";
 import LifeEventsPanel from "@/components/panels/lifeEvents/LifeEventsPanel";
 import PanchangPanel from "@/components/panels/PanchangPanel";
 import PredictionPanel from "@/components/panels/PredictionPanel";
 import RectificationPanel from "@/components/panels/rectification/RectificationPanel";
-import SpeculationPanel from "@/components/panels/SpeculationPanel";
+import JaiminiPanel from "@/components/panels/JaiminiPanel";
+import VargaPanel from "@/components/panels/VargaPanel";
 import Disclaimer from "@/components/ui/Disclaimer";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { AYANAMSHA_LABELS } from "@/utils/astrology/ayanamsha";
-import type { AyanamshaId, NodeMode } from "@/utils/astrology/types";
+import { AYANAMSHA_IDS, AYANAMSHA_LABELS, AYANAMSHA_SHORT } from "@/utils/astrology/ayanamsha";
+import type { NodeMode } from "@/utils/astrology/types";
+
+/**
+ * The two gated panels are code-split rather than statically imported.
+ *
+ * Their data modules (`speculation.ts` 87 KB + `intimacy.ts` 64 KB of source)
+ * were shipping in the main route chunk for every visitor, even though the tabs
+ * that reach them only appear once `isAdvancedUnlocked` is satisfied. Splitting
+ * them changes no visibility behaviour — the gate is unchanged and still
+ * decides whether the tab exists at all — it only stops the payload being
+ * downloaded and parsed by sessions that can never open it.
+ *
+ * `ssr: false` because both panels read the chart out of context and have no
+ * meaningful server-rendered form; the loading state is a moment at most, since
+ * the chunk is fetched the instant the gate opens.
+ */
+const SpeculationPanel = dynamic(() => import("@/components/panels/SpeculationPanel"), {
+  ssr: false,
+  loading: () => <PanelSkeleton label="Speculation" />,
+});
+const IntimacyPanel = dynamic(() => import("@/components/panels/IntimacyPanel"), {
+  ssr: false,
+  loading: () => <PanelSkeleton label="Intimacy" />,
+});
+
+function PanelSkeleton({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-dashed border-line bg-surface-soft text-sm text-fg-muted">
+      Loading {label}…
+    </div>
+  );
+}
 
 const BASE_TABS = [
   { key: "interpret", label: "Interpretation", icon: BookOpen },
@@ -44,7 +80,9 @@ const BASE_TABS = [
   { key: "events", label: "Life Events", icon: CalendarRange },
   { key: "predict", label: "Predictions", icon: TrendingUp },
   { key: "panchang", label: "Panchang", icon: CalendarDays },
-  { key: "ashtaka", label: "Ashtakavarga", icon: Grid3x3 },
+  { key: "vargas", label: "Vargas", icon: Grid2x2 },
+  { key: "strength", label: "Strength", icon: Grid3x3 },
+  { key: "jaimini", label: "Jaimini", icon: Layers },
   { key: "rectify", label: "Rectify Time", icon: Target },
 ] as const;
 
@@ -79,17 +117,18 @@ function Header() {
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
             <Settings2 className="ml-1 h-3.5 w-3.5 text-fg-subtle" />
-            {(["lahiri", "pushya"] as AyanamshaId[]).map((a) => (
+            {AYANAMSHA_IDS.map((a) => (
               <button
                 key={a}
                 onClick={() => setAyanamsha(a)}
+                title={AYANAMSHA_LABELS[a]}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
                   ayanamsha === a
                     ? "bg-primary-soft text-heading ring-1 ring-inset ring-primary-ring"
                     : "text-fg-muted hover:text-fg-2"
                 }`}
               >
-                {AYANAMSHA_LABELS[a].split(" ")[0]}
+                {AYANAMSHA_SHORT[a]}
               </button>
             ))}
           </div>
@@ -136,9 +175,23 @@ function Header() {
 }
 
 function InputCard() {
-  const { mode, setMode } = useChart();
+  const { mode, setMode, committed, clearSession } = useChart();
   return (
     <div className="rounded-xl border border-line bg-surface p-4">
+      {committed && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-line-soft bg-surface-soft px-2.5 py-1.5">
+          <span className="text-[11px] text-fg-muted">
+            Restored from your last session — this chart survives a refresh.
+          </span>
+          <button
+            type="button"
+            onClick={clearSession}
+            className="ml-auto text-[11px] font-medium text-eyebrow underline-offset-2 hover:underline"
+          >
+            Clear
+          </button>
+        </div>
+      )}
       <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
         <button
           onClick={() => setMode("auto")}
@@ -181,8 +234,27 @@ function ChalitShiftSummary() {
   );
 }
 
+/**
+ * Ashtakavarga, Shadbala and Bhava Bala on one tab.
+ *
+ * They belong together because they are three answers to the same question
+ * asked from different directions — Ashtakavarga scores a sign by transit
+ * support, Shadbala scores a graha by its six-fold capacity, Bhava Bala scores
+ * a house by its lord and the glances it receives. Reading any one alone is how
+ * a chart gets over- or under-called; the disagreements between them are the
+ * finding.
+ */
+function StrengthTab() {
+  return (
+    <div className="space-y-6">
+      <ShadbalaTable />
+      <AshtakavargaTable />
+    </div>
+  );
+}
+
 function Workspace() {
-  const { chart, advancedUnlocked } = useChart();
+  const { chart, chartError, advancedUnlocked } = useChart();
   const [tab, setTab] = useState<TabKey>("interpret");
 
   const tabs = useMemo(
@@ -236,20 +308,32 @@ function Workspace() {
             {activeTab === "events" && <LifeEventsPanel />}
             {activeTab === "predict" && <PredictionPanel />}
             {activeTab === "panchang" && <PanchangPanel />}
-            {activeTab === "ashtaka" && <AshtakavargaTable />}
+            {activeTab === "vargas" && <VargaPanel />}
+            {activeTab === "strength" && <StrengthTab />}
+            {activeTab === "jaimini" && <JaiminiPanel />}
             {activeTab === "rectify" && <RectificationPanel />}
             {activeTab === "speculation" && <SpeculationPanel />}
             {activeTab === "intimacy" && <IntimacyPanel />}
           </>
         ) : (
           <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-line bg-surface-soft p-8 text-center">
+            {chartError ? (
+              <>
+                <OctagonAlert className="mb-3 h-10 w-10 text-bad-strong" />
+                <h2 className="font-serif text-xl font-bold text-bad-strong">That chart could not be cast</h2>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-fg">{chartError}</p>
+              </>
+            ) : (
+              <>
             <Sparkles className="mb-3 h-10 w-10 text-eyebrow-faint" />
             <h2 className="font-serif text-xl font-bold text-heading-soft">Cast a chart to begin</h2>
             <p className="mt-2 max-w-md text-sm leading-relaxed text-fg-muted">
               Enter birth data for full ephemeris calculation, or switch to Manual Configuration to map an
-              existing chart directly. Interpretations, Vimshottari dashas, Panchang, Ashtakavarga and
-              transit-based predictions will populate here.
+              existing chart directly. Interpretations, Vimshottari dashas, Panchang, divisional charts,
+              Shadbala, Jaimini and transit-based predictions will populate here.
             </p>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -264,7 +348,7 @@ export default function Page() {
       <Disclaimer />
       <Workspace />
       <footer className="border-t border-line-faint py-4 text-center text-[11px] text-fg-faint">
-        Jyotisha Studio · astronomy-engine ephemeris · Lahiri &amp; Pushya ayanamsha · Sripati Bhava Chalit ·
+        Jyotisha Studio · astronomy-engine ephemeris · Lahiri, Pushya &amp; Raman ayanamsha · Sripati Bhava Chalit ·
         For guidance, not determinism.
       </footer>
     </ChartProvider>

@@ -10,8 +10,9 @@ import type {
   TransitInfo,
 } from "@/utils/astrology/types";
 import { DASHA_THEMES, TRANSIT_TABLES } from "./transitTexts";
-import { dashaLordAssessment } from "./predictions";
 import { ordinal } from "./synthesis";
+import { DIGNITY_LABELS } from "@/utils/astrology/states";
+import { ownedHouses } from "@/utils/astrology/yogas";
 
 /**
  * Year-forecast engine. Given any [start, end] window (a Gregorian calendar
@@ -49,6 +50,37 @@ const SADE_SATI_TEXT: Record<"rising" | "peak" | "setting", string> = {
 };
 
 // --- Year overview -----------------------------------------------------------
+
+
+/**
+ * Prose assessment of one dasha lord's period.
+ *
+ * Moved here from the former `predictions.ts` when that module was retired.
+ * It was the only reachable function in a 128-line file whose other two exports
+ * (`buildYearlyPrediction`, `buildMonthlyPrediction`) were superseded the
+ * moment this engine took over the Predictions tab, and left the codebase with
+ * a documentation pointer aimed at unreachable code. It lives beside its only
+ * caller now.
+ */
+export function dashaLordAssessment(chart: ChartData, lord: PlanetId, role: string): string {
+  const p = chart.planets.find((q) => q.id === lord);
+  if (!p) return "";
+  const owned = ownedHouses(lord, chart.ascendant.sign);
+  const ownedStr =
+    owned.length > 0
+      ? `As lord of the ${owned.map(ordinal).join(" and ")}, its period activates ${owned
+          .map((h) => HOUSE_SIGNIFICATIONS[h - 1].split(",")[0])
+          .join(" and ")}.`
+      : `As a nodal graha it delivers the agenda of its dispositor and conjunctions.`;
+  const condition = `${PLANET_NAMES[lord]} sits natally in your ${ordinal(p.house)} house in ${SIGNS[p.sign]} — ${DIGNITY_LABELS[p.dignity]}${p.retrograde ? ", retrograde" : ""}${p.combust ? ", combust" : ""}.`;
+  const quality =
+    p.dignity === "exalted" || p.dignity === "moolatrikona" || p.dignity === "own" || p.dignity === "greatFriend"
+      ? "Expect this period to deliver its promises with interest — its natal strength converts effort into durable results."
+      : p.dignity === "debilitated" || p.dignity === "greatEnemy" || p.dignity === "enemy"
+        ? "Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion."
+        : "The period lord's neutral condition means results will track your conduct closely — this is an earned-outcome stretch, not a fated one.";
+  return `${role}: ${DASHA_THEMES[lord]} ${condition} ${ownedStr} ${quality}`;
+}
 
 export interface MahaSegment {
   lord: PlanetId;

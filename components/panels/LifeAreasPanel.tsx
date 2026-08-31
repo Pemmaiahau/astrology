@@ -11,6 +11,9 @@ import {
   Heart,
   HeartPulse,
   Home,
+  Layers,
+  Lightbulb,
+  Target,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -21,6 +24,8 @@ import {
   type LifeAreaKey,
   type LifeAreaReport,
 } from "@/data/interpretations/lifeAreas";
+import { PLANET_NAMES } from "@/utils/astrology/constants";
+import type { AreaLever } from "@/data/interpretations/lifeAreaOptions";
 
 const AREA_ICONS: Record<LifeAreaKey, LucideIcon> = {
   finance: Wallet,
@@ -50,6 +55,27 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div>
       <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-fg-subtle">{title}</p>
       {children}
+    </div>
+  );
+}
+
+const LEVER_STYLE: Record<AreaLever["kind"], { chip: string; icon: LucideIcon }> = {
+  strength: { chip: "border-good-ring bg-good-soft text-good", icon: Target },
+  timing: { chip: "border-info-ring bg-info-soft text-info", icon: Lightbulb },
+  caution: { chip: "border-bad-border bg-bad-wash text-bad-strong", icon: Layers },
+  corroboration: { chip: "border-line-soft bg-surface-3 text-fg-muted", icon: Layers },
+};
+
+function LeverCard({ lever }: { lever: AreaLever }) {
+  const style = LEVER_STYLE[lever.kind];
+  const Icon = style.icon;
+  return (
+    <div className={`rounded-lg border p-2.5 ${style.chip}`}>
+      <p className="flex items-center gap-1.5 text-xs font-bold">
+        <Icon className="h-3.5 w-3.5 shrink-0" />
+        {lever.title}
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-fg">{lever.body}</p>
     </div>
   );
 }
@@ -91,6 +117,64 @@ function AreaCard({ report }: { report: LifeAreaReport }) {
       {open && (
         <div className="space-y-4 border-t border-line-soft p-4">
           <p className="text-xs italic leading-relaxed text-fg-subtle">Scope: {report.blurb}.</p>
+
+          {report.possibilities.length > 0 && (
+            <Section title="What this area can be — ranked by the chart">
+              <p className="mb-2 text-[11px] leading-relaxed text-fg-faint">
+                Each entry is a graha&apos;s own classical signification for this area, surfaced because
+                that graha won the most votes from the area&apos;s house lords, occupants, karakas,
+                drishti and its own divisional chart. Fit is relative to the top-ranked graha, then
+                scaled by how capable that graha actually is in this chart.
+              </p>
+              <div className="space-y-2">
+                {report.possibilities.map((p) => (
+                  <div key={p.planet} className="rounded-lg border border-line-soft bg-surface-3 p-2.5">
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="font-serif text-sm font-bold text-fg-2">{p.label}</span>
+                      <span className="text-[11px] font-medium text-eyebrow">
+                        via {PLANET_NAMES[p.planet]}
+                      </span>
+                      <div className="ml-auto flex items-center gap-2">
+                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-inset-2">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-cta-from-hover to-cta-to-hover"
+                            style={{ width: `${p.fit}%` }}
+                          />
+                        </div>
+                        <span className="font-mono text-[11px] text-fg-muted">{p.fit}%</span>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-fg">{p.detail}.</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-fg-faint">
+                      Why: {PLANET_NAMES[p.planet]} {p.reasons.join("; ")}.
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {report.levers.length > 0 && (
+            <Section title="Best options — what to do with this">
+              <div className="space-y-2">
+                {report.levers.map((l, i) => (
+                  <LeverCard key={i} lever={l} />
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {report.corroboration.length > 0 && (
+            <Section title="Divisional & strength corroboration">
+              <div className="space-y-1.5 rounded-lg border border-line-soft bg-surface-3 p-2.5">
+                {report.corroboration.map((c, i) => (
+                  <p key={i} className="text-[11px] leading-relaxed text-fg-muted">
+                    {c}
+                  </p>
+                ))}
+              </div>
+            </Section>
+          )}
 
           {report.houses.map((h) => (
             <Section key={h.house} title={`House Analysis — ${h.house}`}>
@@ -203,12 +287,18 @@ function AreaCard({ report }: { report: LifeAreaReport }) {
 }
 
 export default function LifeAreasPanel() {
-  const { chart, dashaTree, ashtakavarga, yogas, now } = useChart();
+  const { chart, dashaTree, ashtakavarga, yogas, now, vargas, shadbala, bhavaBala, jaimini } =
+    useChart();
 
   const reports = useMemo(() => {
     if (!chart) return null;
-    return buildLifeAreaReports(chart, dashaTree, ashtakavarga, yogas, now);
-  }, [chart, dashaTree, ashtakavarga, yogas, now]);
+    return buildLifeAreaReports(chart, dashaTree, ashtakavarga, yogas, now, {
+      vargas,
+      shadbala,
+      bhavaBala,
+      jaimini,
+    });
+  }, [chart, dashaTree, ashtakavarga, yogas, now, vargas, shadbala, bhavaBala, jaimini]);
 
   if (!chart || !reports) return null;
 
