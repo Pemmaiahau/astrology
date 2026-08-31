@@ -15,7 +15,24 @@ import { rectify, validateRectifyRequest } from "@/utils/astrology/rectification
  * never as a `Date`.
  */
 
-export const runtime = "nodejs";
+/**
+ * Edge runtime, not Node.
+ *
+ * The site deploys to Cloudflare Pages, which cannot serve a Node.js server
+ * function from a plain `next build` — that path needs the
+ * `@cloudflare/next-on-pages` adapter, and that adapter in turn requires edge.
+ * Declaring `nodejs` here would have turned a working static deployment into a
+ * failing build.
+ *
+ * Nothing in the rectification chain needs Node: it is `astronomy-engine`
+ * (pure JS), the ayanamsha polynomials, and `Intl.DateTimeFormat` for zone
+ * handling — no `fs`, no `Buffer`, no `process`, no `require`. So the switch is
+ * a declaration change rather than a port.
+ *
+ * `force-dynamic` stays: a sweep is a pure function of its POST body, but the
+ * route must not be prerendered or cached as a static asset.
+ */
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 interface RequestBodyShape {
