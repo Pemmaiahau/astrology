@@ -38,6 +38,7 @@ import RectificationPanel from "@/components/panels/rectification/RectificationP
 import JaiminiPanel from "@/components/panels/JaiminiPanel";
 import VargaPanel from "@/components/panels/VargaPanel";
 import Disclaimer from "@/components/ui/Disclaimer";
+import DownloadReport from "@/components/ui/DownloadReport";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { AYANAMSHA_IDS, AYANAMSHA_LABELS, AYANAMSHA_SHORT } from "@/utils/astrology/ayanamsha";
 import type { NodeMode } from "@/utils/astrology/types";
@@ -175,7 +176,7 @@ function Header() {
 }
 
 function InputCard() {
-  const { mode, setMode, committed, clearSession } = useChart();
+  const { mode, setMode, committed, clearSession, chart } = useChart();
   return (
     <div className="rounded-xl border border-line bg-surface p-4">
       {committed && (
@@ -215,6 +216,7 @@ function InputCard() {
         </button>
       </div>
       {mode === "auto" ? <AutoInput /> : <ManualInput />}
+      {chart && <DownloadReport />}
     </div>
   );
 }
