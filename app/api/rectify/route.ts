@@ -16,23 +16,28 @@ import { rectify, validateRectifyRequest } from "@/utils/astrology/rectification
  */
 
 /**
- * Edge runtime, not Node.
+ * No runtime declaration — deliberately.
  *
- * The site deploys to Cloudflare Pages, which cannot serve a Node.js server
- * function from a plain `next build` — that path needs the
- * `@cloudflare/next-on-pages` adapter, and that adapter in turn requires edge.
- * Declaring `nodejs` here would have turned a working static deployment into a
- * failing build.
+ * This route was briefly declared `runtime = "edge"`, for a deployment through
+ * Cloudflare Pages and `@cloudflare/next-on-pages`, an adapter that can only
+ * serve edge functions. The deployment now goes through Workers and
+ * `@opennextjs/cloudflare` instead, which is the exact inverse: it refuses to
+ * bundle an edge route at all ("OpenNext requires edge runtime function to be
+ * defined in a separate function") and fails the build outright. So the two
+ * Cloudflare paths cannot both be satisfied, and the declaration follows
+ * whichever one deploys the site.
  *
- * Nothing in the rectification chain needs Node: it is `astronomy-engine`
- * (pure JS), the ayanamsha polynomials, and `Intl.DateTimeFormat` for zone
- * handling — no `fs`, no `Buffer`, no `process`, no `require`. So the switch is
- * a declaration change rather than a port.
+ * Leaving it off rather than writing `runtime = "nodejs"` is the point: the
+ * default already is nodejs, and an explicit declaration here is what created
+ * the coupling to a deployment target in the first place. Nothing in the
+ * rectification chain constrains the choice — it is `astronomy-engine` (pure
+ * JS), the ayanamsha polynomials, and `Intl.DateTimeFormat` for zone handling,
+ * with no `fs`, `Buffer`, `process` or `require` anywhere in the graph — so it
+ * runs unchanged under workerd with nodejs_compat.
  *
  * `force-dynamic` stays: a sweep is a pure function of its POST body, but the
  * route must not be prerendered or cached as a static asset.
  */
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 interface RequestBodyShape {
