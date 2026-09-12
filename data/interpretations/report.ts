@@ -24,6 +24,16 @@ export interface Evidence {
   /** Signed contribution to the section's judgement (positive = supportive). */
   weight: number;
   source?: Citation;
+  /**
+   * Which scored sub-item(s) this evidence actually fed (e.g. a section with
+   * several ranked scenarios). Optional — sections with a single score can
+   * ignore it. Where present, a scenario's displayed "why" reasons should be
+   * built by filtering on this tag rather than by matching keywords in
+   * `text`: keyword-matching drifts out of sync with the score the moment the
+   * prose is reworded, silently hiding evidence that actually moved the
+   * number. Tagging at the point of scoring keeps the explanation honest.
+   */
+  tags?: string[];
 }
 
 /** A ranked item: a career option, an income stream, a settlement scenario… */

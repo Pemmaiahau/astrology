@@ -24,10 +24,21 @@ import { ordinal } from "./synthesis";
  * short journeys per the standard house significations (BPHS/Phaladeepika
  * house chapters); Rahu as the karaka of foreign lands (consensus of the
  * standard literature); movable-sign emphasis for mobility (classical sign
- * taxonomy, BPHS Ch.4); D-4 (residence/fortune) and D-12 corroboration per
- * Shodasavarga usage. Direction indications use the digpati scheme and are
- * explicitly capped at low-to-moderate confidence — they are the weakest
- * technique in this section.
+ * taxonomy, BPHS Ch.4); D-4 (Chaturthamsa — property, home and fortune)
+ * corroboration per Shodasavarga usage. D-12 (Dwadasamsa) is deliberately
+ * *not* used here despite appearing in some modern write-ups of this topic:
+ * this app's own varga significations (utils/astrology/varga.ts) hold it to
+ * its classical remit of parents and ancestry, not residence, so borrowing it
+ * for a foreign-settlement corroboration would be citing a chart for
+ * something it doesn't classically speak to. Direction indications use the
+ * digpati scheme and are explicitly capped at low-to-moderate confidence —
+ * they are the weakest technique in this section.
+ *
+ * Every evidence entry below is tagged with the scenario(s) it actually
+ * scores (`tags: ["travel" | "stay" | "settle"]`). The three RankedItems'
+ * `reasons` are filtered on those tags rather than matched against keywords
+ * in the prose — so what a reader sees under "why" always matches what moved
+ * that scenario's number, even after the wording above is edited.
  */
 
 export interface ForeignReport extends SectionReport {
@@ -68,13 +79,14 @@ export function buildForeignReport(
       text: `${PLANET_NAMES[p.id]} sits in your 12th house, the house of distant places and of life lived away from where you started. A planet there keeps pulling your attention over the horizon, even in years when you do not move.`,
       weight: 7,
       source: { work: "BPHS", ref: "12th-house significations" },
+      tags: ["stay", "settle"],
     });
   }
   if (twelfthLord) {
     const s = strengths[twelfthLordId];
     if (s && s.score >= 55) {
       stayScore += 6;
-      evidence.push({ text: `${PLANET_NAMES[twelfthLordId]} rules your 12th house and is strong (${s.score}/100), which is the difference between a foreign house that delivers and one that only drains. Time spent abroad tends to come back to you as something — money, skill, a life — rather than just disappearing.`, weight: 6 });
+      evidence.push({ text: `${PLANET_NAMES[twelfthLordId]} rules your 12th house and is strong (${s.score}/100), which is the difference between a foreign house that delivers and one that only drains. Time spent abroad tends to come back to you as something — money, skill, a life — rather than just disappearing.`, weight: 6, tags: ["stay"] });
     }
   }
 
@@ -86,23 +98,24 @@ export function buildForeignReport(
       text: `The ruler of your rising sign, ${PLANET_NAMES[lagnaLordId]}, sits in your 12th house — the clearest classical signature there is for a life lived away from where it began. It usually shows up as a pull you feel long before there is a practical reason for it.`,
       weight: 10,
       source: { work: "Phaladeepika", ref: "Lagna lord in the 12th" },
+      tags: ["stay", "settle"],
     });
   }
   if (twelfthLord && twelfthLord.house === 1) {
     stayScore += 8;
-    evidence.push({ text: "Your 12th ruler stands in your 1st house, which brings foreign themes right onto your own identity. People often read you as someone who has been elsewhere, sometimes before you have.", weight: 7 });
+    evidence.push({ text: "Your 12th ruler stands in your 1st house, which brings foreign themes right onto your own identity. People often read you as someone who has been elsewhere, sometimes before you have.", weight: 7, tags: ["stay"] });
   }
 
   // --- 9th: long journeys; 3rd: short journeys ---
   const ninthOccupants = chart.planets.filter((p) => p.house === 9);
   if (ninthOccupants.length) {
     travelScore += 6 * ninthOccupants.length;
-    evidence.push({ text: `${ninthOccupants.map((p) => PLANET_NAMES[p.id]).join(", ")} occupies your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.`, weight: 6 });
+    evidence.push({ text: `${ninthOccupants.map((p) => PLANET_NAMES[p.id]).join(", ")} occupies your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.`, weight: 6, tags: ["travel"] });
   }
   const thirdOccupants = chart.planets.filter((p) => p.house === 3);
   if (thirdOccupants.length) {
     travelScore += 4 * thirdOccupants.length;
-    evidence.push({ text: `${thirdOccupants.map((p) => PLANET_NAMES[p.id]).join(", ")} occupies your 3rd house of short journeys, which reads as frequent movement rather than distant movement — a life with a lot of trips in it.`, weight: 4 });
+    evidence.push({ text: `${thirdOccupants.map((p) => PLANET_NAMES[p.id]).join(", ")} occupies your 3rd house of short journeys, which reads as frequent movement rather than distant movement — a life with a lot of trips in it.`, weight: 4, tags: ["travel"] });
   }
 
   // --- 4th house afflicted: leaving the homeland ---
@@ -117,11 +130,12 @@ export function buildForeignReport(
         text: `The ruler of your 4th house — home, family land, the place you are from — sits in the ${ordinal(fourthLord.house)}, which loosens your roots. That is the classical precondition for settling somewhere else, and it often feels less like wanderlust than like home never quite closing around you.`,
         weight: 6,
         source: { work: "Phaladeepika", ref: "4th lord in dusthana" },
+        tags: ["settle"],
       });
     }
     if (maleficsOnFourth.length >= 2) {
       settleScore += 4;
-      evidence.push({ text: `${maleficsOnFourth.map((a) => PLANET_NAMES[a]).join(", ")} press on your 4th house of home. Comfort is something you build rather than inherit, which means you can build it abroad about as easily as you can build it where you were born.`, weight: 3 });
+      evidence.push({ text: `${maleficsOnFourth.map((a) => PLANET_NAMES[a]).join(", ")} press on your 4th house of home. Comfort is something you build rather than inherit, which means you can build it abroad about as easily as you can build it where you were born.`, weight: 3, tags: ["settle"] });
     }
   }
 
@@ -134,12 +148,13 @@ export function buildForeignReport(
         text: `Rahu, the planet of foreign places and of everything unfamiliar, sits in your ${ordinal(rahu.house)} house. Wherever Rahu falls is where you are willing to be a beginner in a strange place — and that willingness is most of what migration actually asks for.`,
         weight: 6,
         source: { work: "standard literature", ref: "Rahu as videsha karaka" },
+        tags: ["stay", "settle"],
       });
     }
     const saturn = planetOf("Sa");
     if (saturn && saturn.sign === rahu.sign) {
       stayScore += 4;
-      evidence.push({ text: "Saturn sits with Rahu in your chart, which lengthens foreign stints into something structural. Time abroad tends to come in years rather than months, and to change the shape of your life rather than decorate it.", weight: 4 });
+      evidence.push({ text: "Saturn sits with Rahu in your chart, which lengthens foreign stints into something structural. Time abroad tends to come in years rather than months, and to change the shape of your life rather than decorate it.", weight: 4, tags: ["stay"] });
     }
   }
 
@@ -150,11 +165,11 @@ export function buildForeignReport(
     if (movers >= 2) {
       travelScore += 6;
       stayScore += 4;
-      evidence.push({ text: `${movers} of your rising sign, Sun and Moon fall in movable signs, so motion is native to you rather than something you force. Staying still for long stretches is usually the thing that costs you effort.`, weight: 5, source: { work: "BPHS", ref: "Ch.4 sign taxonomy" } });
+      evidence.push({ text: `${movers} of your rising sign, Sun and Moon fall in movable signs, so motion is native to you rather than something you force. Staying still for long stretches is usually the thing that costs you effort.`, weight: 5, source: { work: "BPHS", ref: "Ch.4 sign taxonomy" }, tags: ["travel", "stay"] });
     }
   }
 
-  // --- D-4 / D-12 corroboration ---
+  // --- D-4 corroboration (D-12 deliberately excluded — see file header) ---
   if (vargas) {
     const d4 = vargas.charts.D4;
     const d4Twelfth = chart.planets.filter((p) => {
@@ -163,37 +178,42 @@ export function buildForeignReport(
     });
     if (d4Twelfth.length >= 2) {
       settleScore += 4;
-      evidence.push({ text: `${d4Twelfth.length} planets fall in the 12th house of your D-4, the chart read specifically for where you live. That is an independent second source agreeing with the relocation reading rather than the same evidence counted twice.`, weight: 3, source: { work: "BPHS", ref: "Ch.6 (Chaturthamsa)" } });
+      evidence.push({ text: `${d4Twelfth.length} planets fall in the 12th house of your D-4, the chart read specifically for where you live. That is an independent second source agreeing with the relocation reading rather than the same evidence counted twice.`, weight: 3, source: { work: "BPHS", ref: "Ch.6 (Chaturthamsa)" }, tags: ["settle"] });
     }
   } else {
     caveats.push(
-      "The D-4 and D-12 charts, which corroborate where you live, could not be built here. The reading below rests on the birth chart alone, which is workable but thinner than it should be."
+      "The D-4 chart, which corroborates where you live, could not be built here. The reading below rests on the birth chart alone, which is workable but thinner than it should be."
     );
   }
 
   // --- Scenarios ---
+  // Each scenario's `reasons` is the evidence actually tagged for it, not a
+  // keyword match against the prose — so "why" always agrees with the score
+  // above it, even evidence that also feeds another scenario (shown there
+  // too, honestly, since it really did move both numbers).
   const norm = (x: number) => clamp(Math.round(x), 5, 95);
+  const reasonsFor = (tag: "travel" | "stay" | "settle") => evidence.filter((e) => e.tags?.includes(tag));
   const scenarios: RankedItem[] = [
     {
       key: "travel",
       label: "Travelling often — trips, assignments, pilgrimages, and back home again",
       score: norm(travelScore + stayScore * 0.3),
       verdict: verdictOf(norm(travelScore + stayScore * 0.3)),
-      reasons: evidence.filter((e) => e.text.includes("journeys") || e.text.includes("movable")),
+      reasons: reasonsFor("travel"),
     },
     {
       key: "stay",
       label: "Living abroad for years at a time — work or study, with a return in mind",
       score: norm(stayScore + travelScore * 0.2),
       verdict: verdictOf(norm(stayScore + travelScore * 0.2)),
-      reasons: evidence.filter((e) => !e.text.includes("journeys")),
+      reasons: reasonsFor("stay"),
     },
     {
       key: "settle",
       label: "Settling for good somewhere other than where you were born",
       score: norm(settleScore + stayScore * 0.4),
       verdict: verdictOf(norm(settleScore + stayScore * 0.4)),
-      reasons: evidence.filter((e) => e.text.includes("12th") || e.text.includes("4th") || e.text.includes("roots")),
+      reasons: reasonsFor("settle"),
     },
   ].sort((a, b) => b.score - a.score);
 

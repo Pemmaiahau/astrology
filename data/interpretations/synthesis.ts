@@ -267,13 +267,13 @@ function aspectParagraph(chart: ChartData, d: Drishti, house: number, benefics: 
 
 function aspectBalanceSentence(house: number, beneficCount: number, maleficCount: number): string {
   if (beneficCount + maleficCount === 0) {
-    return `No graha casts drishti on the ${ordinal(house)}. Its affairs run on the lord's condition alone, with neither external reinforcement nor interference — outcomes here are quieter and more self-determined than elsewhere in the chart.`;
+    return `No planet casts an aspect on the ${ordinal(house)}. Its affairs run on the lord's condition alone, with neither external reinforcement nor interference — outcomes here are quieter and more self-determined than elsewhere in the chart.`;
   }
   if (maleficCount === 0) {
-    return `Every drishti reaching this house is benefic — an unusually protected field, and one of the safer areas of the life.`;
+    return `Every aspect reaching this house is benefic — an unusually protected field, and one of the safer areas of the life.`;
   }
   if (beneficCount === 0) {
-    return `Every drishti reaching this house is malefic. With no benefic counterweight, these significations need conscious defence, and the house tends to mature through difficulty rather than ease.`;
+    return `Every aspect reaching this house is malefic. With no benefic counterweight, these significations need conscious defence, and the house tends to mature through difficulty rather than ease.`;
   }
   return `The house takes ${beneficCount} benefic and ${maleficCount} malefic ${beneficCount + maleficCount === 2 ? "aspect" : "aspects"} — a contested field whose results swing with whichever of these planets is running its dasha.`;
 }
@@ -287,11 +287,11 @@ function conjunctionQualifier(cs: ConjunctionStrength): string {
   const orb = cs.orb.toFixed(1);
   switch (cs.tier) {
     case "Dominant":
-      return `This blend runs hot: the grahas sit within ${orb}° with a combined force of ${cs.score}/100, led by ${leader}. The combination expresses strongly and early, and it defines this house rather than merely colouring it.`;
+      return `This blend runs hot: the planets sit within ${orb}° with a combined force of ${cs.score}/100, led by ${leader}. The combination expresses strongly and early, and it defines this house rather than merely colouring it.`;
     case "Balanced":
       return `At ${orb}° the planets are genuinely blended — combined force ${cs.score}/100, led by ${leader}. Expect the combination to express steadily rather than dramatically, in proportion to the effort put into it.`;
     case "Weak blend":
-      return `The span is ${orb}° and the combined force only ${cs.score}/100: these grahas share a field more than a purpose. The promise is real but muted, and tends to surface mainly during ${leader}'s periods.`;
+      return `The span is ${orb}° and the combined force only ${cs.score}/100: these planets share a field more than a purpose. The promise is real but muted, and tends to surface mainly during ${leader}'s periods.`;
     default:
       return `Combined force is just ${cs.score}/100 across ${orb}°. This combination is compromised — its difficulties will be felt more reliably than its gifts, and remedial strengthening of ${leader} is the highest-leverage intervention available.`;
   }
@@ -300,7 +300,7 @@ function conjunctionQualifier(cs: ConjunctionStrength): string {
 const GROUP_TIER_NOTE: Record<ConjunctionStrength["tier"], string> = {
   Dominant: "The group acts as a single, life-defining complex that matures across each of their dashas in turn.",
   Balanced: "The pairwise dynamics above braid into one complex whose results arrive in sequence, as each planet's dasha comes round.",
-  "Weak blend": "These grahas dilute one another more than they cooperate; the house stays busy without ever becoming decisive.",
+  "Weak blend": "These planets dilute one another more than they cooperate; the house stays busy without ever becoming decisive.",
   Afflicted: "The concentration is a liability rather than an asset here — the house is overloaded, and its significations need deliberate, sustained repair.",
 };
 
@@ -631,7 +631,7 @@ export function interpretHouse(
         ? "Its combined occupancy makes this a major theatre of the life."
         : occupants.length === 1
           ? `${PLANET_NAMES[occupants[0].id]} occupies it, so this house's affairs are lived directly rather than delegated.`
-          : "No graha occupies it, so the house is judged — as the classics prescribe — by the condition of its lord and by the drishti it receives.")
+          : "No planet occupies it, so the house is judged — as the classics prescribe — by the condition of its lord and by the aspects it receives.")
   );
 
   // 2. The lord.
@@ -651,7 +651,7 @@ export function interpretHouse(
     paragraphs.push(nakshatraSentence(lordPos, `The lord ${lordName}`));
   } else {
     paragraphs.push(
-      `The ${ordinal(house)} is ruled by ${lordName}, which has not been placed in this chart. Without the lord's position the house can only be read from the drishti it receives and from its sign — enter ${lordName} to complete the judgement.`
+      `The ${ordinal(house)} is ruled by ${lordName}, which has not been placed in this chart. Without the lord's position the house can only be read from the aspects it receives and from its sign — enter ${lordName} to complete the judgement.`
     );
   }
 
@@ -665,7 +665,7 @@ export function interpretHouse(
     ];
     if (p.bhava !== p.house && chart.cusps) {
       lines.push(
-        `Note (Bhava Chalit): by Sripati cusps this planet actually operates from the ${ordinal(p.bhava)} bhava — read its concrete, event-level results there, while its sign-based dignity stays as above.`
+        `Note: by the more precise house-cusp method (Bhava Chalit, Sripati), this planet actually delivers its concrete, day-to-day results through the ${ordinal(p.bhava)} house rather than the ${ordinal(p.house)} — read its outcomes there, while its sign-based strength and dignity above stay as described.`
       );
     }
     paragraphs.push(lines.join(" "));
@@ -735,7 +735,7 @@ export function interpretHouse(
   if (occupants.length === 0) {
     paragraphs.push(
       lordPos
-        ? `In sum: with no occupant to speak for it, the ${ordinal(house)}'s fortunes rest on ${lordName}'s condition in the ${ordinal(lordPos.house)} and on the drishti above. Strengthen ${lordName} and this house improves; nothing else reaches it directly.`
+        ? `In sum: with no occupant to speak for it, the ${ordinal(house)}'s fortunes rest on ${lordName}'s condition in the ${ordinal(lordPos.house)} and on the aspects above. Strengthen ${lordName} and this house improves; nothing else reaches it directly.`
         : `In sum: the ${ordinal(house)} must be read from its aspects alone until its lord ${lordName} is placed.`
     );
   }
@@ -758,7 +758,7 @@ export function interpretHouse(
       : null,
   });
   signals.push({
-    label: "drishti balance",
+    label: "aspect balance",
     positive: beneficCount === maleficCount ? null : beneficCount > maleficCount,
   });
 

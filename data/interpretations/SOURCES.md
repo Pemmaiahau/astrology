@@ -42,6 +42,7 @@ Abbreviations: **BPHS** = Brihat Parashara Hora Shastra.
 | `data/interpretations/foreign.ts` | 12th = foreign residence, 9th = long journeys, 3rd = short; weak/afflicted 4th = leaving homeland; lagna lord in 12th | BPHS / Phaladeepika house chapters |
 | | Rahu as videsha (foreign) karaka; Saturn–Rahu for long stints | Standard literature (work-level) |
 | | Movable-sign emphasis for mobility | BPHS sign taxonomy |
+| | D-4 (Chaturthamsa) 12th-house corroboration for settlement | BPHS Ch.6 (Shodasavarga usage). **D-12 (Dwadasamsa) is deliberately not used for this** despite appearing in some modern write-ups of foreign settlement — this app holds D-12 to its classical remit of parents/ancestry (see `varga.ts`), not residence, so it isn't cited here |
 | | Direction of settlement from the digpati of the strongest foreign significator | Digpati scheme — **weakest technique here; confidence capped** |
 | `data/interpretations/cautions.ts` | Functional benefic/malefic scheme per lagna | BPHS lagna-lordship scheme (as tabulated in the standard literature) |
 | | Marakas = 2nd and 7th lords | BPHS, Maraka adhyaya |

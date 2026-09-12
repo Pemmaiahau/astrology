@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Clock4, Play, Sigma, TriangleAlert } from "lucide-react";
+import { AlertTriangle, Check, Clock4, Play, Sigma, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
 import { AYANAMSHA_LABELS } from "@/utils/astrology/ayanamsha";
@@ -8,11 +8,13 @@ import {
   RECTIFY_STEP_MIN,
   RECTIFY_WINDOW_MIN,
   rectify,
+  shiftLocalCivil,
   timezoneWarnings,
 } from "@/utils/astrology/rectification/rectify";
 import { MIN_EVENTS } from "@/utils/astrology/rectification/score";
 import type {
   AyanamshaSensitivity,
+  CandidateScore,
   DualAyanamshaResult,
   LifeEvent,
   RectificationResult,
@@ -69,6 +71,100 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
     <div className="rounded-lg border border-line-soft bg-surface-3 px-3 py-2" title={hint}>
       <div className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">{label}</div>
       <div className="font-mono text-sm text-fg">{value}</div>
+    </div>
+  );
+}
+
+/**
+ * Closes the loop between Rectification and the rest of the app.
+ *
+ * Every other tab (Interpretation, Life Events, Dasha, Vargas…) reads
+ * `chart.birthUtc` off the committed input — a sweep result here changes
+ * nothing there until someone re-types the corrected time into the birth
+ * form. That gap matters most for exactly the readings that most need an
+ * accurate birth minute (house cusps, dasha boundaries), so this button
+ * commits the winning candidate as the new working chart directly, via the
+ * same `commitAuto` the birth-data form itself calls.
+ *
+ * Only offered when the working chart is itself auto-derived (`mode ===
+ * "auto"`): a Manual Configuration chart's planets are hand-placed and don't
+ * come from this date/time at all, so silently swapping the mode out from
+ * under a manual chart on a button click would overwrite real user input
+ * with computed positions — worth a deliberate switch, not a side effect.
+ */
+function ApplyBestTime({
+  birth,
+  best,
+  mode,
+  currentLocalDateTime,
+  onApply,
+}: {
+  birth: RectifyBirth;
+  best: CandidateScore;
+  mode: "auto" | "manual";
+  currentLocalDateTime?: string;
+  onApply: (input: {
+    name: string;
+    dateISO: string;
+    time: string;
+    place: { name: string; lat: number; lon: number; timezone: string };
+    gender?: RectifyBirth["gender"];
+  }) => void;
+}) {
+  const local = shiftLocalCivil(birth.dateISO, birth.time, best.offsetMin);
+  const alreadyApplied = currentLocalDateTime === `${local.dateISO} ${local.time}`;
+
+  if (mode !== "auto") {
+    return (
+      <p className="text-[11px] leading-relaxed text-fg-subtle">
+        Your working chart is in Manual Configuration mode — its planets are placed by hand rather
+        than derived from this date and time, so this result can&apos;t be applied to it directly.
+        Re-cast the chart from Birth Data with{" "}
+        <span className="font-mono text-fg-muted">
+          {local.dateISO} {local.time}
+        </span>{" "}
+        if you want the app to use this corrected time everywhere.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        disabled={alreadyApplied}
+        onClick={() =>
+          onApply({
+            name: birth.name ?? "",
+            dateISO: local.dateISO,
+            time: local.time,
+            place: {
+              name: birth.placeName ?? "Birth place",
+              lat: birth.lat,
+              lon: birth.lon,
+              timezone: birth.timezone,
+            },
+            gender: birth.gender,
+          })
+        }
+        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+          alreadyApplied
+            ? "cursor-default bg-good-soft text-good"
+            : "bg-gradient-to-r from-cta-from to-cta-to text-cta-fg hover:from-cta-from-hover hover:to-cta-to-hover"
+        }`}
+      >
+        <Check className="h-3.5 w-3.5" />
+        {alreadyApplied ? "Applied — this is your working chart" : "Apply this time to your chart"}
+      </button>
+      {!alreadyApplied && (
+        <span className="text-[11px] text-fg-muted">
+          Recomputes every tab — Interpretation, Life Events, Dasha and the rest — from{" "}
+          <span className="font-mono">
+            {local.dateISO} {local.time}
+          </span>{" "}
+          instead of the recorded {birth.dateISO} {birth.time}.
+        </span>
+      )}
     </div>
   );
 }
@@ -183,7 +279,7 @@ function ResultDetail({
 }
 
 export default function RectificationPanel() {
-  const { chart } = useChart();
+  const { chart, mode, commitAuto } = useChart();
   const [events, setEvents] = useState<LifeEvent[]>(seedEvents);
   const [result, setResult] = useState<DualAyanamshaResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -346,6 +442,15 @@ export default function RectificationPanel() {
               treat a Raman reading of the surviving minute as one step less confirmed.
             </p>
             <ResultDetail result={detail === "lahiri" ? result.lahiri : result.pushya} events={dated} />
+            <div className="mt-4 rounded-lg border border-primary-border-soft bg-primary-wash p-3">
+              <ApplyBestTime
+                birth={birth}
+                best={detail === "lahiri" ? result.lahiri.best : result.pushya.best}
+                mode={mode}
+                currentLocalDateTime={chart?.meta.localDateTime}
+                onApply={commitAuto}
+              />
+            </div>
           </section>
 
           <section className="rounded-xl border border-line-soft bg-surface-soft p-4">

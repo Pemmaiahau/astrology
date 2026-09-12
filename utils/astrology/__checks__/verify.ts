@@ -788,6 +788,19 @@ function norm360Check(x: number): number {
     check("Career: option scores in 5–95 with reasons", c.options.every((o) => o.score >= 5 && o.score <= 95 && o.reasons.length > 0));
   }
 
+  // Foreign: 3 scenarios ranked, scores within 5–95, and — the point of the
+  // tag-based rewrite — every reason shown under a scenario is evidence that
+  // was actually tagged for it (never picked up by a stale keyword match).
+  {
+    const f = buildForeignReport(chart, vargas, strengths);
+    check("Foreign: 3 ranked scenarios", f.scenarios.length === 3, String(f.scenarios.length));
+    check("Foreign: scenario scores in 5–95", f.scenarios.every((s) => s.score >= 5 && s.score <= 95));
+    check(
+      "Foreign: every scenario reason is tagged for that scenario",
+      f.scenarios.every((s) => s.reasons.every((r) => r.tags?.includes(s.key)))
+    );
+  }
+
   // Marriage: probabilistic phrasing — the words "will marry" must not appear.
   {
     const m = buildMarriageReport(chart, vargas, jaimini, strengths, yogas);
