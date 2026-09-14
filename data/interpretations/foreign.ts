@@ -1,5 +1,5 @@
 import { AGE_BANDS, agePriorFor, dateAtAge } from "@/utils/astrology/ageBands";
-import { aspectsOnSign } from "@/utils/astrology/aspects";
+import { aspectedSigns, aspectsOnSign, planetsAspecting } from "@/utils/astrology/aspects";
 import type { AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
 import {
   PLANET_DIRECTION,
@@ -68,14 +68,15 @@ export function buildForeignReport(
   const evidence: Evidence[] = [];
   // Base scores are set so that a chart with no foreign signature at all reads
   // as "Needs effort" for travel and "Challenged" for staying/settling, and a
-  // chart carrying two or three of the standard signatures reaches
+  // chart carrying three or four of the standard signatures reaches
   // "Supportive"/"Strong promise". Calibrated against a 400-chart random
-  // sample (see SOURCES.md, foreign.ts row): the previous bases (20/10/5)
-  // put 70% of all charts in "Challenged" for living abroad, which no
-  // real population matches.
-  let travelScore = 26; // short journeys base
-  let stayScore = 16;   // long stays abroad
-  let settleScore = 10; // permanent settlement
+  // sample AND a known settled-abroad chart (see SOURCES.md, foreign.ts
+  // row): the original bases (20/10/5) put 70% of all charts in "Challenged"
+  // for living abroad, which no real population matches. Re-tune both
+  // together whenever a rule is added — the medians drift up otherwise.
+  let travelScore = 24; // short journeys base
+  let stayScore = 12;   // long stays abroad
+  let settleScore = 6;  // permanent settlement
 
   const lagnaLordId = SIGN_LORDS[lagna];
   const lagnaLord = planetOf(lagnaLordId);
@@ -146,6 +147,40 @@ export function buildForeignReport(
     stayScore += 8;
     settleScore += 4;
     evidence.push({ text: "Your 12th ruler stands in your 1st house, which brings foreign themes right onto your own identity. People often read you as someone who has been elsewhere, sometimes before you have.", weight: 7, tags: ["stay", "settle"] });
+  }
+  if (lagnaLord && [6, 8].includes(lagnaLord.house)) {
+    stayScore += 6;
+    settleScore += 5;
+    evidence.push({
+      text: `The ruler of your rising sign, ${PLANET_NAMES[lagnaLordId]}, sits in your ${ordinal(lagnaLord.house)} house — one of the three "away" houses (the 6th, 8th and 12th). The tradition reads the ruler of the self in any of them as a life lived at a distance from where it began${lagnaLord.house === 6 ? ", and the 6th in particular as a living made through service or employment away from home" : ""}. It is a quieter version of the 12th-house signature, but it points the same way.`,
+      weight: 6,
+      source: { work: "standard literature", ref: `Lagna lord in the ${ordinal(lagnaLord.house)} — away from the birthplace` },
+      tags: ["stay", "settle"],
+    });
+  }
+
+  // --- Lords looking at the 12th: an aspect is a classical connection too ---
+  {
+    const lookers = ([
+      [lagnaLord, "the ruler of your rising sign"],
+      [moon, "your Moon"],
+      [ninthLord, "the ruler of your 9th house of long journeys"],
+    ] as const)
+      .filter(([p]) => p && p.house !== 12 && aspectedSigns(p.id, p.sign).includes(twelfthSign))
+      .filter(([p], i, arr) => arr.findIndex(([q]) => q!.id === p!.id) === i)
+      .map(([p, label]) => `${PLANET_NAMES[p!.id]} (${label})`);
+    if (lookers.length) {
+      const gain = Math.min(2, lookers.length);
+      stayScore += 2 + 2 * gain;
+      settleScore += 2 * gain;
+      travelScore += gain;
+      evidence.push({
+        text: `${lookers.join(" and ")} ${lookers.length > 1 ? "aspect" : "aspects"} your 12th house of distant lands. A planet does not have to sit in a house to be tied to it — its aspect is a classical connection — and when the planets that stand for you, your mind or your fortune keep looking at the house of far-away places, the far-away place keeps coming up in your life.`,
+        weight: 2 + 2 * gain,
+        source: { work: "standard literature", ref: "Lagna lord / Moon / 9th lord aspecting the 12th" },
+        tags: ["travel", "stay", "settle"],
+      });
+    }
   }
 
   // --- Where else the 12th lord goes, and who comes to the 12th ---
@@ -281,6 +316,24 @@ export function buildForeignReport(
     });
   }
   if (rahu && rahu.house === 4) rootsLoosened = true;
+  if (fourthLord) {
+    const hard: PlanetId[] = ["Sa", "Ma", "Ra", "Ke"];
+    const withLord = chart.planets.filter((p) => p.id !== fourthLord.id && p.sign === fourthLord.sign && hard.includes(p.id)).map((p) => p.id);
+    const onLord = planetsAspecting(chart, fourthLord.id).filter((id) => hard.includes(id));
+    const afflictors = [...new Set([...withLord, ...onLord])];
+    const nodal = afflictors.some((id) => id === "Ra" || id === "Ke");
+    if (afflictors.length >= 2 || (nodal && afflictors.length >= 1 && withLord.length)) {
+      rootsLoosened = true;
+      settleScore += 4;
+      stayScore += 2;
+      evidence.push({
+        text: `${PLANET_NAMES[fourthLordId]}, the ruler of your 4th house of home, is pressed on by ${afflictors.map((id) => PLANET_NAMES[id]).join(" and ")}${withLord.length ? " (sitting with it or aspecting it)" : " (by aspect)"}. The home house itself may look quiet, but its ruler is under strain — which in practice reads as roots that are easier to lift than they appear from outside.`,
+        weight: 4,
+        source: { work: "standard literature", ref: "afflicted 4th lord" },
+        tags: ["stay", "settle"],
+      });
+    }
+  }
 
   // --- Rahu links ---
   if (rahu) {
@@ -323,9 +376,45 @@ export function buildForeignReport(
         tags: ["stay", "settle"],
       });
     }
+    const rahuOn = ([
+      [lagnaLord, "the ruler of your rising sign"],
+      [moon, "your Moon"],
+      [fourthLord, "the ruler of your 4th house of home"],
+      [twelfthLord, "the ruler of your 12th house of distant lands"],
+    ] as const)
+      .filter(([p]) => p && p.id !== "Ra" && p.id !== "Ke" && p.sign !== rahu.sign && aspectedSigns("Ra", rahu.sign).includes(p.sign))
+      .filter(([p], i, arr) => arr.findIndex(([q]) => q!.id === p!.id) === i)
+      .map(([p, label]) => `${PLANET_NAMES[p!.id]} (${label})`);
+    if (rahuOn.length) {
+      const gain = Math.min(2, rahuOn.length);
+      stayScore += 3 * gain;
+      settleScore += 3 * gain;
+      evidence.push({
+        text: `Rahu aspects ${rahuOn.join(" and ")}. An aspect is a lighter touch than sitting together, but it is the same message: the planet of the unfamiliar has a hand on the things that stand for you, your mind, your home or the far-away place — and where Rahu presses, the familiar option tends not to be the one taken.`,
+        weight: 3 * gain,
+        source: { work: "standard literature", ref: "Rahu's aspect on the Lagna lord / Moon / 4th lord / 12th lord" },
+        tags: ["stay", "settle"],
+      });
+    }
     if (saturn && saturn.sign === rahu.sign) {
       stayScore += 4;
       evidence.push({ text: "Saturn sits with Rahu in your chart, which lengthens foreign stints into something structural. Time abroad tends to come in years rather than months, and to change the shape of your life rather than decorate it.", weight: 4, tags: ["stay"] });
+    }
+  }
+  if (twelfthLord) {
+    const company = chart.planets
+      .filter((p) => p.id !== twelfthLord.id && p.sign === twelfthLord.sign && ["Sa", "Ra", "Ke"].includes(p.id))
+      .filter((p) => !(p.id === "Ra" && rahu && rahu.house === 12)) // Rahu in the 12th is already counted above
+      .map((p) => PLANET_NAMES[p.id]);
+    if (company.length) {
+      stayScore += 4;
+      settleScore += 4;
+      evidence.push({
+        text: `${PLANET_NAMES[twelfthLordId]}, the ruler of your 12th house, sits with ${company.join(" and ")}. Saturn, Rahu and Ketu are the three planets most associated with distance, separation and the unfamiliar; any of them keeping company with the ruler of the house of distant lands colours that house toward a long time away rather than a short one.`,
+        weight: 4,
+        source: { work: "standard literature", ref: "12th lord with Saturn / Rahu / Ketu" },
+        tags: ["stay", "settle"],
+      });
     }
   }
 

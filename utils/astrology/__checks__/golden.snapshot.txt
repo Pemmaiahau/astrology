@@ -439,6 +439,7 @@ CHART canonical-delhi
      [2] These are tendencies rather than certainties. A strong score means the chart supports that shape of life and it tends to come easily; a low one means it costs more effort, not that it is closed to you.
      [3] Open any row to see what moved its number. A ▲ is a signature that pulls you abroad, a ▼ is something that holds you where you are. A low score with only ▲ reasons under it simply means few of the classical signatures are present — nothing in the chart is pushing back.
      item travel score=81 verdict=Strong promise :: Travelling often — trips, assignments, pilgrimages, and back home again
+        why(4) Mars (the ruler of your rising sign) aspects your 12th house of distant lands. A planet does not have to sit in a house to be tied to it — its aspect is a classical connection — and when the planets that stand for you, your mind or your fortune keep looking at the house of far-away places, the far-away place keeps coming up in your life.
         why(5) Your 12th house (distant lands) and your 3rd house (short trips) are tied together: Jupiter (your 12th) and Mercury (your 3rd) sit together or in each other's houses. This reads as a lot of going and coming rather than one big move: frequent flights, short stints, work that keeps you in motion.
         why(6) Moon, Mars, Mercury, Saturn occupy your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.
         why(4) Jupiter occupies your 3rd house of short journeys, which reads as frequent movement rather than distant movement — a life with a lot of trips in it.
@@ -446,15 +447,19 @@ CHART canonical-delhi
         why(3) Your Moon — the planet of the mind — sits in your 9th, one of the houses of movement. The mind itself is restless in a productive way: it settles best when there is a journey somewhere in the calendar.
         why(4) Rahu, the planet of foreign places, sits in your 10th house — the house of work. That is the signature of foreign contact coming through your career: foreign employers, foreign clients, or a posting.
         why(5) 2 of your rising sign, Sun and Moon fall in movable signs, so motion is native to you rather than something you force. Staying still for long stretches is usually the thing that costs you effort.
-     item stay score=48 verdict=Mixed :: Living abroad for years at a time — work or study, with a return in mind
+     item stay score=50 verdict=Mixed :: Living abroad for years at a time — work or study, with a return in mind
+        why(4) Mars (the ruler of your rising sign) aspects your 12th house of distant lands. A planet does not have to sit in a house to be tied to it — its aspect is a classical connection — and when the planets that stand for you, your mind or your fortune keep looking at the house of far-away places, the far-away place keeps coming up in your life.
         why(6) Moon, Mars, Mercury, Saturn occupy your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.
         why(5) The ruler of your rising sign, Mars, sits in your 9th house — the house of long journeys. You, personally, are placed in a travelling house, which usually shows up as a life that keeps moving even when you did not plan it to.
         why(5) Ketu sits in your 4th house. Ketu is the planet of letting go, and in the house of home it loosens the tie to the birthplace from the inside — people with this placement tend to feel that home is something they carry rather than somewhere they return to, which makes leaving easier than it is for most.
+        why(4) Moon, the ruler of your 4th house of home, is pressed on by Mars and Saturn (sitting with it or aspecting it). The home house itself may look quiet, but its ruler is under strain — which in practice reads as roots that are easier to lift than they appear from outside.
         why(4) Rahu, the planet of foreign places, sits in your 10th house — the house of work. That is the signature of foreign contact coming through your career: foreign employers, foreign clients, or a posting.
         why(5) 2 of your rising sign, Sun and Moon fall in movable signs, so motion is native to you rather than something you force. Staying still for long stretches is usually the thing that costs you effort.
-     item settle score=33 verdict=Challenged :: Settling for good somewhere other than where you were born
+     item settle score=35 verdict=Needs effort :: Settling for good somewhere other than where you were born
+        why(4) Mars (the ruler of your rising sign) aspects your 12th house of distant lands. A planet does not have to sit in a house to be tied to it — its aspect is a classical connection — and when the planets that stand for you, your mind or your fortune keep looking at the house of far-away places, the far-away place keeps coming up in your life.
         why(3) Mars, Rahu press on your 4th house of home. Comfort is something you build rather than inherit, which means you can build it abroad about as easily as you can build it where you were born.
         why(5) Ketu sits in your 4th house. Ketu is the planet of letting go, and in the house of home it loosens the tie to the birthplace from the inside — people with this placement tend to feel that home is something they carry rather than somewhere they return to, which makes leaving easier than it is for most.
+        why(4) Moon, the ruler of your 4th house of home, is pressed on by Mars and Saturn (sitting with it or aspecting it). The home house itself may look quiet, but its ruler is under strain — which in practice reads as roots that are easier to lift than they appear from outside.
   == What tends to take you there
      [1] The foreign houses in your chart point at work — a posting, a transfer, or a job that only exists somewhere else; study or teaching — going to learn something, or to pass it on. That is usually the thread worth following when an opportunity appears and you are trying to judge whether it is the one.
   == Direction — the softest reading here
@@ -991,18 +996,18 @@ CHART pune-yoga-dense
 
 --- section: foreign ---
   headline: Foreign themes are present in your chart at a moderate level — travelling often is the shape they most naturally take, and the place you come from keeps its pull on you.
-  score=53 verdict=Mixed confidence=75
+  score=50 verdict=Mixed confidence=75
   == Three different lives abroad, scored separately
      [1] Travelling often, living abroad for years, and settling permanently are three different things, and a chart can be strong for one and quiet on the others. They are scored independently here for that reason.
      [2] These are tendencies rather than certainties. A strong score means the chart supports that shape of life and it tends to come easily; a low one means it costs more effort, not that it is closed to you.
      [3] Open any row to see what moved its number. A ▲ is a signature that pulls you abroad, a ▼ is something that holds you where you are. A low score with only ▲ reasons under it simply means few of the classical signatures are present — nothing in the chart is pushing back.
-     item travel score=53 verdict=Mixed :: Travelling often — trips, assignments, pilgrimages, and back home again
+     item travel score=50 verdict=Mixed :: Travelling often — trips, assignments, pilgrimages, and back home again
         why(6) Your 12th house (distant lands) and your 10th house (your working life) are tied together: Saturn (your 12th) and Mars (your 10th) sit together or in each other's houses. The most likely door abroad for you is therefore a job — a posting, a transfer, a role that only exists somewhere else — and it tends to open in the periods of these planets.
         why(5) Your 12th house (distant lands) and your 3rd house (short trips) are tied together: Saturn (your 12th) and Mars (your 3rd) sit together or in each other's houses. This reads as a lot of going and coming rather than one big move: frequent flights, short stints, work that keeps you in motion.
         why(6) Jupiter occupies your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.
         why(4) Rahu, the planet of foreign places, sits in your 10th house — the house of work. That is the signature of foreign contact coming through your career: foreign employers, foreign clients, or a posting.
         why(-3) 3 of your rising sign, Sun and Moon fall in fixed signs, and fixed signs prefer to stay put. Moving is something you do for a reason rather than for its own sake, and once you have arrived somewhere you tend to stay — which counts a little against constant travel, and not at all against a single decisive move.
-     item stay score=50 verdict=Mixed :: Living abroad for years at a time — work or study, with a return in mind
+     item stay score=49 verdict=Mixed :: Living abroad for years at a time — work or study, with a return in mind
         why(6) Saturn rules your 12th house and is strong (69/100), which is the difference between a foreign house that delivers and one that only drains. Time spent abroad tends to come back to you as something — money, skill, a life — rather than just disappearing.
         why(7) Your 12th ruler stands in your 1st house, which brings foreign themes right onto your own identity. People often read you as someone who has been elsewhere, sometimes before you have.
         why(6) Your 12th house (distant lands) and your 7th house (partner, and the people you do business with) are tied together: Saturn (your 12th) and Sun (your 7th) sit together or in each other's houses. So foreign life in your chart tends to arrive through a person — a marriage, a partnership, a client — rather than through a plan you made alone.
@@ -1010,13 +1015,15 @@ CHART pune-yoga-dense
         why(6) Jupiter occupies your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.
         why(5) Ketu sits in your 4th house. Ketu is the planet of letting go, and in the house of home it loosens the tie to the birthplace from the inside — people with this placement tend to feel that home is something they carry rather than somewhere they return to, which makes leaving easier than it is for most.
         why(4) Rahu, the planet of foreign places, sits in your 10th house — the house of work. That is the signature of foreign contact coming through your career: foreign employers, foreign clients, or a posting.
+        why(3) Rahu aspects Venus (the ruler of your 4th house of home). An aspect is a lighter touch than sitting together, but it is the same message: the planet of the unfamiliar has a hand on the things that stand for you, your mind, your home or the far-away place — and where Rahu presses, the familiar option tends not to be the one taken.
         why(-3) 3 of your rising sign, Sun and Moon fall in fixed signs, and fixed signs prefer to stay put. Moving is something you do for a reason rather than for its own sake, and once you have arrived somewhere you tend to stay — which counts a little against constant travel, and not at all against a single decisive move.
         why(-5) The ruler of your rising sign, Saturn, sits in your 1st house — your own house. That anchors you: your sense of self is tied to where you are from, and while it does not stop you going abroad, it is the single most common reason a person with foreign chances still chooses to come back.
-     item settle score=38 verdict=Needs effort :: Settling for good somewhere other than where you were born
+     item settle score=36 verdict=Needs effort :: Settling for good somewhere other than where you were born
         why(7) Your 12th ruler stands in your 1st house, which brings foreign themes right onto your own identity. People often read you as someone who has been elsewhere, sometimes before you have.
         why(6) Your 12th house (distant lands) and your 7th house (partner, and the people you do business with) are tied together: Saturn (your 12th) and Sun (your 7th) sit together or in each other's houses. So foreign life in your chart tends to arrive through a person — a marriage, a partnership, a client — rather than through a plan you made alone.
         why(3) Mars, Rahu press on your 4th house of home. Comfort is something you build rather than inherit, which means you can build it abroad about as easily as you can build it where you were born.
         why(5) Ketu sits in your 4th house. Ketu is the planet of letting go, and in the house of home it loosens the tie to the birthplace from the inside — people with this placement tend to feel that home is something they carry rather than somewhere they return to, which makes leaving easier than it is for most.
+        why(3) Rahu aspects Venus (the ruler of your 4th house of home). An aspect is a lighter touch than sitting together, but it is the same message: the planet of the unfamiliar has a hand on the things that stand for you, your mind, your home or the far-away place — and where Rahu presses, the familiar option tends not to be the one taken.
         why(-5) The ruler of your rising sign, Saturn, sits in your 1st house — your own house. That anchors you: your sense of self is tied to where you are from, and while it does not stop you going abroad, it is the single most common reason a person with foreign chances still chooses to come back.
   == What tends to take you there
      [1] The foreign houses in your chart point at work — a posting, a transfer, or a job that only exists somewhere else; study or teaching — going to learn something, or to pass it on; a marriage or a business partnership that takes you abroad. That is usually the thread worth following when an opportunity appears and you are trying to judge whether it is the one.
@@ -1551,24 +1558,29 @@ CHART southern-hemisphere
 
 --- section: foreign ---
   headline: Foreign themes are present in your chart at a moderate level — travelling often is the shape they most naturally take, and the place you come from keeps its pull on you.
-  score=45 verdict=Mixed confidence=75
+  score=46 verdict=Mixed confidence=75
   == Three different lives abroad, scored separately
      [1] Travelling often, living abroad for years, and settling permanently are three different things, and a chart can be strong for one and quiet on the others. They are scored independently here for that reason.
      [2] These are tendencies rather than certainties. A strong score means the chart supports that shape of life and it tends to come easily; a low one means it costs more effort, not that it is closed to you.
      [3] Open any row to see what moved its number. A ▲ is a signature that pulls you abroad, a ▼ is something that holds you where you are. A low score with only ▲ reasons under it simply means few of the classical signatures are present — nothing in the chart is pushing back.
-     item travel score=45 verdict=Mixed :: Travelling often — trips, assignments, pilgrimages, and back home again
+     item travel score=46 verdict=Mixed :: Travelling often — trips, assignments, pilgrimages, and back home again
+        why(4) Venus (the ruler of your rising sign) aspects your 12th house of distant lands. A planet does not have to sit in a house to be tied to it — its aspect is a classical connection — and when the planets that stand for you, your mind or your fortune keep looking at the house of far-away places, the far-away place keeps coming up in your life.
         why(5) Your 12th house (distant lands) and your 3rd house (short trips) are tied together: Mars (your 12th) and Moon (your 3rd) sit together or in each other's houses. This reads as a lot of going and coming rather than one big move: frequent flights, short stints, work that keeps you in motion.
         why(4) Jupiter occupies your 3rd house of short journeys, which reads as frequent movement rather than distant movement — a life with a lot of trips in it.
         why(3) Your Moon — the planet of the mind — sits in your 7th, one of the houses of movement. The mind itself is restless in a productive way: it settles best when there is a journey somewhere in the calendar.
         why(-3) 2 of your rising sign, Sun and Moon fall in fixed signs, and fixed signs prefer to stay put. Moving is something you do for a reason rather than for its own sake, and once you have arrived somewhere you tend to stay — which counts a little against constant travel, and not at all against a single decisive move.
         why(2) Your 12th house, or its ruler, falls in a water sign. The old texts read water on the house of distant lands as journeys across the sea — in modern terms, the foreign place in your chart is more likely to be overseas than over a land border.
-     item stay score=37 verdict=Needs effort :: Living abroad for years at a time — work or study, with a return in mind
+     item stay score=43 verdict=Needs effort :: Living abroad for years at a time — work or study, with a return in mind
         why(6) Mars rules your 12th house and is strong (58/100), which is the difference between a foreign house that delivers and one that only drains. Time spent abroad tends to come back to you as something — money, skill, a life — rather than just disappearing.
+        why(6) The ruler of your rising sign, Venus, sits in your 6th house — one of the three "away" houses (the 6th, 8th and 12th). The tradition reads the ruler of the self in any of them as a life lived at a distance from where it began, and the 6th in particular as a living made through service or employment away from home. It is a quieter version of the 12th-house signature, but it points the same way.
+        why(4) Venus (the ruler of your rising sign) aspects your 12th house of distant lands. A planet does not have to sit in a house to be tied to it — its aspect is a classical connection — and when the planets that stand for you, your mind or your fortune keep looking at the house of far-away places, the far-away place keeps coming up in your life.
         why(6) Your 12th house (distant lands) and your 7th house (partner, and the people you do business with) are tied together: Mars rules both — your 12th and your 7th — and sits in the 7th. So foreign life in your chart tends to arrive through a person — a marriage, a partnership, a client — rather than through a plan you made alone.
         why(7) The ruler of your 4th house — home, family land, the place you are from — sits in the 6th, which loosens your roots. That is the classical precondition for settling somewhere else, and it often feels less like wanderlust than like home never quite closing around you.
         why(-3) 2 of your rising sign, Sun and Moon fall in fixed signs, and fixed signs prefer to stay put. Moving is something you do for a reason rather than for its own sake, and once you have arrived somewhere you tend to stay — which counts a little against constant travel, and not at all against a single decisive move.
         why(2) Your 12th house, or its ruler, falls in a water sign. The old texts read water on the house of distant lands as journeys across the sea — in modern terms, the foreign place in your chart is more likely to be overseas than over a land border.
-     item settle score=33 verdict=Challenged :: Settling for good somewhere other than where you were born
+     item settle score=38 verdict=Needs effort :: Settling for good somewhere other than where you were born
+        why(6) The ruler of your rising sign, Venus, sits in your 6th house — one of the three "away" houses (the 6th, 8th and 12th). The tradition reads the ruler of the self in any of them as a life lived at a distance from where it began, and the 6th in particular as a living made through service or employment away from home. It is a quieter version of the 12th-house signature, but it points the same way.
+        why(4) Venus (the ruler of your rising sign) aspects your 12th house of distant lands. A planet does not have to sit in a house to be tied to it — its aspect is a classical connection — and when the planets that stand for you, your mind or your fortune keep looking at the house of far-away places, the far-away place keeps coming up in your life.
         why(6) Your 12th house (distant lands) and your 7th house (partner, and the people you do business with) are tied together: Mars rules both — your 12th and your 7th — and sits in the 7th. So foreign life in your chart tends to arrive through a person — a marriage, a partnership, a client — rather than through a plan you made alone.
         why(7) The ruler of your 4th house — home, family land, the place you are from — sits in the 6th, which loosens your roots. That is the classical precondition for settling somewhere else, and it often feels less like wanderlust than like home never quite closing around you.
   == What tends to take you there
@@ -2070,7 +2082,7 @@ CHART polar-equal-house
 
 --- section: foreign ---
   headline: Your chart leans clearly toward travelling often.
-  score=64 verdict=Supportive confidence=65
+  score=64 verdict=Supportive confidence=75
   == Three different lives abroad, scored separately
      [1] Travelling often, living abroad for years, and settling permanently are three different things, and a chart can be strong for one and quiet on the others. They are scored independently here for that reason.
      [2] These are tendencies rather than certainties. A strong score means the chart supports that shape of life and it tends to come easily; a low one means it costs more effort, not that it is closed to you.
@@ -2079,13 +2091,17 @@ CHART polar-equal-house
         why(5) Your 12th house (distant lands) and your 3rd house (short trips) are tied together: Mercury (your 12th) and Jupiter (your 3rd) sit together or in each other's houses. This reads as a lot of going and coming rather than one big move: frequent flights, short stints, work that keeps you in motion.
         why(6) Jupiter, Rahu occupy your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.
         why(4) Sun, Mercury, Ketu occupy your 3rd house of short journeys, which reads as frequent movement rather than distant movement — a life with a lot of trips in it.
-     item stay score=40 verdict=Needs effort :: Living abroad for years at a time — work or study, with a return in mind
+     item stay score=46 verdict=Mixed :: Living abroad for years at a time — work or study, with a return in mind
         why(6) Jupiter, Rahu occupy your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.
         why(7) The ruler of your 4th house — home, family land, the place you are from — sits in the 8th, which loosens your roots. That is the classical precondition for settling somewhere else, and it often feels less like wanderlust than like home never quite closing around you.
         why(6) Rahu, the planet of foreign places and of everything unfamiliar, sits in your 9th house. Wherever Rahu falls is where you are willing to be a beginner in a strange place — and that willingness is most of what migration actually asks for.
-     item settle score=34 verdict=Needs effort :: Settling for good somewhere other than where you were born
+        why(6) Rahu aspects Moon (your Moon) and Mercury (the ruler of your 12th house of distant lands). An aspect is a lighter touch than sitting together, but it is the same message: the planet of the unfamiliar has a hand on the things that stand for you, your mind, your home or the far-away place — and where Rahu presses, the familiar option tends not to be the one taken.
+        why(4) Mercury, the ruler of your 12th house, sits with Ketu. Saturn, Rahu and Ketu are the three planets most associated with distance, separation and the unfamiliar; any of them keeping company with the ruler of the house of distant lands colours that house toward a long time away rather than a short one.
+     item settle score=42 verdict=Needs effort :: Settling for good somewhere other than where you were born
         why(7) The ruler of your 4th house — home, family land, the place you are from — sits in the 8th, which loosens your roots. That is the classical precondition for settling somewhere else, and it often feels less like wanderlust than like home never quite closing around you.
         why(6) Rahu, the planet of foreign places and of everything unfamiliar, sits in your 9th house. Wherever Rahu falls is where you are willing to be a beginner in a strange place — and that willingness is most of what migration actually asks for.
+        why(6) Rahu aspects Moon (your Moon) and Mercury (the ruler of your 12th house of distant lands). An aspect is a lighter touch than sitting together, but it is the same message: the planet of the unfamiliar has a hand on the things that stand for you, your mind, your home or the far-away place — and where Rahu presses, the familiar option tends not to be the one taken.
+        why(4) Mercury, the ruler of your 12th house, sits with Ketu. Saturn, Rahu and Ketu are the three planets most associated with distance, separation and the unfamiliar; any of them keeping company with the ruler of the house of distant lands colours that house toward a long time away rather than a short one.
   == What tends to take you there
      [1] The foreign houses in your chart point at study or teaching — going to learn something, or to pass it on. That is usually the thread worth following when an opportunity appears and you are trying to judge whether it is the one.
   == Direction — the softest reading here
