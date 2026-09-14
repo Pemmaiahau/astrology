@@ -2,7 +2,7 @@ import { naturalBenefics, planetsAspecting } from "./aspects";
 import type { AshtakavargaResult } from "./ashtakavarga";
 import { NAKSHATRAS, PLANET_NAMES, PLANETS } from "./constants";
 import { separation } from "./math";
-import { nakshatraRelation } from "./states";
+import { DIGNITY_LABELS, nakshatraRelation } from "./states";
 import type { ChartData, Dignity, NakshatraRelation, PlanetId } from "./types";
 
 /** Re-exported from states.ts, where it now lives beside the other per-planet state derivations. */
@@ -82,7 +82,7 @@ export function computeStrength(
     if (delta !== 0) factors.push({ label, delta });
   };
 
-  add("Dignity: " + p.dignity, DIGNITY_DELTA[p.dignity]);
+  add(`Dignity: ${DIGNITY_LABELS[p.dignity]}`, DIGNITY_DELTA[p.dignity]);
 
   if (p.combust) add("Combust", -15);
   if (p.retrograde && !["Ra", "Ke"].includes(id)) add("Retrograde (cheshta)", 5);

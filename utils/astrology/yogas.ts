@@ -75,7 +75,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         key: `vrj-${p.id}`,
         name: `Vipareeta Raja Yoga (${kind})`,
         planets: [p.id],
-        description: `${PLANET_NAMES[p.id]}, lord of the ${dusthanaLordships.map(ordinal).join(" and ")}, sits in the ${ordinal(p.house)} — a dusthana lord hidden in a dusthana. Adversity turns on itself: rivals self-destruct, crises resolve in the native's favour, and gains arrive through difficulty others cannot stomach.`,
+        description: `${PLANET_NAMES[p.id]}, lord of the ${dusthanaLordships.map(ordinal).join(" and ")}, sits in the ${ordinal(p.house)} — the ruler of a difficult house (the 6th, 8th and 12th are the "dusthana" houses) sitting in another difficult house, which the tradition reads as a reversal. Adversity turns on itself: rivals self-destruct, crises resolve in your favour, and gains arrive through difficulty others cannot stomach.`,
       });
     }
   }
@@ -88,7 +88,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
       name: "Gajakesari Yoga",
       planets: ["Ju", "Mo"],
       description:
-        "Jupiter stands in a kendra from the Moon. The mind is backed by wisdom: reputation, counsel-worthiness and resilience in public life, strongest when Jupiter is dignified.",
+        "Jupiter stands in a corner house (the 1st, 4th, 7th or 10th — a 'kendra') counted from the Moon. The mind is backed by wisdom: reputation, counsel-worthiness and resilience in public life, strongest when Jupiter is well placed by sign.",
     });
   }
 
@@ -100,7 +100,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
       key: "budhaditya",
       name: "Budhaditya Yoga",
       planets: ["Su", "Me"],
-      description: `Sun and Mercury conjoin in the ${ordinal(su.house)} house: sharp administrative intellect and articulate authority${me.combust ? ", though Mercury's combustion demands the native learn to separate ego from analysis" : ""}.`,
+      description: `Sun and Mercury conjoin in the ${ordinal(su.house)} house: sharp administrative intellect and articulate authority${me.combust ? ", though Mercury's combustion demands you learn to separate ego from analysis" : ""}.`,
     });
   }
 
@@ -125,27 +125,27 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
     Ma: {
       name: "Ruchaka",
       trait:
-        "a commanding, athletic physicality and fearless executive nerve. The native leads from the front, thrives in competition, defence, surgery or engineering, and carries authority that is taken rather than granted. Anger is the tax on the gift.",
+        "a commanding, athletic physicality and fearless executive nerve. You lead from the front, thrive in competition, defence, surgery or engineering, and carry authority that is taken rather than granted. Anger is the tax on the gift.",
     },
     Me: {
       name: "Bhadra",
       trait:
-        "an exceptionally quick, articulate and commercially fluent intelligence. Learning comes fast, speech persuades, and the native is trusted with analysis, negotiation and the written word. Restlessness and over-cleverness are the failure modes.",
+        "an exceptionally quick, articulate and commercially fluent intelligence. Learning comes fast, speech persuades, and you are trusted with analysis, negotiation and the written word. Restlessness and over-cleverness are the failure modes.",
     },
     Ju: {
       name: "Hamsa",
       trait:
-        "a dignified, principled and genuinely wise bearing. Others bring this native their decisions; teaching, counsel, law and philanthropy come naturally, and reputation outruns self-promotion. Moral certainty is the only excess to watch.",
+        "a dignified, principled and genuinely wise bearing. Others bring you their decisions; teaching, counsel, law and philanthropy come naturally, and reputation outruns self-promotion. Moral certainty is the only excess to watch.",
     },
     Ve: {
       name: "Malavya",
       trait:
-        "beauty, refinement and magnetic social grace, with real comfort and artistic capacity in the life. Relationships, luxury, design and diplomacy all favour this native. Indulgence, not scarcity, is the discipline required.",
+        "beauty, refinement and magnetic social grace, with real comfort and artistic capacity in the life. Relationships, luxury, design and diplomacy all favour you. Indulgence, not scarcity, is the discipline required.",
     },
     Sa: {
       name: "Sasa",
       trait:
-        "formidable endurance and organisational authority built slowly and held for a long time. The native governs systems, labour and institutions, and outlasts flashier rivals. Coldness and a taste for control are the shadow.",
+        "formidable endurance and organisational authority built slowly and held for a long time. You govern systems, labour and institutions, and outlast flashier rivals. Coldness and a taste for control are the shadow.",
     },
   };
 
@@ -158,7 +158,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
       key: `mahapurusha-${p.id}`,
       name: `${mp.name} Yoga (Pancha Mahapurusha)`,
       planets: [p.id],
-      description: `${PLANET_NAMES[p.id]} is ${p.dignity === "exalted" ? "exalted" : p.dignity === "moolatrikona" ? "in its moolatrikona" : "in its own sign"} and occupies the ${ordinal(p.house)} house, a kendra — one of the five Mahapurusha ("great person") combinations. It stamps the whole personality with ${mp.trait}`,
+      description: `${PLANET_NAMES[p.id]} is ${p.dignity === "exalted" ? "exalted" : p.dignity === "moolatrikona" ? "in its moolatrikona" : "in its own sign"} and occupies the ${ordinal(p.house)} house, one of the four corner houses (a 'kendra') — one of the five Mahapurusha ("great person") combinations. It stamps the whole personality with ${mp.trait}`,
     });
   }
 
@@ -174,7 +174,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         key: `yk-${yk}`,
         name: "Yogakaraka in Strength",
         planets: [yk],
-        description: `${PLANET_NAMES[yk]}, the yogakaraka for this Lagna (simultaneous kendra and trikona lord), occupies the ${ordinal(p.house)} house. A single-planet raja yoga engine: its dasha periods carry the chart's biggest promotions in status and material standing.`,
+        description: `${PLANET_NAMES[yk]}, the most helpful planet for your rising sign (the 'yogakaraka' — it rules a corner house and a fortunate house at once), occupies the ${ordinal(p.house)} house. A single-planet engine of rank: its main periods (dashas) carry the chart's biggest promotions in status and material standing.`,
       });
     }
   }
@@ -229,7 +229,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
           key: `raja-${pairKey}`,
           name: "Raja Yoga (Kendra–Trikona link)",
           planets: [k, t],
-          description: `${PLANET_NAMES[k]} (an angle lord) and ${PLANET_NAMES[t]} (a trine lord) ${how}. The classical engine of rank: the union of dharma and karma lords lifts status, and its results ripen in the dasha periods of the two planets involved.`,
+          description: `${PLANET_NAMES[k]} (an angle lord) and ${PLANET_NAMES[t]} (a trine lord) ${how}. The classical engine of rank: when the ruler of a fortune house (1st, 5th or 9th) joins the ruler of a corner house (1st, 4th, 7th or 10th), status is lifted, and the results ripen in the main periods (dashas) of the two planets involved.`,
         });
       }
     }
@@ -324,7 +324,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
             : {
                 kind: "Maha",
                 gloss:
-                  "Both lords own auspicious houses, which is the strong form of the exchange: the two areas actively fund each other, and the native's periods for either planet tend to move both at once.",
+                  "Both lords own auspicious houses, which is the strong form of the exchange: the two areas actively fund each other, and your periods for either planet tend to move both at once.",
               };
 
         out.push({
@@ -386,14 +386,14 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         key: "durudhara",
         name: "Durudhara Yoga",
         planets: [...twelfth, ...second],
-        description: `The Moon is flanked on both sides — ${names(twelfth)} in the sign before it, ${names(second)} in the sign after. The strongest of the lunar support combinations: the mind is braced from either side, so the native tends to have both means and backing, gives as readily as they receive, and rarely faces a difficult stretch entirely alone. Comforts and vehicles come without the grinding that other charts need.`,
+        description: `The Moon is flanked on both sides — ${names(twelfth)} in the sign before it, ${names(second)} in the sign after. The strongest of the lunar support combinations: the mind is braced from either side, so you tend to have both means and backing, give as readily as you receive, and rarely face a difficult stretch entirely alone. Comforts and vehicles come without the grinding that other charts need.`,
       });
     } else if (second.length) {
       out.push({
         key: "sunapha",
         name: "Sunapha Yoga",
         planets: second,
-        description: `${names(second)} occupies the sign after the Moon. Sunapha builds self-made standing: intelligence applied to earning, wealth accumulated by the native's own effort rather than inherited, and a reputation that grows on results. What ${names(second)} governs is where that earning tends to concentrate.`,
+        description: `${names(second)} occupies the sign after the Moon. Sunapha builds self-made standing: intelligence applied to earning, wealth accumulated by your own effort rather than inherited, and a reputation that grows on results. What ${names(second)} governs is where that earning tends to concentrate.`,
       });
     } else if (twelfth.length) {
       out.push({
@@ -423,8 +423,8 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
       );
       const moonInKendra = KENDRA.includes(mo.house);
       const cancels: string[] = [];
-      if (kendraFromMoon) cancels.push("planets occupy kendras from the Moon");
-      if (moonInKendra) cancels.push("the Moon itself holds a kendra from the Lagna");
+      if (kendraFromMoon) cancels.push("planets occupy the corner houses counted from the Moon");
+      if (moonInKendra) cancels.push("the Moon itself sits in a corner house counted from the rising sign");
       out.push({
         key: "kemadruma",
         name: cancels.length ? "Kemadruma Yoga (cancelled)" : "Kemadruma Yoga",
@@ -447,7 +447,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
           name: "Shakata Yoga",
           planets: ["Mo", "Ju"],
           description:
-            "The Moon falls in a dusthana counted from Jupiter — the cart-wheel yoga of alternating fortune. Gains and setbacks cycle; the classical counsel is to build reserves in the good phases and avoid overreach at peaks. A kendra Moon would have cancelled it; here it stands.",
+            "The Moon falls in a difficult house (the 6th, 8th or 12th) counted from Jupiter — the cart-wheel yoga of alternating fortune. Gains and setbacks cycle; the classical counsel is to build reserves in the good phases and avoid overreach at peaks. A Moon in a corner house from Jupiter would have cancelled it; here it stands.",
         });
       }
     }
@@ -462,7 +462,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         key: "daridra",
         name: "Daridra Yoga",
         planets: [eleventh.id],
-        description: `The 11th lord ${PLANET_NAMES[eleventh.id]}, carrier of income and gains, sits in the ${ordinal(eleventh.house)} — a dusthana. Income arrives with friction: leaks, delays or expenditure that shadows earning.${vrjToo ? " Its simultaneous Vipareeta Raja Yoga softens this — losses can invert into gains after struggle." : ""} Budgeting discipline and diversified income are the practical counters.`,
+        description: `The 11th lord ${PLANET_NAMES[eleventh.id]}, carrier of income and gains, sits in the ${ordinal(eleventh.house)} — one of the difficult houses. Income arrives with friction: leaks, delays or expenditure that shadows earning.${vrjToo ? " Its simultaneous Vipareeta Raja Yoga softens this — losses can invert into gains after struggle." : ""} Budgeting discipline and diversified income are the practical counters.`,
       });
     }
   }
@@ -505,7 +505,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
           key: `amala-${from === "Lagna" ? "lagna" : "moon"}`,
           name: "Amala Yoga",
           planets: occ.map((p) => p.id),
-          description: `Only natural benefics (${occ.map((p) => PLANET_NAMES[p.id]).join(", ")}) occupy the 10th from ${from}. The "stainless" yoga: reputation stays clean, work is respected, and standing survives controversy. Career fortunes rise on merit rather than manoeuvre.`,
+          description: `Only the gentle planets (${occ.map((p) => PLANET_NAMES[p.id]).join(", ")}) occupy the 10th from ${from}. The "stainless" yoga: reputation stays clean, work is respected, and standing survives controversy. Career fortunes rise on merit rather than manoeuvre.`,
         });
         break; // one Amala finding is enough
       }

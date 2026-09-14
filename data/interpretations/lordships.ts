@@ -22,7 +22,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ju", "Su", "Ma"],
     malefics: ["Sa", "Me", "Ve"],
     neutrals: ["Mo"],
-    note: "Jupiter as 9th lord is the premier benefic; the Sun as 5th lord supports it. Mars protects as Lagna lord despite 8th lordship. Saturn (10th+11th), Mercury (3rd+6th) and Venus (2nd+7th, the maraka) require dignity before they deliver cleanly.",
+    note: "For Aries rising, Jupiter is the most helpful planet, because it rules your 9th house of fortune; the Sun, ruling your 5th house of intelligence and children, supports it. Mars is on your side as the ruler of your rising sign, even though it also rules the difficult 8th. Saturn (your 10th and 11th houses), Mercury (3rd and 6th) and Venus (2nd and 7th — one of the two 'health-watch' houses) each need to be well placed before their periods deliver cleanly.",
   },
   {
     // Taurus
@@ -30,7 +30,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Sa", "Me", "Su"],
     malefics: ["Mo", "Ju", "Ma"],
     neutrals: ["Ve"],
-    note: "Saturn, lord of the 9th and 10th, is the textbook yogakaraka — its strong periods build career and fortune together. Jupiter (8th+11th) and the Moon (3rd) work against the grain; Mars carries maraka charge as 7th lord.",
+    note: "For Taurus rising, Saturn is the textbook yogakaraka — it rules both your 9th house of fortune and your 10th house of career, so its strong periods build career and fortune together. Jupiter (your 8th and 11th) and the Moon (your 3rd) work against the grain for this rising sign. Mars, as ruler of your 7th, is one of the two planets the tradition watches for health in its periods.",
   },
   {
     // Gemini
@@ -38,7 +38,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ve", "Sa", "Me"],
     malefics: ["Ma", "Ju", "Su"],
     neutrals: ["Mo"],
-    note: "Venus (5th+12th) is the finest planet here; Saturn as 9th lord supports dharma. Mars (6th+11th) is the sharpest functional malefic, and Jupiter suffers kendradhipati dosha as 7th+10th lord with maraka duty.",
+    note: "For Gemini rising, Venus is the finest planet — it rules your 5th house of intelligence and children and your 12th; Saturn, ruling your 9th house of fortune, supports your luck. Mars (your 6th and 11th) is the sharpest planet working against you. Jupiter rules your 7th and 10th, two corner houses, which by a classical rule ('kendradhipati dosha') dilutes a gentle planet's goodness — and it also carries the 7th-house health-watch duty.",
   },
   {
     // Cancer
@@ -46,7 +46,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ma", "Ju", "Mo"],
     malefics: ["Ve", "Me"],
     neutrals: ["Su", "Sa"],
-    note: "Mars, lord of the 5th and 10th, is the yogakaraka — intelligence converted into achievement. Jupiter as 9th lord blesses. Venus (4th+11th) and Mercury (3rd+12th) run counter; Saturn as 7th+8th lord is a maraka needing watchfulness.",
+    note: "For Cancer rising, Mars is the yogakaraka — it rules your 5th house of intelligence and your 10th house of career, so it converts intelligence into achievement. Jupiter, ruling your 9th house of fortune, blesses. Venus (your 4th and 11th) and Mercury (your 3rd and 12th) run counter to your interests. Saturn rules your 7th and 8th, which makes it one of the two planets to watch for health in its periods.",
   },
   {
     // Leo
@@ -54,7 +54,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ma", "Su", "Ju"],
     malefics: ["Me", "Ve", "Sa"],
     neutrals: ["Mo"],
-    note: "Mars owns the 4th and 9th — a yogakaraka pairing home, property and fortune. Jupiter as 5th lord is a clean benefic. Saturn (6th+7th) doubles as maraka and obstacle-setter; Venus and Mercury need strength to behave.",
+    note: "For Leo rising, Mars is the yogakaraka — it rules your 4th house of home and property and your 9th house of fortune, pairing the two. Jupiter, ruling your 5th, is a clean helper. Saturn rules your 6th and 7th, so it is both an obstacle-setter and one of the two planets watched for health. Venus and Mercury need to be strong before they behave well for you.",
   },
   {
     // Virgo
@@ -62,7 +62,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ve", "Me"],
     malefics: ["Ma", "Ju", "Mo"],
     neutrals: ["Su", "Sa"],
-    note: "Venus, lord of the 2nd and 9th, is the wealth-and-fortune engine (with maraka duty riding along). Mercury protects as Lagna lord. Mars (3rd+8th) is the harshest malefic; Jupiter's 4th+7th kendra lordship dilutes its natural grace.",
+    note: "For Virgo rising, Venus rules your 2nd house of wealth and your 9th house of fortune, which makes it your wealth-and-fortune engine (with the 2nd-house health-watch duty riding along). Mercury is on your side as ruler of your rising sign. Mars (your 3rd and 8th) is the harshest planet for you; Jupiter rules your 4th and 7th, two corner houses, which by a classical rule dilutes its natural grace.",
   },
   {
     // Libra
@@ -70,7 +70,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Sa", "Me", "Ve"],
     malefics: ["Ju", "Su", "Ma"],
     neutrals: ["Mo"],
-    note: "Saturn (4th+5th) is the yogakaraka — patient, structural rise. Mercury as 9th lord carries fortune. Jupiter (3rd+6th) is the chief functional malefic; Mars as 2nd+7th lord is the working maraka.",
+    note: "For Libra rising, Saturn is the yogakaraka — it rules your 4th house of home and your 5th house of intelligence, giving a patient, structural rise. Mercury, ruling your 9th house of fortune, carries your luck. Jupiter (your 3rd and 6th) is the chief planet working against you; Mars rules your 2nd and 7th, the two houses the tradition watches for health.",
   },
   {
     // Scorpio
@@ -78,7 +78,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ju", "Mo", "Su", "Ma"],
     malefics: ["Me", "Ve"],
     neutrals: ["Sa"],
-    note: "The Moon as 9th lord and Jupiter as 2nd+5th lord are the principal benefics; the Sun as 10th lord adds authority. Venus (7th+12th) and Mercury (8th+11th) are the working malefics/marakas.",
+    note: "For Scorpio rising, the Moon (ruler of your 9th house of fortune) and Jupiter (ruler of your 2nd house of wealth and 5th of intelligence) are your main helpers; the Sun, ruling your 10th house of career, adds authority. Venus (your 7th and 12th) and Mercury (your 8th and 11th) are the planets working against you, and both carry the health-watch duty of the 2nd/7th.",
   },
   {
     // Sagittarius
@@ -86,7 +86,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ma", "Su", "Ju"],
     malefics: ["Ve", "Sa"],
     neutrals: ["Mo", "Me"],
-    note: "Mars (5th+12th) and the Sun (9th lord) drive dharma and initiative; Jupiter protects as Lagna lord. Venus (6th+11th) and Saturn (2nd+3rd, maraka) are the planets to audit before trusting their dashas.",
+    note: "For Sagittarius rising, Mars (ruler of your 5th and 12th) and the Sun (ruler of your 9th house of fortune) drive your sense of purpose and initiative; Jupiter is on your side as ruler of your rising sign. Venus (your 6th and 11th) and Saturn (your 2nd and 3rd — with the 2nd-house health-watch duty) are the planets to check carefully before trusting their periods.",
   },
   {
     // Capricorn
@@ -94,7 +94,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ve", "Me", "Sa"],
     malefics: ["Ma", "Ju", "Mo"],
     neutrals: ["Su"],
-    note: "Venus (5th+10th) is the yogakaraka — creativity crowned with career. Mercury as 9th lord blesses. Mars (4th+11th) is the sharpest malefic; Jupiter (3rd+12th) leaks resources, and the Moon as 7th lord holds maraka duty.",
+    note: "For Capricorn rising, Venus is the yogakaraka — it rules your 5th house of intelligence and creativity and your 10th house of career, so creativity gets crowned with career. Mercury, ruling your 9th house of fortune, blesses. Mars (your 4th and 11th) is the sharpest planet working against you; Jupiter (your 3rd and 12th) tends to leak resources, and the Moon, as ruler of your 7th, carries the health-watch duty.",
   },
   {
     // Aquarius
@@ -102,7 +102,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Ve", "Sa"],
     malefics: ["Ju", "Mo", "Ma"],
     neutrals: ["Su", "Me"],
-    note: "Venus (4th+9th) is the yogakaraka; Saturn protects as Lagna+12th lord. Jupiter (2nd+11th) works as a maraka-flavoured accumulator, the Moon (6th) and Mars (3rd+10th) demand dignity before their periods reward.",
+    note: "For Aquarius rising, Venus is the yogakaraka — it rules your 4th house of home and your 9th house of fortune. Saturn is on your side as ruler of your rising sign (and of your 12th). Jupiter rules your 2nd and 11th, so it accumulates wealth but also carries the 2nd-house health-watch duty; the Moon (your 6th) and Mars (your 3rd and 10th) need to be well placed before their periods reward you.",
   },
   {
     // Pisces
@@ -110,7 +110,7 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     benefics: ["Mo", "Ma", "Ju"],
     malefics: ["Ve", "Sa", "Su", "Me"],
     neutrals: [],
-    note: "The Moon as 5th lord and Mars as 2nd+9th lord are the wealth-dharma pair; Jupiter guards as Lagna lord. Venus (3rd+8th), Saturn (11th+12th) and Mercury (4th+7th kendradhipati, maraka) all carry functional friction.",
+    note: "For Pisces rising, the Moon (ruler of your 5th house of intelligence) and Mars (ruler of your 2nd house of wealth and 9th of fortune) are your wealth-and-fortune pair; Jupiter guards you as ruler of your rising sign. Venus (your 3rd and 8th), Saturn (your 11th and 12th) and Mercury (your 4th and 7th — two corner houses, plus the 7th-house health-watch duty) all carry friction for this rising sign.",
   },
 ];
 

@@ -22,9 +22,16 @@ import { ordinal } from "./synthesis";
  *
  * Sources: 12th house as foreign residence, 9th as long journeys, 3rd as
  * short journeys per the standard house significations (BPHS/Phaladeepika
- * house chapters); Rahu as the karaka of foreign lands (consensus of the
- * standard literature); movable-sign emphasis for mobility (classical sign
- * taxonomy, BPHS Ch.4); D-4 (Chaturthamsa — property, home and fortune)
+ * house chapters); the 12th lord's links to the 9th/7th/10th/4th/3rd lords,
+ * Rahu joined to the Lagna lord / Moon / 4th lord, Moon in the 12th and Ketu
+ * in the 4th per the applied literature (work-level citations — these are
+ * consensus rules of practice rather than verse-anchored); Rahu as the
+ * karaka of foreign lands (consensus of the standard literature);
+ * movable-sign emphasis for mobility and fixed-sign emphasis against it
+ * (classical sign taxonomy, BPHS Ch.4); the Lagna lord in the 1st/4th and a
+ * well-placed, unafflicted 4th lord counted *against* settlement, so the
+ * "why" list can say what holds a person home as well as what pulls them
+ * away; D-4 (Chaturthamsa — property, home and fortune)
  * corroboration per Shodasavarga usage. D-12 (Dwadasamsa) is deliberately
  * *not* used here despite appearing in some modern write-ups of this topic:
  * this app's own varga significations (utils/astrology/varga.ts) hold it to
@@ -59,16 +66,40 @@ export function buildForeignReport(
   const planetOf = (id: PlanetId) => chart.planets.find((p) => p.id === id);
 
   const evidence: Evidence[] = [];
-  let travelScore = 20; // short journeys base
-  let stayScore = 10;   // long stays abroad
-  let settleScore = 5;  // permanent settlement
+  // Base scores are set so that a chart with no foreign signature at all reads
+  // as "Needs effort" for travel and "Challenged" for staying/settling, and a
+  // chart carrying two or three of the standard signatures reaches
+  // "Supportive"/"Strong promise". Calibrated against a 400-chart random
+  // sample (see SOURCES.md, foreign.ts row): the previous bases (20/10/5)
+  // put 70% of all charts in "Challenged" for living abroad, which no
+  // real population matches.
+  let travelScore = 26; // short journeys base
+  let stayScore = 16;   // long stays abroad
+  let settleScore = 10; // permanent settlement
 
   const lagnaLordId = SIGN_LORDS[lagna];
   const lagnaLord = planetOf(lagnaLordId);
-  const twelfthSign = (lagna + 11) % 12;
-  const twelfthLordId = SIGN_LORDS[twelfthSign];
+  const houseSign = (h: number) => (lagna + h - 1) % 12;
+  const lordOfHouse = (h: number) => SIGN_LORDS[houseSign(h)];
+  const twelfthSign = houseSign(12);
+  const twelfthLordId = lordOfHouse(12);
   const twelfthLord = planetOf(twelfthLordId);
+  const ninthLordId = lordOfHouse(9);
+  const ninthLord = planetOf(ninthLordId);
+  const seventhLordId = lordOfHouse(7);
+  const seventhLord = planetOf(seventhLordId);
+  const tenthLordId = lordOfHouse(10);
+  const tenthLord = planetOf(tenthLordId);
+  const thirdLordId = lordOfHouse(3);
+  const thirdLord = planetOf(thirdLordId);
+  const fourthSign = houseSign(4);
+  const fourthLordId = lordOfHouse(4);
+  const fourthLord = planetOf(fourthLordId);
   const rahu = planetOf("Ra");
+  const ketu = planetOf("Ke");
+  const moon = planetOf("Mo");
+  const saturn = planetOf("Sa");
+  const isWater = (sign: number) => sign % 4 === 3; // Cancer, Scorpio, Pisces
 
   // --- 12th house: foreign residence ---
   const twelfthOccupants = chart.planets.filter((p) => p.house === 12);
@@ -79,6 +110,16 @@ export function buildForeignReport(
       text: `${PLANET_NAMES[p.id]} sits in your 12th house, the house of distant places and of life lived away from where you started. A planet there keeps pulling your attention over the horizon, even in years when you do not move.`,
       weight: 7,
       source: { work: "BPHS", ref: "12th-house significations" },
+      tags: ["stay", "settle"],
+    });
+  }
+  if (moon && moon.house === 12) {
+    stayScore += 4;
+    settleScore += 3;
+    evidence.push({
+      text: "The Moon in particular is the planet that stands for your mind and for where you feel at home, and it is one of the planets in your 12th. That is the specific signature of someone whose sense of home forms away from where they were born, rather than someone who merely travels.",
+      weight: 4,
+      source: { work: "standard literature", ref: "Moon in the 12th — residence abroad" },
       tags: ["stay", "settle"],
     });
   }
@@ -103,41 +144,143 @@ export function buildForeignReport(
   }
   if (twelfthLord && twelfthLord.house === 1) {
     stayScore += 8;
-    evidence.push({ text: "Your 12th ruler stands in your 1st house, which brings foreign themes right onto your own identity. People often read you as someone who has been elsewhere, sometimes before you have.", weight: 7, tags: ["stay"] });
+    settleScore += 4;
+    evidence.push({ text: "Your 12th ruler stands in your 1st house, which brings foreign themes right onto your own identity. People often read you as someone who has been elsewhere, sometimes before you have.", weight: 7, tags: ["stay", "settle"] });
+  }
+
+  // --- Where else the 12th lord goes, and who comes to the 12th ---
+  // The 12th (foreign residence) linked to the 9th (long journeys, fortune),
+  // 7th (partner, the "other place" in horary practice), 10th (work), 4th
+  // (home) or 3rd (short journeys) is how the applied literature reads what
+  // kind of foreign life the chart is set up for. Each link is counted once,
+  // whichever direction it runs in.
+  // When one planet rules both houses (Jupiter for Aries rising owns the 9th
+  // and 12th, say) the "link" is that planet standing in either house; the
+  // wording has to say so rather than pretend two planets met.
+  const linked = (a: typeof lagnaLord, aHouse: number, b: typeof lagnaLord, bHouse: number) => {
+    if (!a || !b) return false;
+    if (a.id === b.id) return a.house === aHouse || a.house === bHouse;
+    return a.house === bHouse || b.house === aHouse || a.sign === b.sign;
+  };
+  const linkPhrase = (a: typeof lagnaLord, aLabel: string, b: typeof lagnaLord, bLabel: string) =>
+    a && b && a.id === b.id
+      ? `${PLANET_NAMES[a.id]} rules both — ${aLabel} and ${bLabel} — and sits in the ${ordinal(a.house)}`
+      : `${PLANET_NAMES[a!.id]} (${aLabel}) and ${PLANET_NAMES[b!.id]} (${bLabel}) sit together or in each other's houses`;
+  if (linked(twelfthLord, 12, ninthLord, 9)) {
+    stayScore += 8;
+    settleScore += 6;
+    travelScore += 4;
+    evidence.push({
+      text: `The rulers of your 12th house (distant lands) and your 9th house (long journeys and fortune) are joined: ${linkPhrase(twelfthLord, "your 12th", ninthLord, "your 9th")}. In the applied tradition this is the strongest single tie between "far away" and "your luck": the good things in your life have a way of being on the other side of a long journey.`,
+      weight: 8,
+      source: { work: "standard literature", ref: "9th–12th lord connection" },
+      tags: ["travel", "stay", "settle"],
+    });
+  }
+  if (linked(twelfthLord, 12, seventhLord, 7)) {
+    stayScore += 6;
+    settleScore += 4;
+    evidence.push({
+      text: `Your 12th house (distant lands) and your 7th house (partner, and the people you do business with) are tied together: ${linkPhrase(twelfthLord, "your 12th", seventhLord, "your 7th")}. So foreign life in your chart tends to arrive through a person — a marriage, a partnership, a client — rather than through a plan you made alone.`,
+      weight: 6,
+      source: { work: "standard literature", ref: "7th–12th lord connection" },
+      tags: ["stay", "settle"],
+    });
+  }
+  if (linked(twelfthLord, 12, tenthLord, 10)) {
+    stayScore += 7;
+    travelScore += 3;
+    evidence.push({
+      text: `Your 12th house (distant lands) and your 10th house (your working life) are tied together: ${linkPhrase(twelfthLord, "your 12th", tenthLord, "your 10th")}. The most likely door abroad for you is therefore a job — a posting, a transfer, a role that only exists somewhere else — and it tends to open in the periods of these planets.`,
+      weight: 6,
+      source: { work: "standard literature", ref: "10th–12th lord connection" },
+      tags: ["travel", "stay"],
+    });
+  }
+  if (twelfthLord && twelfthLord.house === 4) {
+    settleScore += 6;
+    stayScore += 3;
+    evidence.push({
+      text: `Your 12th ruler ${PLANET_NAMES[twelfthLordId]} sits in your 4th house — the house of home. The foreign house has moved into the home house, which is the classical picture of a distant place that eventually becomes where you live, not just where you go.`,
+      weight: 6,
+      source: { work: "standard literature", ref: "12th lord in the 4th" },
+      tags: ["stay", "settle"],
+    });
+  }
+  if (linked(twelfthLord, 12, thirdLord, 3)) {
+    travelScore += 5;
+    evidence.push({
+      text: `Your 12th house (distant lands) and your 3rd house (short trips) are tied together: ${linkPhrase(twelfthLord, "your 12th", thirdLord, "your 3rd")}. This reads as a lot of going and coming rather than one big move: frequent flights, short stints, work that keeps you in motion.`,
+      weight: 5,
+      tags: ["travel"],
+    });
   }
 
   // --- 9th: long journeys; 3rd: short journeys ---
   const ninthOccupants = chart.planets.filter((p) => p.house === 9);
   if (ninthOccupants.length) {
-    travelScore += 6 * ninthOccupants.length;
-    evidence.push({ text: `${ninthOccupants.map((p) => PLANET_NAMES[p.id]).join(", ")} occupies your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.`, weight: 6, tags: ["travel"] });
+    travelScore += Math.min(3, ninthOccupants.length) * 6;
+    stayScore += Math.min(3, ninthOccupants.length) * 2;
+    evidence.push({ text: `${ninthOccupants.map((p) => PLANET_NAMES[p.id]).join(", ")} ${ninthOccupants.length > 1 ? "occupy" : "occupies"} your 9th house of long journeys and higher learning, so travel in your life tends to have a purpose attached — study, teaching, belief, or something you went to find.`, weight: 6, source: { work: "BPHS", ref: "9th-house significations" }, tags: ["travel", "stay"] });
   }
   const thirdOccupants = chart.planets.filter((p) => p.house === 3);
   if (thirdOccupants.length) {
-    travelScore += 4 * thirdOccupants.length;
-    evidence.push({ text: `${thirdOccupants.map((p) => PLANET_NAMES[p.id]).join(", ")} occupies your 3rd house of short journeys, which reads as frequent movement rather than distant movement — a life with a lot of trips in it.`, weight: 4, tags: ["travel"] });
+    travelScore += Math.min(3, thirdOccupants.length) * 4;
+    evidence.push({ text: `${thirdOccupants.map((p) => PLANET_NAMES[p.id]).join(", ")} ${thirdOccupants.length > 1 ? "occupy" : "occupies"} your 3rd house of short journeys, which reads as frequent movement rather than distant movement — a life with a lot of trips in it.`, weight: 4, source: { work: "BPHS", ref: "3rd-house significations" }, tags: ["travel"] });
+  }
+  if (lagnaLord && [3, 7, 9].includes(lagnaLord.house)) {
+    const gain = lagnaLord.house === 9 ? 5 : lagnaLord.house === 3 ? 4 : 3;
+    travelScore += gain;
+    stayScore += lagnaLord.house === 3 ? 0 : 3;
+    evidence.push({
+      text: `The ruler of your rising sign, ${PLANET_NAMES[lagnaLordId]}, sits in your ${ordinal(lagnaLord.house)} house — ${lagnaLord.house === 9 ? "the house of long journeys" : lagnaLord.house === 3 ? "the house of short journeys" : "the house of the other place and the other person"}. You, personally, are placed in a travelling house, which usually shows up as a life that keeps moving even when you did not plan it to.`,
+      weight: gain,
+      tags: lagnaLord.house === 3 ? ["travel"] : ["travel", "stay"],
+    });
+  }
+  if (moon && [3, 7, 9].includes(moon.house)) {
+    travelScore += 3;
+    evidence.push({
+      text: `Your Moon — the planet of the mind — sits in your ${ordinal(moon.house)}, one of the houses of movement. The mind itself is restless in a productive way: it settles best when there is a journey somewhere in the calendar.`,
+      weight: 3,
+      tags: ["travel"],
+    });
   }
 
-  // --- 4th house afflicted: leaving the homeland ---
-  {
-    const fourthSign = (lagna + 3) % 12;
-    const fourthLordId = SIGN_LORDS[fourthSign];
-    const fourthLord = planetOf(fourthLordId);
-    const maleficsOnFourth = aspectsOnSign(chart, fourthSign).filter((a) => ["Sa", "Ma", "Ra", "Ke"].includes(a));
-    if (fourthLord && [6, 8, 12].includes(fourthLord.house)) {
-      settleScore += 7;
-      evidence.push({
-        text: `The ruler of your 4th house — home, family land, the place you are from — sits in the ${ordinal(fourthLord.house)}, which loosens your roots. That is the classical precondition for settling somewhere else, and it often feels less like wanderlust than like home never quite closing around you.`,
-        weight: 6,
-        source: { work: "Phaladeepika", ref: "4th lord in dusthana" },
-        tags: ["settle"],
-      });
-    }
-    if (maleficsOnFourth.length >= 2) {
-      settleScore += 4;
-      evidence.push({ text: `${maleficsOnFourth.map((a) => PLANET_NAMES[a]).join(", ")} press on your 4th house of home. Comfort is something you build rather than inherit, which means you can build it abroad about as easily as you can build it where you were born.`, weight: 3, tags: ["settle"] });
-    }
+  // --- 4th house: the roots, loosened or held ---
+  const maleficsOnFourth = aspectsOnSign(chart, fourthSign).filter((a) => ["Sa", "Ma", "Ra", "Ke"].includes(a));
+  const maleficsInFourth = chart.planets.filter((p) => p.house === 4 && ["Sa", "Ma", "Ra", "Ke"].includes(p.id));
+  let rootsLoosened = false;
+  if (fourthLord && [6, 8, 12].includes(fourthLord.house)) {
+    rootsLoosened = true;
+    settleScore += fourthLord.house === 12 ? 9 : 7;
+    stayScore += 3;
+    evidence.push({
+      text: fourthLord.house === 12
+        ? `The ruler of your 4th house — home, family land, the place you are from — sits in your 12th, the house of distant lands. Home itself has been placed abroad. Of all the settlement signatures this is one of the most literal, and it often feels less like wanderlust than like the place you were born never quite closing around you.`
+        : `The ruler of your 4th house — home, family land, the place you are from — sits in the ${ordinal(fourthLord.house)}, which loosens your roots. That is the classical precondition for settling somewhere else, and it often feels less like wanderlust than like home never quite closing around you.`,
+      weight: 7,
+      source: { work: "Phaladeepika", ref: "4th lord in dusthana" },
+      tags: ["stay", "settle"],
+    });
   }
+  if (maleficsOnFourth.length >= 2) {
+    rootsLoosened = true;
+    settleScore += 4;
+    evidence.push({ text: `${maleficsOnFourth.map((a) => PLANET_NAMES[a]).join(", ")} press on your 4th house of home. Comfort is something you build rather than inherit, which means you can build it abroad about as easily as you can build it where you were born.`, weight: 3, tags: ["settle"] });
+  }
+  if (ketu && ketu.house === 4) {
+    rootsLoosened = true;
+    settleScore += 5;
+    stayScore += 2;
+    evidence.push({
+      text: "Ketu sits in your 4th house. Ketu is the planet of letting go, and in the house of home it loosens the tie to the birthplace from the inside — people with this placement tend to feel that home is something they carry rather than somewhere they return to, which makes leaving easier than it is for most.",
+      weight: 5,
+      source: { work: "standard literature", ref: "Ketu in the 4th" },
+      tags: ["stay", "settle"],
+    });
+  }
+  if (rahu && rahu.house === 4) rootsLoosened = true;
 
   // --- Rahu links ---
   if (rahu) {
@@ -150,23 +293,90 @@ export function buildForeignReport(
         source: { work: "standard literature", ref: "Rahu as videsha karaka" },
         tags: ["stay", "settle"],
       });
+    } else if ([3, 10].includes(rahu.house)) {
+      travelScore += 4;
+      stayScore += 3;
+      evidence.push({
+        text: `Rahu, the planet of foreign places, sits in your ${ordinal(rahu.house)} house — ${rahu.house === 10 ? "the house of work" : "the house of short journeys"}. That is the signature of foreign contact coming through ${rahu.house === 10 ? "your career: foreign employers, foreign clients, or a posting" : "constant movement: trips that add up rather than one move"}.`,
+        weight: 4,
+        source: { work: "standard literature", ref: "Rahu as videsha karaka" },
+        tags: ["travel", "stay"],
+      });
     }
-    const saturn = planetOf("Sa");
+    const rahuWith = ([
+      [lagnaLord, "the ruler of your rising sign"],
+      [moon, "your Moon"],
+      [fourthLord, "the ruler of your 4th house of home"],
+      [twelfthLord, "the ruler of your 12th house of distant lands"],
+      [ninthLord, "the ruler of your 9th house of long journeys"],
+    ] as const)
+      .filter(([p]) => p && p.id !== "Ra" && p.id !== "Ke" && p.sign === rahu.sign)
+      .map(([p, label]) => `${PLANET_NAMES[p!.id]} (${label})`);
+    if (rahuWith.length) {
+      const gain = Math.min(2, rahuWith.length);
+      stayScore += 5 * gain;
+      settleScore += 4 * gain;
+      evidence.push({
+        text: `Rahu shares a sign with ${rahuWith.join(" and ")}. When the foreign planet sits on the planets that stand for you, your mind or your home, it puts the unfamiliar right at the centre of your life rather than at its edge — this is one of the most common signatures in the charts of people who actually emigrate.`,
+        weight: 5 * gain,
+        source: { work: "standard literature", ref: "Rahu with the Lagna lord / Moon / 4th lord" },
+        tags: ["stay", "settle"],
+      });
+    }
     if (saturn && saturn.sign === rahu.sign) {
       stayScore += 4;
       evidence.push({ text: "Saturn sits with Rahu in your chart, which lengthens foreign stints into something structural. Time abroad tends to come in years rather than months, and to change the shape of your life rather than decorate it.", weight: 4, tags: ["stay"] });
     }
   }
 
-  // --- Movable-sign emphasis ---
+  // --- Sign emphasis: movable signs move, fixed signs stay ---
   {
-    const movers = [chart.ascendant.sign, ...chart.planets.filter((p) => ["Su", "Mo"].includes(p.id)).map((p) => p.sign)]
-      .filter((s) => signMobility(s) === "movable").length;
+    const triad = [chart.ascendant.sign, ...chart.planets.filter((p) => ["Su", "Mo"].includes(p.id)).map((p) => p.sign)];
+    const movers = triad.filter((s) => signMobility(s) === "movable").length;
+    const fixed = triad.filter((s) => signMobility(s) === "fixed").length;
     if (movers >= 2) {
       travelScore += 6;
       stayScore += 4;
       evidence.push({ text: `${movers} of your rising sign, Sun and Moon fall in movable signs, so motion is native to you rather than something you force. Staying still for long stretches is usually the thing that costs you effort.`, weight: 5, source: { work: "BPHS", ref: "Ch.4 sign taxonomy" }, tags: ["travel", "stay"] });
+    } else if (fixed >= 2) {
+      travelScore -= 4;
+      stayScore -= 3;
+      evidence.push({ text: `${fixed} of your rising sign, Sun and Moon fall in fixed signs, and fixed signs prefer to stay put. Moving is something you do for a reason rather than for its own sake, and once you have arrived somewhere you tend to stay — which counts a little against constant travel, and not at all against a single decisive move.`, weight: -3, source: { work: "BPHS", ref: "Ch.4 sign taxonomy" }, tags: ["travel", "stay"] });
     }
+    const watery = [twelfthSign, ...(twelfthLord ? [twelfthLord.sign] : [])].filter(isWater).length;
+    if (watery && (twelfthOccupants.length || (twelfthLord && [1, 4, 7, 9, 10].includes(twelfthLord.house)))) {
+      travelScore += 2;
+      stayScore += 2;
+      evidence.push({ text: "Your 12th house, or its ruler, falls in a water sign. The old texts read water on the house of distant lands as journeys across the sea — in modern terms, the foreign place in your chart is more likely to be overseas than over a land border.", weight: 2, source: { work: "standard literature", ref: "watery signs and sea voyages" }, tags: ["travel", "stay"] });
+    }
+  }
+
+  // --- What holds you where you are (counted against) ---
+  if (lagnaLord && [1, 4].includes(lagnaLord.house) && !(rahu && rahu.sign === lagnaLord.sign)) {
+    stayScore -= 5;
+    settleScore -= 6;
+    evidence.push({
+      text: `The ruler of your rising sign, ${PLANET_NAMES[lagnaLordId]}, sits in your ${lagnaLord.house === 1 ? "1st house — your own house" : "4th house — the house of home"}. That anchors you: your sense of self is tied to where you are from, and while it does not stop you going abroad, it is the single most common reason a person with foreign chances still chooses to come back.`,
+      weight: -5,
+      source: { work: "BPHS", ref: `Lagna lord in the ${ordinal(lagnaLord.house)}` },
+      tags: ["stay", "settle"],
+    });
+  }
+  if (
+    !rootsLoosened &&
+    fourthLord &&
+    [1, 4, 5, 7, 9, 10].includes(fourthLord.house) &&
+    maleficsOnFourth.length === 0 &&
+    maleficsInFourth.length === 0
+  ) {
+    settleScore -= 5;
+    stayScore -= 2;
+    evidence.push({
+      text: `Your 4th house of home is in good order: its ruler ${PLANET_NAMES[fourthLordId]} sits in a supportive house (the ${ordinal(fourthLord.house)}) and no difficult planet presses on the home. Roots that hold this well are a real asset — and they are also the reason permanent settlement elsewhere is less likely for you than a long stay with a return.`,
+      weight: -4,
+      source: { work: "BPHS", ref: "4th lord well placed" },
+      tags: ["stay", "settle"],
+    });
   }
 
   // --- D-4 corroboration (D-12 deliberately excluded — see file header) ---
@@ -222,11 +432,12 @@ export function buildForeignReport(
   if (lagnaLord && lagnaLord.house === 12)
     purpose.push("a move you choose rather than one you are pushed into — the initiative is yours");
   const tenthLinks = chart.planets.filter((p) => p.house === 12 && ownedHouses(p.id, lagna).includes(10)).length;
-  if (tenthLinks || (twelfthLord && ownedHouses(twelfthLordId, lagna).includes(10)))
+  if (tenthLinks || (twelfthLord && ownedHouses(twelfthLordId, lagna).includes(10)) || linked(twelfthLord, 12, tenthLord, 10) || (rahu && rahu.house === 10))
     purpose.push("work — a posting, a transfer, or a job that only exists somewhere else");
-  const ninthLinks = ninthOccupants.length > 0;
+  const ninthLinks = ninthOccupants.length > 0 || linked(twelfthLord, 12, ninthLord, 9);
   if (ninthLinks) purpose.push("study or teaching — going to learn something, or to pass it on");
-  if (rahu && rahu.house === 7) purpose.push("a marriage or a business partnership that takes you abroad");
+  if ((rahu && rahu.house === 7) || linked(twelfthLord, 12, seventhLord, 7))
+    purpose.push("a marriage or a business partnership that takes you abroad");
   if (!purpose.length)
     purpose.push(
       "mixed motives rather than one clear driver — no single house dominates the foreign axis in your chart, which usually means the reason arrives with the opportunity"
@@ -244,13 +455,19 @@ export function buildForeignReport(
   const top = scenarios[0];
   const confidence = clamp(35 + evidence.length * 5 + (vargas ? 5 : 0), 25, 75); // capped ≤75 by design
 
+  const shortLabel = (key: string) =>
+    key === "travel" ? "travelling often" : key === "stay" ? "living abroad for a stretch of years" : "settling permanently somewhere else";
+  const headline =
+    top.score >= 60
+      ? `Your chart leans clearly toward ${shortLabel(top.key)}${scenarios[1].score >= 56 ? `, with ${shortLabel(scenarios[1].key)} close behind` : ""}.`
+      : top.score >= 45
+        ? `Foreign themes are present in your chart at a moderate level — ${shortLabel(top.key)} is the shape they most naturally take, and the place you come from keeps its pull on you.`
+        : "Foreign themes are faint in your chart. Life is most likely anchored near where it began, with travel as visits rather than moves — which says nothing about opportunity, only about where the chart's own weight sits.";
+
   return {
     key: "foreign",
     title: "Foreign Travel & Settlement",
-    headline:
-      top.score >= 55
-        ? `Your chart leans clearly toward ${top.label.toLowerCase()}.`
-        : "Foreign themes are present in your chart but moderate — travel, yes, and the place you come from keeps its pull on you.",
+    headline,
     score: top.score,
     verdict: top.verdict as ForeignReport["verdict"],
     confidence,
@@ -260,6 +477,7 @@ export function buildForeignReport(
         paragraphs: [
           "Travelling often, living abroad for years, and settling permanently are three different things, and a chart can be strong for one and quiet on the others. They are scored independently here for that reason.",
           "These are tendencies rather than certainties. A strong score means the chart supports that shape of life and it tends to come easily; a low one means it costs more effort, not that it is closed to you.",
+          "Open any row to see what moved its number. A ▲ is a signature that pulls you abroad, a ▼ is something that holds you where you are. A low score with only ▲ reasons under it simply means few of the classical signatures are present — nothing in the chart is pushing back.",
         ],
         items: scenarios,
       },

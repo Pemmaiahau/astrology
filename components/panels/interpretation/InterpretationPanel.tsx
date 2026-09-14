@@ -107,9 +107,13 @@ export default function InterpretationPanel() {
 
       {yogas.length > 0 && (
         <section className="rounded-xl border border-good-border bg-good-wash p-4">
-          <h3 className="mb-2 flex items-center gap-2 font-serif text-base font-bold text-good">
-            <Star className="h-4 w-4" /> Structural Yogas Detected
+          <h3 className="mb-1 flex items-center gap-2 font-serif text-base font-bold text-good">
+            <Star className="h-4 w-4" /> Yogas Detected
           </h3>
+          <p className="mb-3 text-xs leading-relaxed text-fg-muted">
+            A yoga is a named combination of planets that the classical texts single out as producing a
+            specific result — good or difficult. These are the ones that form in your chart.
+          </p>
           <ul className="space-y-3">
             {yogas.map((y) => (
               <li key={y.key} className="text-sm leading-relaxed text-fg">
@@ -134,12 +138,14 @@ export default function InterpretationPanel() {
           <ScrollText className="h-4 w-4" /> House-by-House Reading
         </h3>
         <p className="mt-1 text-xs leading-relaxed text-fg-muted">
-          All twelve houses are judged. Houses with no occupant are read the classical way — by the
-          condition of their lord and by the drishti (aspects) they receive. Each house also carries a
+          Your chart is divided into twelve houses, each covering one area of life — and all twelve are
+          read below, whether or not a planet sits in them. An empty house is read the classical way: by
+          the condition of the planet that rules it, and by the planets that aspect it from elsewhere.
+          Each house also carries a collapsed
           <span className="font-semibold text-fg-2"> Classical corroboration </span>
-          block: the Navamsa and the house&apos;s own divisional chart, its Bhava Bala in rupas, its
-          Sarvashtakavarga bindus, the lord&apos;s Shadbala against the classical minimum, and Jaimini
-          argala — ending in a convergence line saying how many of those independent measures agree.
+          block for readers who want the technical checks — the divisional charts, the house&apos;s
+          strength in rupas, its Ashtakavarga points, the ruler&apos;s Shadbala and the Jaimini argala —
+          ending in a line saying how many of those independent measures agree with the reading above.
         </p>
       </section>
 

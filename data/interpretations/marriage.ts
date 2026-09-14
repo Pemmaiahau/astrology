@@ -14,10 +14,9 @@ import { vargaPositionOf, type VargaSet } from "@/utils/astrology/varga";
 import type {
   AyanamshaId, ChartData, DashaPeriod, Gender, PlanetId, YogaFinding,
 } from "@/utils/astrology/types";
-import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import type { Evidence, SectionReport, TimingWindow } from "./report";
 import { plain, toTimingWindow } from "./report";
-import { ordinal } from "./synthesis";
+import { DIGNITY_INLINE, ordinal } from "./synthesis";
 
 /**
  * Marriage: timing windows, spouse indications, harmony and delay factors.
@@ -152,7 +151,7 @@ export function buildMarriageReport(
   if (seventhLord) {
     const s = strengths[seventhLordId];
     harmonyFactors.push({
-      text: `Your 7th house is ruled by ${PLANET_NAMES[seventhLordId]}, and it sits in your ${ordinal(seventhLord.house)} house, ${DIGNITY_LABELS[seventhLord.dignity]}${s ? `, scoring ${s.score}/100 for strength` : ""}. That is where your partnership life gets carried out — ${ordinal(seventhLord.house)}-house matters and your marriage tend to move together.`,
+      text: `Your 7th house is ruled by ${PLANET_NAMES[seventhLordId]}, and it sits in your ${ordinal(seventhLord.house)} house, ${DIGNITY_INLINE[seventhLord.dignity]}${s ? `, with an overall strength of ${s.score} out of 100` : ""}. That is where your partnership life gets carried out — ${ordinal(seventhLord.house)}-house matters and your marriage tend to move together.`,
       weight: s ? Math.round((s.score - 50) / 8) : 0,
     });
     if ([6, 8, 12].includes(seventhLord.house)) {
@@ -179,7 +178,7 @@ export function buildMarriageReport(
     const s = strengths[kid];
     const afflicted = k.combust || k.dignity === "debilitated" || (k.warWith && !k.warWinner);
     (afflicted ? delayFactors : harmonyFactors).push({
-      text: `${PLANET_NAMES[kid]} is your natural significator for marriage, and it stands ${DIGNITY_LABELS[k.dignity]} in your ${ordinal(k.house)} house${k.combust ? ", too close to the Sun to shine on its own" : ""}${s ? ` (${s.score}/100)` : ""}. ${
+      text: `${PLANET_NAMES[kid]} is your natural significator for marriage, and it sits in your ${ordinal(k.house)} house, ${DIGNITY_INLINE[k.dignity]}${k.combust ? ", too close to the Sun to shine on its own" : ""}${s ? ` (${s.score}/100)` : ""}. ${
         afflicted
           ? "A significator under pressure usually shows up as a slower, more deliberate route into partnership — you tend to learn about love the long way, which is not the same as being denied it."
           : "A significator in good condition shows up as ease in being close to someone: affection you can express, and a partnership that gets easier rather than heavier with time."
@@ -195,7 +194,7 @@ export function buildMarriageReport(
     const ul = jaimini.upapada;
     const ulLord = SIGN_LORDS[ul];
     const ulLordPos = planetOf(ulLord);
-    upapadaText = `Your ${plain("Upapada Lagna")} falls in ${SIGNS[ul]}, and ${PLANET_NAMES[ulLord]} rules it${ulLordPos ? `, sitting in your ${ordinal(ulLordPos.house)} house, ${DIGNITY_LABELS[ulLordPos.dignity]}` : ", though it is unplaced in this chart"}. This point describes marriage as a standing institution in your life rather than as romance — the household, the in-laws, the public fact of being married. Its condition is the best single indicator of how settled and respected that arrangement tends to feel from the inside.`;
+    upapadaText = `Your ${plain("Upapada Lagna")} falls in ${SIGNS[ul]}, and ${PLANET_NAMES[ulLord]} rules it${ulLordPos ? `, sitting in your ${ordinal(ulLordPos.house)} house, ${DIGNITY_INLINE[ulLordPos.dignity]}` : ", though it is unplaced in this chart"}. This point describes marriage as a standing institution in your life rather than as romance — the household, the in-laws, the public fact of being married. Its condition is the best single indicator of how settled and respected that arrangement tends to feel from the inside.`;
     if (ulLordPos && ["exalted", "own", "moolatrikona", "greatFriend"].includes(ulLordPos.dignity)) {
       harmonyFactors.push({
         text: "The ruler of your marriage pada is well placed, which classically marks a union with standing — one that holds up in front of family and over time. It usually shows as a marriage other people treat as solid, and that you can rely on when other parts of life wobble.",

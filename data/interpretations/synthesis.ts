@@ -9,7 +9,6 @@ import {
 } from "@/utils/astrology/constants";
 import { ordinal } from "@/utils/astrology/format";
 import { fmtDeg } from "@/utils/astrology/math";
-import { DIGNITY_LABELS } from "@/utils/astrology/states";
 import {
   conjunctionStrength,
   type ConjunctionStrength,
@@ -74,6 +73,33 @@ function flags(p: PlanetPosition): string {
   return out.length ? `, ${out.join(", ")}` : "";
 }
 
+/**
+ * Plain-English dignity phrase for the always-visible prose: says what the
+ * sign does *to* the planet, so a reader who has never met "Adhi Mitra" still
+ * knows whether the placement is comfortable. `DIGNITY_LABELS` (title-cased,
+ * with the Sanskrit) stays in use for the expert tables and the depth block.
+ */
+export const DIGNITY_PLAIN: Record<Dignity, string> = {
+  exalted: "the sign where it is exalted — at its very strongest",
+  moolatrikona: "its moolatrikona, the sign where it works most productively",
+  own: "its own sign, so it is on home ground",
+  greatFriend: "the sign of a great friend, where it is warmly hosted",
+  friend: "a friend's sign, where it is comfortable",
+  neutral: "a sign that is neutral to it — neither helped nor hindered",
+  enemy: "an enemy's sign, where it meets resistance",
+  greatEnemy: "the sign of a great enemy, where it struggles to be itself",
+  debilitated: "the sign where it is debilitated — its weakest position",
+};
+
+/** The state flags spelled out, for a reader who does not know the terms. */
+function flagsPlain(p: PlanetPosition): string {
+  const out: string[] = [];
+  if (p.retrograde) out.push("retrograde (appearing to move backwards in the sky at your birth)");
+  if (p.combust) out.push("combust (so close to the Sun that its light is drowned out)");
+  if (p.warWith) out.push(p.warWinner ? `the winner of a close planetary war with ${PLANET_NAMES[p.warWith]}` : `the loser of a close planetary war with ${PLANET_NAMES[p.warWith]}`);
+  return out.length ? ` It is also ${out.join(", and ")}.` : "";
+}
+
 export type FunctionalRole = "yogakaraka" | "benefic" | "malefic" | "neutral";
 
 export function functionalRole(id: PlanetId, lagnaSign: number): FunctionalRole {
@@ -84,75 +110,86 @@ export function functionalRole(id: PlanetId, lagnaSign: number): FunctionalRole 
   return "neutral";
 }
 
-const ROLE_WORD: Record<FunctionalRole, string> = {
-  yogakaraka: "the yogakaraka",
-  benefic: "a functional benefic",
-  malefic: "a functional malefic",
-  neutral: "functionally neutral",
+/**
+ * What a planet's functional role means for *this* reader, in plain words.
+ * The classical term follows in brackets the first time a house reading uses
+ * it, so a reader who goes on to the expert tabs recognises it there.
+ */
+const ROLE_PLAIN: Record<FunctionalRole, string> = {
+  yogakaraka: "the single most helpful planet your rising sign can have (the 'yogakaraka'), because it rules one of the supporting houses and one of the fortunate houses at the same time",
+  benefic: "a planet that works in your favour by the houses it rules (a 'functional benefic')",
+  malefic: "a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic')",
+  neutral: "neither for you nor against you by rulership (functionally neutral)",
 };
 
 export function lordshipSentence(id: PlanetId, lagnaSign: number): string {
   const name = PLANET_NAMES[id];
   if (id === "Ra" || id === "Ke") {
-    return `${name} owns no sign and acts through its dispositor, nakshatra lord and conjunctions — a karmic agent rather than a functional lord.`;
+    return `${name} rules no sign of its own. It works through the planet that owns the sign it sits in, through the ruler of its star-group (nakshatra), and through whatever it sits beside — a shadow that takes on the colour of its surroundings rather than a house ruler with an agenda of its own.`;
   }
   const houses = ownedHouses(id, lagnaSign);
   const marakas = marakasFor(lagnaSign);
   const houseStr = houses.map((h) => ordinal(h)).join(" and ");
   const sigStr = houses.map((h) => HOUSE_SIGNIFICATIONS[h - 1].split(",")[0]).join(" and ");
-  const classification = `${ROLE_WORD[functionalRole(id, lagnaSign)]} for this Lagna`;
-  const marakaNote = marakas.includes(id) ? ", carrying maraka responsibility as well" : "";
-  return `As lord of the ${houseStr} for ${SIGNS[lagnaSign]} Lagna, ${name} governs ${sigStr} and operates as ${classification}${marakaNote}.`;
+  const role = ROLE_PLAIN[functionalRole(id, lagnaSign)];
+  const marakaNote = marakas.includes(id)
+    ? " It also rules one of the two houses (the 2nd and 7th) that the tradition watches for health in its main periods, so its periods deserve a little extra care."
+    : "";
+  return `For your ${SIGNS[lagnaSign]} rising sign, ${name} rules your ${houseStr} ${houses.length > 1 ? "houses" : "house"} — ${sigStr} — which makes it ${role}.${marakaNote}`;
 }
 
-const DIGNITY_MODIFIER: Record<Dignity, (name: string) => string> = {
-  exalted: (n) => `${n} is exalted here — its significations operate at full, sometimes overwhelming, capacity; this is one of the chart's power centres.`,
-  moolatrikona: (n) => `${n} sits in its moolatrikona — confident, productive and duty-forward; results come with unusual reliability.`,
-  own: (n) => `${n} occupies its own sign, ruling from home ground: stable, self-sufficient results that do not depend on other planets' cooperation.`,
-  greatFriend: (n) => `${n} rests in a great friend's sign, well hosted — its promises are delivered with goodwill and modest interest.`,
-  friend: (n) => `${n} is in a friendly sign; the placement cooperates with the native rather than resisting.`,
-  neutral: (n) => `${n} stands on neutral ground — outcomes here track effort almost exactly, with neither subsidy nor surcharge.`,
-  enemy: (n) => `${n} sits in an enemy's sign; its agenda meets friction from the landlord, and results require roughly double the usual persistence.`,
-  greatEnemy: (n) => `${n} is lodged with a great enemy — expect its significations to be taxed; remedial strengthening of this planet earns outsized returns.`,
-  debilitated: (n) => `${n} is debilitated (neecha): its confidence is structurally undermined and its portfolios need conscious, repeated shoring up — unless a Neechabhanga cancellation (checked in the yoga findings) converts the weakness into eventual strength.`,
+const DIGNITY_MODIFIER: Record<Dignity, (name: string, sign: string) => string> = {
+  exalted: (n, s) => `${s} is the sign where ${n} is exalted — its strongest possible position. Everything ${n} stands for runs at full, sometimes overwhelming, capacity here; this is one of the power centres of your chart.`,
+  moolatrikona: (n, s) => `${s} is ${n}'s moolatrikona, the sign where it works most productively. Results in this house arrive with unusual reliability — confident, steady and duty-minded.`,
+  own: (n, s) => `${s} is ${n}'s own sign, so it is on home ground here: what it gives is stable and self-sufficient, and does not depend on other planets cooperating.`,
+  greatFriend: (n, s) => `${s} belongs to a great friend of ${n}, so it is warmly hosted here. Its promises are delivered with goodwill, and usually with a little extra.`,
+  friend: (n, s) => `${s} belongs to a friend of ${n}, so the placement is comfortable and cooperates with you rather than resisting.`,
+  neutral: (n, s) => `${s} is neutral ground for ${n} — the sign neither helps nor hinders it. What you get out of this house tracks what you put in almost exactly, with no subsidy and no surcharge.`,
+  enemy: (n, s) => `${s} belongs to an enemy of ${n}, so it meets resistance here — a guest whose host does not much like it. Results in this house take roughly twice the usual persistence to arrive.`,
+  greatEnemy: (n, s) => `${s} belongs to a great enemy of ${n}, so it struggles to be itself here. Expect what ${n} stands for to be taxed — and expect deliberate attention to this planet to pay back more than usual, precisely because it starts from behind.`,
+  debilitated: (n, s) => `${s} is the sign where ${n} is debilitated — its weakest position in the zodiac. Its confidence is undermined from the start and the matters it rules need conscious, repeated shoring up, unless a cancellation (Neechabhanga, checked in the yoga findings) turns the early weakness into eventual strength.`,
 };
 
 const NAK_RELATION_TEXT: Record<NakshatraRelation, (planet: string, lord: string) => string> = {
-  self: (p) => `${p} occupies its own nakshatra, so its intent reaches the world undiluted — what it promises, it delivers in its own voice.`,
-  friend: (p, l) => `Its nakshatra lord ${l} is a natural friend of ${p}, so these results are passed on willingly and arrive in recognisable form.`,
-  neutral: (p, l) => `Its nakshatra lord ${l} is neutral toward ${p}: results are transmitted faithfully, but without amplification.`,
-  enemy: (p, l) => `Its nakshatra lord ${l} is a natural enemy of ${p}, so even a well-placed ${p} has its results filtered through an unsympathetic agent — expect the promise to arrive altered, later, or at a price.`,
+  self: (p) => `${p} sits in a nakshatra it rules itself, so its intent reaches the world undiluted — what it promises, it delivers in its own voice.`,
+  friend: (p, l) => `${l}, the ruler of that nakshatra, is a natural friend of ${p}, so this flavour is passed on willingly and arrives in a form you recognise.`,
+  neutral: (p, l) => `${l}, the ruler of that nakshatra, is neutral toward ${p}, so this flavour comes through as it is — neither boosted nor blocked.`,
+  enemy: (p, l) => `${l}, the ruler of that nakshatra, is a natural enemy of ${p}, so even a well-placed ${p} has its results filtered through an unsympathetic hand — expect what it promises to arrive altered, later, or at a price.`,
 };
 
-/** The nakshatra overlay for one planet: which star it sits in, and how well that host treats it. */
-function nakshatraSentence(p: PlanetPosition, label: string): string {
+/**
+ * The nakshatra overlay for one planet: which star it sits in, and how well
+ * that host treats it. The first sentence explains what a nakshatra is, in
+ * passing, every time — a reader may land on any house first.
+ */
+function nakshatraSentence(p: PlanetPosition, label: string, explain: boolean): string {
   const name = PLANET_NAMES[p.id];
   const lordName = PLANET_NAMES[p.nakshatraLord];
-  return (
-    `${label} lies in ${NAKSHATRAS[p.nakshatra]} pada ${p.pada}, ruled by ${lordName} — ${NAKSHATRA_QUALITIES[p.nakshatra]}. ` +
-    `${NAK_RELATION_TEXT[p.nakshatraRelation](name, lordName)}`
-  );
+  const opening = explain
+    ? `${label} also falls in the star-group (nakshatra) called ${NAKSHATRAS[p.nakshatra]}, in its ${ordinal(p.pada)} quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is ${lordName}, and the flavour is: ${NAKSHATRA_QUALITIES[p.nakshatra]}. `
+    : `${label} falls in the nakshatra ${NAKSHATRAS[p.nakshatra]} (${ordinal(p.pada)} quarter), ruled by ${lordName}, whose flavour is: ${NAKSHATRA_QUALITIES[p.nakshatra]}. `;
+  return opening + NAK_RELATION_TEXT[p.nakshatraRelation](name, lordName);
 }
 
 function stateSentences(p: PlanetPosition): string[] {
   const out: string[] = [];
   const name = PLANET_NAMES[p.id];
-  out.push(DIGNITY_MODIFIER[p.dignity](name));
+  out.push(DIGNITY_MODIFIER[p.dignity](name, SIGNS[p.sign]));
   if (p.retrograde) {
     out.push(
-      `${name} is retrograde (vakri): its energy internalises and intensifies, revisiting its themes repeatedly across the life — matters conclude on the second or third pass, not the first.`
+      `${name} is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first.`
     );
   }
   if (p.combust) {
     out.push(
-      `${name} is combust (asta), scorched within the Sun's orb: its outward significations are weakened while the ego colonises its portfolio; humility and deliberate cultivation of this planet's virtues are the remedy.`
+      `${name} is combust — so close to the Sun that its own light is drowned out. Its outward results are weakened while pride and self-image crowd into its territory; the remedy is humility, and deliberately practising the qualities this planet stands for.`
     );
   }
   if (p.warWith) {
     out.push(
       p.warWinner
-        ? `${name} has won a graha yuddha (planetary war) against ${PLANET_NAMES[p.warWith]}, emerging dominant — it commandeers the loser's resources in this house.`
-        : `${name} has lost a graha yuddha to ${PLANET_NAMES[p.warWith]}; its independent agency is compromised and it serves the victor's agenda more than its own.`
+        ? `${name} has won a planetary war (two planets within a degree of each other) against ${PLANET_NAMES[p.warWith]}, and comes out on top — it takes over the loser's resources in this house.`
+        : `${name} has lost a planetary war (two planets within a degree of each other) to ${PLANET_NAMES[p.warWith]}. Its independence is compromised here, and it ends up serving the winner's agenda more than its own.`
     );
   }
   return out;
@@ -175,35 +212,36 @@ const WEAK_DIGNITIES: Dignity[] = ["debilitated", "greatEnemy", "enemy"];
 
 function fromOwnHouseSentence(name: string, house: number, fromOwn: number): string {
   if (fromOwn === 1) {
-    return `It sits in the very house it rules — the strongest possible endorsement of the ${ordinal(house)}'s promise, since the lord defends its own portfolio directly.`;
+    return `It sits in the very house it rules, which is the strongest endorsement a house can get: the ruler is at home, defending its own affairs directly.`;
   }
   if (DUSTHANA.includes(fromOwn)) {
-    return `Counted from the ${ordinal(house)} itself, ${name} stands in the ${ordinal(fromOwn)} — a dusthana from its own house. The house's affairs are undermined from within, and repair here takes deliberate, sustained effort rather than good fortune.`;
+    return `Counting from the ${ordinal(house)} house itself, ${name} stands ${fromOwn} places along — the ${ordinal(fromOwn)} from its own house, which is one of the three difficult positions (the 6th, 8th and 12th, called 'dusthana'). The matters of this house are undermined a little from within, and putting them right takes deliberate, sustained effort rather than luck.`;
   }
   if (KENDRA.includes(fromOwn) || TRIKONA.includes(fromOwn)) {
-    return `Counted from the ${ordinal(house)} itself, ${name} stands in the ${ordinal(fromOwn)} — a kendra or trikona from its own house, so the lord actively supports what it rules.`;
+    return `Counting from the ${ordinal(house)} house itself, ${name} stands ${fromOwn} places along — the ${ordinal(fromOwn)} from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules.`;
   }
-  return `Counted from the ${ordinal(house)} itself, ${name} stands in the ${ordinal(fromOwn)}, a working but unremarkable station from its own house.`;
+  return `Counting from the ${ordinal(house)} house itself, ${name} stands ${fromOwn} places along — the ${ordinal(fromOwn)} from its own house, a workable but unremarkable position that neither helps nor hurts.`;
 }
 
 function lordVerdict(name: string, house: number, p: PlanetPosition, strength?: PlanetStrength): string {
   const score = strength?.score;
   if (score !== undefined) {
+    const measure = `Its overall strength — a combined score from its sign, house, aspects and other factors — comes to ${score} out of 100 (${strength!.grade.toLowerCase()})`;
     if (score >= 60) {
-      return `With a composite strength of ${score}/100 (${strength!.grade}), ${name} is in a position to deliver the ${ordinal(house)}'s significations rather than merely promise them.`;
+      return `${measure}, so ${name} is in a position to actually deliver what the ${ordinal(house)} house stands for, not merely promise it.`;
     }
     if (score >= 45) {
-      return `Composite strength ${score}/100 (${strength!.grade}) — ${name} can carry the ${ordinal(house)}, but results here track the native's effort closely and are not gifted.`;
+      return `${measure}. ${name} can carry the ${ordinal(house)} house, but results here follow your own effort closely rather than being handed to you.`;
     }
-    return `Composite strength is only ${score}/100 (${strength!.grade}); the ${ordinal(house)} is under-resourced at the lord level, and its affairs need conscious support before they will hold weight.`;
+    return `${measure}, which is low. The ${ordinal(house)} house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.`;
   }
   if (STRONG_DIGNITIES.includes(p.dignity)) {
-    return `Well dignified, ${name} is able to deliver the ${ordinal(house)}'s significations rather than merely promise them.`;
+    return `Well placed by sign, ${name} is able to actually deliver what the ${ordinal(house)} house stands for, not merely promise it.`;
   }
   if (WEAK_DIGNITIES.includes(p.dignity)) {
-    return `Poorly dignified, ${name} leaves the ${ordinal(house)} under-resourced at the lord level; its affairs need conscious support before they will hold weight.`;
+    return `Poorly placed by sign, ${name} leaves the ${ordinal(house)} house under-resourced at its ruler; its affairs need conscious support from you before they hold weight.`;
   }
-  return `${name} is neutrally placed — the ${ordinal(house)}'s results track the native's effort closely and are not gifted.`;
+  return `${name} is neutrally placed, so the results of the ${ordinal(house)} house follow your own effort closely rather than being handed to you.`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -216,66 +254,79 @@ function aspectQualifier(benefic: boolean, dignity: Dignity, role: FunctionalRol
   let base: string;
   if (benefic) {
     base = strong
-      ? "Coming from a well-dignified benefic, this aspect is a genuine protection and can be relied on when the house is tested."
+      ? "Because this gentle planet is itself well placed, its aspect is a genuine protection — something you can rely on when this house is tested."
       : weak
-        ? "The benefic intent is present but under-resourced: the protection is real yet thin, and arrives later than the native expects."
-        : "As a benefic of moderate standing, its aspect steadies the house without transforming it.";
+        ? "The good intent is there, but the planet itself is poorly placed, so the protection is real yet thin, and tends to arrive later than you expect."
+        : "Coming from a gentle planet in an ordinary condition, the aspect steadies this house without transforming it.";
   } else {
     base = strong
-      ? "A strong malefic aspect does not merely afflict — it also forces competence in this house's affairs, exacting the discipline as its price."
+      ? "A hard planet in a strong position does not merely trouble a house — it also forces you to become competent in its affairs, charging the discipline as its price."
       : weak
-        ? "A weak malefic aspect afflicts without conferring much capability: friction here comes with little compensating discipline."
-        : "As a malefic of moderate standing, its aspect keeps the house honest, applying pressure the native learns to work with.";
+        ? "A hard planet in a weak position troubles the house without building much capability in return: the friction comes with little compensating discipline."
+        : "Coming from a hard planet in an ordinary condition, the aspect keeps this house honest — pressure you learn to work with rather than damage.";
   }
   if (role === "yogakaraka") {
-    return `${base} As the yogakaraka for this Lagna, its glance is among the chart's best structural supports wherever it lands.`;
+    return `${base} And because this is the most helpful planet your rising sign has (the yogakaraka), its aspect is one of the best structural supports in your chart wherever it lands.`;
   }
   if (benefic && role === "malefic") {
-    return `${base} Note the split, though: naturally benefic but functionally adverse for this Lagna, so its blessing here arrives with strings attached.`;
+    return `${base} Note the split, though: gentle by nature but working against your rising sign by the houses it rules, so its blessing here comes with strings attached.`;
   }
   if (!benefic && role === "benefic") {
-    return `${base} Its functional role softens this considerably — a natural malefic that works for this Lagna behaves far better than its reputation.`;
+    return `${base} Its rulerships soften this considerably — a hard planet that works for your rising sign behaves far better than its reputation.`;
   }
   return base;
 }
 
 /** Short lowercase dignity wording for mid-sentence use (DIGNITY_LABELS is title-cased and parenthesised). */
-const DIGNITY_INLINE: Record<Dignity, string> = {
-  exalted: "exalted",
-  moolatrikona: "in moolatrikona",
-  own: "own sign",
-  greatFriend: "great friend's sign",
-  friend: "friendly sign",
-  neutral: "neutral sign",
-  enemy: "enemy sign",
-  greatEnemy: "great enemy's sign",
-  debilitated: "debilitated",
+export const DIGNITY_INLINE: Record<Dignity, string> = {
+  exalted: "where it is exalted",
+  moolatrikona: "in its moolatrikona sign",
+  own: "in its own sign",
+  greatFriend: "in a great friend's sign",
+  friend: "in a friend's sign",
+  neutral: "in a sign neutral to it",
+  enemy: "in an enemy's sign",
+  greatEnemy: "in a great enemy's sign",
+  debilitated: "where it is debilitated",
 };
 
-function aspectParagraph(chart: ChartData, d: Drishti, house: number, benefics: PlanetId[]): string {
+const ROLE_SHORT: Record<FunctionalRole, string> = {
+  yogakaraka: "your rising sign's most helpful planet (the yogakaraka)",
+  benefic: "one that works in your favour by the houses it rules",
+  malefic: "one that pulls against your interests by the houses it rules",
+  neutral: "neutral by rulership",
+};
+
+/**
+ * One aspect on the house. The first aspect in a house explains what an
+ * aspect is and spells out the role vocabulary; later ones in the same house
+ * use the short forms, so a house with five aspects does not read the same
+ * explainer five times.
+ */
+function aspectParagraph(chart: ChartData, d: Drishti, house: number, benefics: PlanetId[], explain: boolean): string {
   const src = chart.planets.find((p) => p.id === d.from);
   if (!src) return "";
   const name = PLANET_NAMES[d.from];
   const benefic = benefics.includes(d.from);
   const role = functionalRole(d.from, chart.ascendant.sign);
-  return [
-    `${name} aspects this house from the ${ordinal(src.house)} in ${SIGNS[src.sign]} (${DIGNITY_INLINE[src.dignity]}${flags(src)}) — a natural ${benefic ? "benefic" : "malefic"} and ${ROLE_WORD[role]} for this Lagna. The glance is ${drishtiCharacter(d.from, d.offset)}.`,
-    ASPECT_ON_HOUSE[d.from][house - 1],
-    aspectQualifier(benefic, src.dignity, role),
-  ].join(" ");
+  const where = `the ${ordinal(src.house)} house in ${SIGNS[src.sign]}, ${DIGNITY_INLINE[src.dignity]}${flags(src)}`;
+  const opening = explain
+    ? `${name} aspects this house — that is, it reaches into it from where it sits, ${where}. By nature ${name} is a ${benefic ? "gentle planet (a 'benefic')" : "hard planet (a 'malefic')"}, and for your rising sign it is ${ROLE_PLAIN[role]}. The aspect landing here is ${drishtiCharacter(d.from, d.offset)}.`
+    : `${name} also aspects this house, from ${where} — a ${benefic ? "gentle" : "hard"} planet by nature, and ${ROLE_SHORT[role]}. The aspect landing here is ${drishtiCharacter(d.from, d.offset)}.`;
+  return [opening, ASPECT_ON_HOUSE[d.from][house - 1], aspectQualifier(benefic, src.dignity, role)].join(" ");
 }
 
 function aspectBalanceSentence(house: number, beneficCount: number, maleficCount: number): string {
   if (beneficCount + maleficCount === 0) {
-    return `No planet casts an aspect on the ${ordinal(house)}. Its affairs run on the lord's condition alone, with neither external reinforcement nor interference — outcomes here are quieter and more self-determined than elsewhere in the chart.`;
+    return `No planet aspects the ${ordinal(house)} house. Its affairs run on the ruler's condition alone, with nothing from outside either reinforcing or interfering — outcomes here are quieter and more in your own hands than elsewhere in the chart.`;
   }
   if (maleficCount === 0) {
-    return `Every aspect reaching this house is benefic — an unusually protected field, and one of the safer areas of the life.`;
+    return `Every aspect reaching this house comes from a gentle planet — an unusually protected area, and one of the safer parts of your life.`;
   }
   if (beneficCount === 0) {
-    return `Every aspect reaching this house is malefic. With no benefic counterweight, these significations need conscious defence, and the house tends to mature through difficulty rather than ease.`;
+    return `Every aspect reaching this house comes from a hard planet. With no gentle planet to balance them, what this house stands for needs conscious defending, and the house tends to mature through difficulty rather than ease — which also means it usually matures well.`;
   }
-  return `The house takes ${beneficCount} benefic and ${maleficCount} malefic ${beneficCount + maleficCount === 2 ? "aspect" : "aspects"} — a contested field whose results swing with whichever of these planets is running its dasha.`;
+  return `The house receives ${beneficCount} gentle and ${maleficCount} hard ${beneficCount + maleficCount === 2 ? "aspect" : "aspects"} — a contested area whose results swing depending on which of these planets is running its main period (dasha) at the time.`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -287,21 +338,21 @@ function conjunctionQualifier(cs: ConjunctionStrength): string {
   const orb = cs.orb.toFixed(1);
   switch (cs.tier) {
     case "Dominant":
-      return `This blend runs hot: the planets sit within ${orb}° with a combined force of ${cs.score}/100, led by ${leader}. The combination expresses strongly and early, and it defines this house rather than merely colouring it.`;
+      return `This pairing runs hot: the two planets sit within ${orb}° of each other, with a combined strength of ${cs.score} out of 100, and ${leader} is the stronger of the two. The combination shows up strongly and early in life, and it defines this house rather than merely colouring it.`;
     case "Balanced":
-      return `At ${orb}° the planets are genuinely blended — combined force ${cs.score}/100, led by ${leader}. Expect the combination to express steadily rather than dramatically, in proportion to the effort put into it.`;
+      return `At ${orb}° apart the two planets are genuinely blended — combined strength ${cs.score} out of 100, with ${leader} the stronger. Expect the combination to show up steadily rather than dramatically, in proportion to the effort you put into it.`;
     case "Weak blend":
-      return `The span is ${orb}° and the combined force only ${cs.score}/100: these planets share a field more than a purpose. The promise is real but muted, and tends to surface mainly during ${leader}'s periods.`;
+      return `The two planets are ${orb}° apart and their combined strength is only ${cs.score} out of 100, so they share a house more than a purpose. The promise is real but muted, and tends to surface mainly during ${leader}'s main periods.`;
     default:
-      return `Combined force is just ${cs.score}/100 across ${orb}°. This combination is compromised — its difficulties will be felt more reliably than its gifts, and remedial strengthening of ${leader} is the highest-leverage intervention available.`;
+      return `Their combined strength is just ${cs.score} out of 100 across ${orb}°, so this combination is compromised — you will feel its difficulties more reliably than its gifts. Deliberately strengthening ${leader} is the single most useful thing to do about it.`;
   }
 }
 
 const GROUP_TIER_NOTE: Record<ConjunctionStrength["tier"], string> = {
-  Dominant: "The group acts as a single, life-defining complex that matures across each of their dashas in turn.",
-  Balanced: "The pairwise dynamics above braid into one complex whose results arrive in sequence, as each planet's dasha comes round.",
-  "Weak blend": "These planets dilute one another more than they cooperate; the house stays busy without ever becoming decisive.",
-  Afflicted: "The concentration is a liability rather than an asset here — the house is overloaded, and its significations need deliberate, sustained repair.",
+  Dominant: "The group acts as one life-defining cluster, and it matures in stages — each time one of these planets' main periods (dashas) comes round.",
+  Balanced: "The pairings above braid into one cluster whose results arrive in sequence, as each planet's main period comes round.",
+  "Weak blend": "These planets water each other down more than they cooperate; the house stays busy without ever becoming decisive.",
+  Afflicted: "The crowding is a liability rather than an asset here — the house is overloaded, and what it stands for needs deliberate, sustained repair.",
 };
 
 /* ------------------------------------------------------------------ *
@@ -626,12 +677,12 @@ export function interpretHouse(
 
   // 1. The field itself.
   paragraphs.push(
-    `The ${ordinal(house)} house falls in ${SIGNS[sign]} and rules ${HOUSE_SIGNIFICATIONS[house - 1]}. ` +
+    `Your ${ordinal(house)} house falls in ${SIGNS[sign]}. This is the part of the chart that covers ${HOUSE_SIGNIFICATIONS[house - 1]}. ` +
       (occupants.length > 1
-        ? "Its combined occupancy makes this a major theatre of the life."
+        ? `${occupants.map((p) => PLANET_NAMES[p.id]).join(", ")} all sit in it, which makes this one of the main arenas of your life — a lot happens here, and it happens to you directly.`
         : occupants.length === 1
-          ? `${PLANET_NAMES[occupants[0].id]} occupies it, so this house's affairs are lived directly rather than delegated.`
-          : "No planet occupies it, so the house is judged — as the classics prescribe — by the condition of its lord and by the aspects it receives.")
+          ? `${PLANET_NAMES[occupants[0].id]} sits in it, so the affairs of this house are things you live directly rather than watch from a distance.`
+          : "No planet sits in it. That is not a weakness in itself — most houses in most charts are empty. An empty house is read the way the classical texts prescribe: by the condition of the planet that rules it, and by the planets that aspect it from elsewhere.")
   );
 
   // 2. The lord.
@@ -639,19 +690,23 @@ export function interpretHouse(
   const lordPos = chart.planets.find((p) => p.id === lordId) ?? null;
   const fromOwnHouse = lordPos ? ((lordPos.house - house + 12) % 12) + 1 : null;
   const lordName = PLANET_NAMES[lordId];
+  let nakExplained = false;
 
   if (lordPos && fromOwnHouse !== null) {
     const lordLines = [
-      `The ${ordinal(house)} is ruled by ${lordName}, placed in the ${ordinal(lordPos.house)} house at ${fmtDeg(lordPos.degInSign)} ${SIGNS[lordPos.sign]} — ${DIGNITY_LABELS[lordPos.dignity]}${flags(lordPos)}.`,
+      `${SIGNS[sign]} is ruled by ${lordName}, so ${lordName} is the ruler of your ${ordinal(house)} house — the planet whose condition decides how this area of life goes. ${lordName} sits in your ${ordinal(lordPos.house)} house at ${fmtDeg(lordPos.degInSign)} ${SIGNS[lordPos.sign]}, which is ${DIGNITY_PLAIN[lordPos.dignity]}.${flagsPlain(lordPos)}`,
       fromOwnHouseSentence(lordName, house, fromOwnHouse),
-      `Its placement carries the ${ordinal(house)}'s agenda into ${HOUSE_SIGNIFICATIONS[lordPos.house - 1].split(",")[0]} — that is where these significations actually play out.`,
+      lordPos.house === house
+        ? ""
+        : `Because the ruler sits in the ${ordinal(lordPos.house)}, the affairs of your ${ordinal(house)} house get worked out mostly through ${HOUSE_SIGNIFICATIONS[lordPos.house - 1].split(",")[0]} — that is where they actually play out in daily life.`,
       lordVerdict(lordName, house, lordPos, strengths[lordId]),
-    ];
+    ].filter(Boolean);
     paragraphs.push(lordLines.join(" "));
-    paragraphs.push(nakshatraSentence(lordPos, `The lord ${lordName}`));
+    paragraphs.push(nakshatraSentence(lordPos, `The ruler, ${lordName},`, true));
+    nakExplained = true;
   } else {
     paragraphs.push(
-      `The ${ordinal(house)} is ruled by ${lordName}, which has not been placed in this chart. Without the lord's position the house can only be read from the aspects it receives and from its sign — enter ${lordName} to complete the judgement.`
+      `${SIGNS[sign]} is ruled by ${lordName}, so ${lordName} is the ruler of your ${ordinal(house)} house — but it has not been placed in this chart. Without its position the house can only be read from the aspects it receives and from its sign; enter ${lordName} to complete the reading.`
     );
   }
 
@@ -659,17 +714,18 @@ export function interpretHouse(
   for (const p of occupants) {
     const core = PLANET_IN_HOUSE[p.id][house - 1];
     const lines = [
-      `${PLANET_NAMES[p.id]} at ${fmtDeg(p.degInSign)} ${SIGNS[p.sign]}: ${lordshipSentence(p.id, lagnaSign)}`,
+      `${PLANET_NAMES[p.id]} sits here at ${fmtDeg(p.degInSign)} ${SIGNS[p.sign]}. ${lordshipSentence(p.id, lagnaSign)}`,
       core,
       ...stateSentences(p),
     ];
     if (p.bhava !== p.house && chart.cusps) {
       lines.push(
-        `Note: by the more precise house-cusp method (Bhava Chalit, Sripati), this planet actually delivers its concrete, day-to-day results through the ${ordinal(p.bhava)} house rather than the ${ordinal(p.house)} — read its outcomes there, while its sign-based strength and dignity above stay as described.`
+        `One refinement: houses can be counted two ways. By whole signs (used above) ${PLANET_NAMES[p.id]} is in the ${ordinal(p.house)}, but by the more precise method that measures from the exact house boundaries (Bhava Chalit), it falls in the ${ordinal(p.bhava)}. Read its concrete, day-to-day results in the ${ordinal(p.bhava)} house too; its strength and comfort by sign, described above, stay as they are.`
       );
     }
     paragraphs.push(lines.join(" "));
-    paragraphs.push(nakshatraSentence(p, PLANET_NAMES[p.id]));
+    paragraphs.push(nakshatraSentence(p, PLANET_NAMES[p.id], !nakExplained));
+    nakExplained = true;
   }
 
   // 4. Nakshatra threads shared between the lord and the occupants.
@@ -678,7 +734,7 @@ export function interpretHouse(
       if (p.id === lordId) continue;
       if (p.nakshatraLord === lordPos.nakshatraLord) {
         paragraphs.push(
-          `${PLANET_NAMES[p.id]} and the house lord ${lordName} both sit in nakshatras ruled by ${PLANET_NAMES[p.nakshatraLord]}. They are wired to the same source: their significations rise and fall together, and ${PLANET_NAMES[p.nakshatraLord]}'s own dasha activates this house twice over.`
+          `${PLANET_NAMES[p.id]} and the house ruler ${lordName} both sit in nakshatras ruled by ${PLANET_NAMES[p.nakshatraLord]}. They are wired to the same source: what they stand for rises and falls together, and ${PLANET_NAMES[p.nakshatraLord]}'s own main period (dasha) switches this house on twice over.`
         );
       }
     }
@@ -689,7 +745,7 @@ export function interpretHouse(
       const b = occupants[j];
       if (a.nakshatraLord === b.nakshatraLord) {
         paragraphs.push(
-          `${PLANET_NAMES[a.id]} and ${PLANET_NAMES[b.id]} share ${PLANET_NAMES[a.nakshatraLord]} as nakshatra lord, which compounds their conjunction: they do not merely share a sign, they answer to the same authority, and ${PLANET_NAMES[a.nakshatraLord]}'s periods bring both to the surface at once.`
+          `${PLANET_NAMES[a.id]} and ${PLANET_NAMES[b.id]} both sit in nakshatras ruled by ${PLANET_NAMES[a.nakshatraLord]}, which tightens their pairing: they do not merely share a sign, they answer to the same planet, and ${PLANET_NAMES[a.nakshatraLord]}'s main periods bring both to the surface at once.`
         );
       }
     }
@@ -698,11 +754,15 @@ export function interpretHouse(
   // 5. Drishti on the house.
   let beneficCount = 0;
   let maleficCount = 0;
+  let aspectExplained = false;
   for (const d of aspects) {
     if (benefics.includes(d.from)) beneficCount++;
     else maleficCount++;
-    const text = aspectParagraph(chart, d, house, benefics);
-    if (text) paragraphs.push(text);
+    const text = aspectParagraph(chart, d, house, benefics, !aspectExplained);
+    if (text) {
+      paragraphs.push(text);
+      aspectExplained = true;
+    }
   }
   paragraphs.push(aspectBalanceSentence(house, beneficCount, maleficCount));
 
@@ -725,7 +785,7 @@ export function interpretHouse(
       if (group) {
         conjunctions.push(group);
         paragraphs.push(
-          `With ${occupants.length} grahas sharing one field, the house becomes a committee: ${PLANET_NAMES[group.leader]} chairs it by composite strength, the group spans ${group.orb.toFixed(1)}° and carries a combined force of ${group.score}/100 (${group.tier}). ${GROUP_TIER_NOTE[group.tier]}`
+          `With ${occupants.length} planets sharing one house, it works like a committee: ${PLANET_NAMES[group.leader]} chairs it as the strongest member, the group spans ${group.orb.toFixed(1)}° and carries a combined strength of ${group.score} out of 100 (${group.tier.toLowerCase()}). ${GROUP_TIER_NOTE[group.tier]}`
         );
       }
     }
@@ -735,8 +795,8 @@ export function interpretHouse(
   if (occupants.length === 0) {
     paragraphs.push(
       lordPos
-        ? `In sum: with no occupant to speak for it, the ${ordinal(house)}'s fortunes rest on ${lordName}'s condition in the ${ordinal(lordPos.house)} and on the aspects above. Strengthen ${lordName} and this house improves; nothing else reaches it directly.`
-        : `In sum: the ${ordinal(house)} must be read from its aspects alone until its lord ${lordName} is placed.`
+        ? `In short: with no planet in it to speak for it, how your ${ordinal(house)} house goes rests on ${lordName}'s condition in the ${ordinal(lordPos.house)} and on the aspects described above. Anything that strengthens ${lordName} — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.`
+        : `In short: your ${ordinal(house)} house has to be read from its aspects alone until its ruler ${lordName} is placed.`
     );
   }
 
