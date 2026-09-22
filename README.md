@@ -60,6 +60,41 @@ npm run cf-typegen  # regenerate cloudflare-env.d.ts after editing wrangler.json
 
 Note that `cloudflare-env.d.ts` brings the workerd runtime types into the project, and they are stricter than the DOM lib in places — `Response.json()` resolves to `unknown` rather than `any`, for one. That is a feature: it caught an unchecked third-party payload in `CitySearch`.
 
+## Chart log (optional)
+
+When a visitor downloads the Markdown report, the birth details that produced it are recorded in a Cloudflare D1 table. Downloads are logged rather than casts: casting is exploratory — the same chart is recast while a time is nudged — whereas a download is the point at which a chart was taken away and used, so one row per download is both far less write volume and the more meaningful signal.
+
+D1 rather than a hosted Postgres because the site is already on Workers: the write is a binding call inside the same isolate rather than a round trip off-platform, and there is **no API key or token anywhere in the path** — a binding is authority granted to this Worker, not a credential it carries and could leak. The free allowance is 5 GB and 100,000 row-writes a day, against one row per download, and unlike a free Supabase project a D1 database is never paused for inactivity.
+
+Nothing about the site depends on it. With no `CHART_LOG_DB` binding the route answers `{ logged: false }` and the download is unaffected, which is how a fork or a plain `next build` runs.
+
+**1. Create the database:**
+
+```bash
+npx wrangler d1 create astrology-chart-log
+```
+
+Paste the `database_id` it prints into the `d1_databases` block in `wrangler.jsonc`, replacing `PASTE_DATABASE_ID_HERE`, then run `npm run cf-typegen`.
+
+**2. Create the table**, locally and remotely:
+
+```bash
+npx wrangler d1 execute astrology-chart-log --local  --file=./migrations/0001_create_chart_logs.sql
+npx wrangler d1 execute astrology-chart-log --remote --file=./migrations/0001_create_chart_logs.sql
+```
+
+`--local` seeds the copy `npm run preview` uses; `--remote` is the live one. Skipping `--remote` is the usual reason a log works in preview and silently does nothing in production.
+
+**3. Deploy.** No secrets and no dashboard variables — the binding travels in `wrangler.jsonc`.
+
+**Reading the log:**
+
+```bash
+npx wrangler d1 execute astrology-chart-log --remote   --command="SELECT created_at, native_name, birth_date, birth_time, place_name, place_country FROM chart_logs ORDER BY created_at DESC LIMIT 20"
+```
+
+**Note on disclosure.** These rows are personal data about identifiable people: a name, a birth moment and a birthplace together identify someone. Before switching this on for real visitors, say so on the page — a line beneath the download button is enough — and be prepared to delete on request.
+
 ## Structure
 
 ```

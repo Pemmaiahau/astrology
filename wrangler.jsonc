@@ -19,5 +19,17 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+
+  // Chart log — see README § "Chart log". The binding is what /api/chart-log
+  // writes through; there is no key or token anywhere in the path, because a
+  // binding is authority granted to this Worker rather than a credential it
+  // carries. Replace database_id with the id `wrangler d1 create` prints.
+  "d1_databases": [
+    {
+      "binding": "CHART_LOG_DB",
+      "database_name": "astrology-chart-log",
+      "database_id": "91b9a270-8372-4cfb-96bc-8e082607e0bd"
+    }
+  ]
 }

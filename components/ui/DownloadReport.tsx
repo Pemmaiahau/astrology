@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { useChart } from "@/components/context/ChartContext";
+import { logChartExport } from "@/utils/log/chartLog";
 
 /**
  * Downloads the whole cast chart as one Markdown document.
@@ -71,6 +72,10 @@ export default function DownloadReport() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+
+      // After the file is handed over, never before: a download that succeeded
+      // is the event being recorded, and the call itself is non-blocking.
+      logChartExport(ctx.committed);
     } catch (err) {
       setError(
         `The report could not be built: ${err instanceof Error ? err.message : String(err)}`
