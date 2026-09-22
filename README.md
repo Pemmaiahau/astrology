@@ -1,6 +1,6 @@
 # Jyotisha Studio — Professional Vedic Astrology
 
-A production-ready Vedic astrology web application: Next.js 15 (App Router) + TypeScript + Tailwind CSS 4 + Lucide icons, fully client-side calculation, optimized for Vercel.
+A production-ready Vedic astrology web application: Next.js 15 (App Router) + TypeScript + Tailwind CSS 4 + Lucide icons, fully client-side calculation, deployed on Cloudflare Workers.
 
 For how the calculation and prediction engine actually works (file-by-file, formulas, and where to make changes), see [ENGINE.md](ENGINE.md).
 
@@ -46,9 +46,19 @@ npm install
 npm run dev
 ```
 
-## Deploy to Vercel
+## Deploy to Cloudflare Workers
 
-Import the repository, set the project **Root Directory** to `astrology/`, framework auto-detects Next.js. No environment variables or API keys required.
+The site runs on Cloudflare Workers through [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare), configured by `wrangler.jsonc` and `open-next.config.ts`. Both must exist **on the branch Cloudflare Workers Builds builds from** — the adapter has nothing to deploy without them.
+
+```bash
+npm run preview   # build and run the real Worker locally
+npm run deploy    # build and push to Cloudflare
+npm run cf-typegen  # regenerate cloudflare-env.d.ts after editing wrangler.jsonc
+```
+
+`next dev` still works for ordinary UI work. It is not the same runtime, so anything touching a binding should be checked with `npm run preview` before it ships.
+
+Note that `cloudflare-env.d.ts` brings the workerd runtime types into the project, and they are stricter than the DOM lib in places — `Response.json()` resolves to `unknown` rather than `any`, for one. That is a feature: it caught an unchecked third-party payload in `CitySearch`.
 
 ## Structure
 

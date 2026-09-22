@@ -132,7 +132,10 @@ export default function CitySearch({ value, onSelect, placeholder }: Props) {
           `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`
         );
         if (!res.ok) throw new Error(`geocoder returned ${res.status}`);
-        const json = await res.json();
+        // Annotated rather than left implicit: `Response.json()` resolves to
+        // `unknown`, and this is a third-party payload, so the shape is an
+        // assumption being declared rather than a fact the types know.
+        const json = (await res.json()) as { results?: OpenMeteoResult[] };
         const found: OpenMeteoResult[] = json.results ?? [];
         setResults(found);
         setOpen(true);
