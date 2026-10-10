@@ -1,5 +1,7 @@
 "use client";
 
+import { oneSentence } from "@/data/interpretations/brief";
+import { FullReasoning } from "@/components/panels/interpretation/BriefView";
 import { useMemo } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Sun, TrendingUp } from "lucide-react";
 import { useChart } from "@/components/context/ChartContext";
@@ -161,7 +163,10 @@ export default function PredictionPanel() {
                     {fmt(m.start)} → {fmt(m.end)}
                   </span>
                 </p>
-                <p className="text-sm leading-relaxed text-fg">{m.text}</p>
+                <p className="text-sm leading-relaxed text-fg">{oneSentence(m.text)}</p>
+                <FullReasoning label="Full Mahadasha assessment">
+                  <p className="text-sm leading-relaxed text-fg">{m.text}</p>
+                </FullReasoning>
               </div>
             ))}
             {forecast.sadeSatiText && (
@@ -193,45 +198,82 @@ export default function PredictionPanel() {
                 <span className="rounded-full bg-neutral-soft px-2 py-0.5 text-[10px] font-medium text-planet">
                   {seg.boundaryReason}
                 </span>
+                {seg.conditional && <span className="text-[11px] text-fg-subtle">{seg.conditional}</span>}
               </div>
 
               {seg.antarText && (
-                <p className="mb-3 text-sm leading-relaxed text-fg">{seg.antarText}</p>
+                <p className="mb-2 text-sm leading-snug text-fg">{oneSentence(seg.antarText)}</p>
               )}
 
               {seg.transits.length > 0 && (
-                <div className="mb-3 space-y-2">
+                <div className="mb-2 flex flex-wrap gap-1.5">
                   {seg.transits.map((t) => (
-                    <p key={t.id} className="text-xs leading-relaxed text-fg-muted">
-                      <span className="font-semibold text-fg">
-                        {PLANET_NAMES[t.id]} in {SIGNS[t.sign]}
-                        {t.retrograde ? " (R)" : ""} — {t.houseFromMoon}th from Moon, {t.houseFromLagna}th
-                        from Lagna:
-                      </span>{" "}
-                      {t.text}
-                    </p>
+                    <span
+                      key={t.id}
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${
+                        t.favourable
+                          ? "bg-good-soft text-good ring-good-ring"
+                          : t.vedhaBy
+                            ? "bg-primary-soft text-heading ring-primary-ring"
+                            : "bg-neutral-soft text-fg-muted ring-neutral-ring"
+                      }`}
+                      title={t.text}
+                    >
+                      {PLANET_NAMES[t.id]} {SIGNS[t.sign]}
+                      {t.retrograde ? " R" : ""} · {t.houseFromMoon}/Mo {t.houseFromLagna}/La
+                      {t.favourable ? " ✓" : t.vedhaBy ? ` ✗ vedha ${PLANET_NAMES[t.vedhaBy]}` : ""}
+                      {t.bindus !== null ? ` · ${t.bindus} bindus` : ""}
+                    </span>
                   ))}
                 </div>
               )}
 
               {seg.pratyantars.length > 0 && (
-                <div className="rounded-lg border border-line-soft bg-surface-3 p-2.5">
-                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-fg-subtle">
-                    Pratyantardashas in this segment
-                  </p>
-                  <div className="space-y-1">
-                    {seg.pratyantars.map((p, j) => (
-                      <p key={j} className="text-xs leading-relaxed text-fg-muted">
-                        <span className="font-mono text-fg-subtle">
-                          {fmt(p.start)}–{fmt(p.end)}
+                <p className="mb-2 text-xs leading-relaxed text-fg-muted">
+                  <span className="font-semibold text-fg-subtle">Pratyantars: </span>
+                  {seg.pratyantars.map((p) => `${PLANET_NAMES[p.lord]} ${fmt(p.start)}–${fmt(p.end)}`).join(" · ")}
+                </p>
+              )}
+
+              <FullReasoning label="Full segment reading">
+                {seg.antarText && (
+                  <p className="mb-3 text-sm leading-relaxed text-fg">{seg.antarText}</p>
+                )}
+
+                {seg.transits.length > 0 && (
+                  <div className="mb-3 space-y-2">
+                    {seg.transits.map((t) => (
+                      <p key={t.id} className="text-xs leading-relaxed text-fg-muted">
+                        <span className="font-semibold text-fg">
+                          {PLANET_NAMES[t.id]} in {SIGNS[t.sign]}
+                          {t.retrograde ? " (R)" : ""} — {t.houseFromMoon}th from Moon, {t.houseFromLagna}th
+                          from Lagna:
                         </span>{" "}
-                        <span className="font-semibold text-heading-soft">{PLANET_NAMES[p.lord]}</span>:{" "}
-                        {p.theme}
+                        {t.text}
                       </p>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+
+                {seg.pratyantars.length > 0 && (
+                  <div className="rounded-lg border border-line-soft bg-surface-3 p-2.5">
+                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-fg-subtle">
+                      Pratyantardashas in this segment
+                    </p>
+                    <div className="space-y-1">
+                      {seg.pratyantars.map((p, j) => (
+                        <p key={j} className="text-xs leading-relaxed text-fg-muted">
+                          <span className="font-mono text-fg-subtle">
+                            {fmt(p.start)}–{fmt(p.end)}
+                          </span>{" "}
+                          <span className="font-semibold text-heading-soft">{PLANET_NAMES[p.lord]}</span>:{" "}
+                          {p.theme}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </FullReasoning>
             </div>
           ))}
         </div>
@@ -246,7 +288,8 @@ export default function PredictionPanel() {
           {forecast.months.map((m, i) => (
             <div key={i} className="rounded-xl border border-line bg-surface p-3">
               <p className="mb-1 text-sm font-bold text-heading">{m.label}</p>
-              {m.dashaLine && <p className="mb-2 text-[11px] font-medium text-fg-subtle">{m.dashaLine}</p>}
+              {m.dashaLine && <p className="text-[11px] font-medium text-fg-subtle">{m.dashaLine}</p>}
+              {m.conditional && <p className="mb-2 text-[11px] text-fg-subtle">{m.conditional}</p>}
               {m.paragraphs.map((p, j) => (
                 <p key={j} className="mb-1.5 text-xs leading-relaxed text-fg-muted last:mb-0">
                   {p}

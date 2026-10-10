@@ -56,10 +56,18 @@ export default function DownloadReport() {
         );
       }
 
+      // Export-only expert layers (Sookshma, Yogini/Chara dasha, special
+      // points, extended yogas, full gochara). They scan ephemerides over
+      // years, so they run here, on demand, never on the context cascade.
+      const { buildExpertLayers } = await import("@/utils/export/expertLayers");
+      const expert = buildExpertLayers({
+        chart, ayanamsha, nodeMode, now, dashaTree, activeDasha, ashtakavarga, jaimini,
+      });
+
       const markdown = buildMarkdownReport({
         chart, ayanamsha, nodeMode, dashaTree, activeDasha, transits, sadeSati,
         ashtakavarga, yogas, vargas, jaimini, shadbala, bhavaBala,
-        speculation, intimacy, generatedAt: now,
+        speculation, intimacy, expert, generatedAt: now,
       });
 
       const url = URL.createObjectURL(

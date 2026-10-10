@@ -1,5 +1,7 @@
 "use client";
 
+import BriefView, { FullReasoning } from "./BriefView";
+import { briefOfSection } from "@/data/interpretations/brief";
 import { Coins } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
@@ -12,12 +14,12 @@ import TimingWindows from "./TimingWindows";
 
 /** Sources of income: ranked streams, percentage split, per-stream timing. */
 export default function WealthCard() {
-  const { chart, vargas, strengths, yogas, dashaTree, ayanamsha, ashtakavarga, now } = useChart();
+  const { chart, vargas, strengths, yogas, extendedYogas, specialPoints, dashaTree, ayanamsha, ashtakavarga, now } = useChart();
   const [timingKey, setTimingKey] = useState<string | null>(null);
 
   const report = useMemo(
-    () => (chart ? buildWealthReport(chart, vargas, strengths, yogas) : null),
-    [chart, vargas, strengths, yogas]
+    () => (chart ? buildWealthReport(chart, vargas, strengths, yogas, { extended: extendedYogas, special: specialPoints }) : null),
+    [chart, vargas, strengths, yogas, extendedYogas, specialPoints]
   );
 
   const timing = useMemo(
@@ -31,6 +33,7 @@ export default function WealthCard() {
   const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
+  const brief = briefOfSection(report, timing);
 
   return (
     <SectionCard
@@ -58,6 +61,8 @@ export default function WealthCard() {
         </div>
       </Section>
 
+      <BriefView brief={brief} topTitle="Strongest earning channels" />
+      <FullReasoning>
       {report.blocks.map((b) => (
         <Section key={b.heading} title={b.heading}>
           {b.paragraphs.map((p, i) => (
@@ -68,6 +73,7 @@ export default function WealthCard() {
           {b.items && <RankedList items={b.items} />}
         </Section>
       ))}
+      </FullReasoning>
 
       <Section title="When each stream activates">
         <BandNote

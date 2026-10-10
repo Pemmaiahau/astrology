@@ -660,6 +660,16 @@ export interface HouseInterpretation {
   sav: number | null;
   /** Bhava Bala in rupas, when Shadbala was available to build it. */
   bhavaRupas: number | null;
+  /**
+   * The convergence verdict as data, for compact displays: which independent
+   * measures support the house and which do not. `tone` is "unscored" when
+   * fewer than two measures could be judged.
+   */
+  verdict: {
+    tone: "favourable" | "unfavourable" | "split" | "unscored";
+    support: string[];
+    against: string[];
+  };
 }
 
 export function interpretHouse(
@@ -879,6 +889,15 @@ export function interpretHouse(
     const convergence = convergenceSentence(house, signals);
     if (convergence) depth.push(convergence);
   }
+  const scoredSignals = depth.length > 0 ? signals.filter((x) => x.positive !== null) : [];
+  const support = scoredSignals.filter((x) => x.positive).map((x) => x.label);
+  const against = scoredSignals.filter((x) => !x.positive).map((x) => x.label);
+  const verdict: HouseInterpretation["verdict"] = {
+    tone:
+      scoredSignals.length < 2 ? "unscored" : against.length === 0 ? "favourable" : support.length === 0 ? "unfavourable" : "split",
+    support,
+    against,
+  };
 
   return {
     house,
@@ -893,6 +912,7 @@ export function interpretHouse(
     depth,
     sav,
     bhavaRupas: ctx.bhavaBala?.find((b) => b.house === house)?.rupas ?? null,
+    verdict,
   };
 }
 

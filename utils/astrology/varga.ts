@@ -223,8 +223,10 @@ export function computeVargaChart(chart: ChartData, vargaId: VargaId): VargaChar
   const ascendant = vargaSign(vargaId, chart.ascendant.longitude);
   const d1Signs = new Map<PlanetId, number>();
   const vSigns: Partial<Record<PlanetId, number>> = {};
+  const rashiSigns: Partial<Record<PlanetId, number>> = {};
   for (const p of chart.planets) {
     d1Signs.set(p.id, p.sign);
+    rashiSigns[p.id] = p.sign;
     vSigns[p.id] = vargaSign(vargaId, p.longitude);
   }
   const positions: VargaPosition[] = chart.planets.map((p) => {
@@ -233,8 +235,10 @@ export function computeVargaChart(chart: ChartData, vargaId: VargaId): VargaChar
       id: p.id,
       sign,
       // Degree inside a varga sign has no classical meaning — dignity is
-      // judged at sign level (moolatrikona counts by sign here).
-      dignity: dignityInSign(p.id, sign, undefined, vSigns),
+      // judged at sign level (moolatrikona counts by sign here). The
+      // tatkalika component is fixed from the rashi chart (planet's and
+      // dispositor's D-1 signs), matching Saptavargaja bala in shadbala.ts.
+      dignity: dignityInSign(p.id, sign, undefined, rashiSigns, p.sign),
       vargottama: vargaId === "D9" && sign === d1Signs.get(p.id),
     };
   });
@@ -304,4 +308,34 @@ export function computeVargaSet(chart: ChartData): VargaSet {
   }
 
   return { charts, vargottama, vimshopaka };
+}
+
+/**
+ * The sixty Shashtiamsa deities (BPHS Ch.6), in order for an odd sign; an even
+ * sign runs the same list backwards. `benefic` follows the BPHS split into
+ * auspicious and inauspicious amshas (the variant readings of Ardra and
+ * Bhramana are taken as inauspicious, per Santhanam's translation — logged in
+ * SOURCES.md).
+ */
+export const SHASHTIAMSA_DEITIES: { name: string; benefic: boolean }[] = [
+  ["Ghora", false], ["Rakshasa", false], ["Deva", true], ["Kubera", true], ["Yaksha", true],
+  ["Kinnara", true], ["Bhrashta", false], ["Kulaghna", false], ["Garala", false], ["Vahni", false],
+  ["Maya", false], ["Purishaka", false], ["Apampathi", true], ["Marutwana", true], ["Kaala", false],
+  ["Sarpa", false], ["Amrita", true], ["Indu", true], ["Mridu", true], ["Komala", true],
+  ["Heramba", true], ["Brahma", true], ["Vishnu", true], ["Maheshwara", true], ["Deva", true],
+  ["Ardra", false], ["Kalinasa", true], ["Kshiteesa", true], ["Kamalakara", true], ["Gulika", false],
+  ["Mrityu", false], ["Kaala", false], ["Davagni", false], ["Ghora", false], ["Yama", false],
+  ["Kantaka", false], ["Sudha", true], ["Amrita", true], ["Poornachandra", true], ["Vishadagdha", false],
+  ["Kulanasa", false], ["Vamshakshaya", false], ["Utpata", false], ["Kaala", false], ["Saumya", true],
+  ["Komala", true], ["Seetala", true], ["Karaladamshtra", false], ["Chandramukhi", true], ["Praveena", true],
+  ["Kaalpavaka", false], ["Dandayudha", false], ["Nirmala", true], ["Saumya", true], ["Krura", false],
+  ["Atisheetala", true], ["Amrita", true], ["Payodhi", true], ["Bhramana", false], ["Chandrarekha", true],
+].map(([name, benefic]) => ({ name: name as string, benefic: benefic as boolean }));
+
+/** Shashtiamsa (D-60) part 1–60 and its deity for a sidereal longitude. */
+export function shashtiamsaDeity(longitude: number): { part: number; name: string; benefic: boolean } {
+  const lon = norm360(longitude);
+  const k = Math.min(59, Math.floor((lon % 30) * 2));
+  const deity = SHASHTIAMSA_DEITIES[isOddSign(signOf(lon)) ? k : 59 - k];
+  return { part: k + 1, ...deity };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { FullReasoning } from "./BriefView";
 import { Clover } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
@@ -52,6 +53,40 @@ export default function LuckyCard() {
 
   return (
     <SectionCard icon={Clover} title={report.title} headline={report.headline} confidence={report.confidence}>
+
+      <Section title="Combined verdict">
+        <table className="w-full text-xs">
+          <tbody>
+            {(
+              [
+                ["Lucky numbers", report.combined.numbers.join(", ")],
+                ["Lucky colours", report.combined.colours.join("; ")],
+                ["Favourable directions", report.combined.directions.join(", ")],
+                ["Favourable days", report.combined.days.join(", ")],
+              ] as [string, string][]
+            ).map(([k, v]) => (
+              <tr key={k} className="border-b border-line-soft last:border-0">
+                <td className="py-1 pr-3 font-medium text-fg-muted">{k}</td>
+                <td className="py-1 font-medium text-heading-2">{v || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {report.combined.disagreements.length > 0 && (
+          <div className="mt-2 rounded-lg border border-heading-border bg-primary-wash p-2.5">
+            <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-eyebrow">
+              Where the two systems disagree
+            </div>
+            {report.combined.disagreements.map((d, i) => (
+              <p key={i} className="text-[11px] leading-relaxed text-fg">
+                {d}
+              </p>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <FullReasoning label="Each system's verdict and the reasoning">
       {report.blocks.map((b) => (
         <Section key={b.heading} title={b.heading}>
           {b.paragraphs.map((p, i) => (
@@ -61,7 +96,6 @@ export default function LuckyCard() {
           ))}
         </Section>
       ))}
-
       <div className="grid gap-4 sm:grid-cols-2">
         <Section title="Jyotisha verdict (from your chart)">
           <VerdictGrid v={report.jyotishaVerdict} />
@@ -97,37 +131,7 @@ export default function LuckyCard() {
         </Section>
       </div>
 
-      <Section title="Combined verdict">
-        <table className="w-full text-xs">
-          <tbody>
-            {(
-              [
-                ["Lucky numbers", report.combined.numbers.join(", ")],
-                ["Lucky colours", report.combined.colours.join("; ")],
-                ["Favourable directions", report.combined.directions.join(", ")],
-                ["Favourable days", report.combined.days.join(", ")],
-              ] as [string, string][]
-            ).map(([k, v]) => (
-              <tr key={k} className="border-b border-line-soft last:border-0">
-                <td className="py-1 pr-3 font-medium text-fg-muted">{k}</td>
-                <td className="py-1 font-medium text-heading-2">{v || "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {report.combined.disagreements.length > 0 && (
-          <div className="mt-2 rounded-lg border border-heading-border bg-primary-wash p-2.5">
-            <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-eyebrow">
-              Where the two systems disagree
-            </div>
-            {report.combined.disagreements.map((d, i) => (
-              <p key={i} className="text-[11px] leading-relaxed text-fg">
-                {d}
-              </p>
-            ))}
-          </div>
-        )}
-      </Section>
+      </FullReasoning>
 
       <p className="text-[11px] leading-relaxed text-fg-subtle">{report.gemstoneNote}</p>
 

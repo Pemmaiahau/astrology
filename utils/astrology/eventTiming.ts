@@ -1,3 +1,4 @@
+import { buildConfirmContext, confirmWindow, type ConfirmContext } from "./dashaConfirm";
 import { aspectedSigns, drishtiOnHouse, naturalBenefics } from "./aspects";
 import type { AshtakavargaResult } from "./ashtakavarga";
 import { PLANET_NAMES, SHADBALA_MINIMUM, SIGN_LORDS, type PlanetId7 } from "./constants";
@@ -93,6 +94,8 @@ export interface TimingContext {
   to: Date;
   /** "Today" — used only to phase-label windows, never to bound the scan. */
   now: Date;
+  /** Yogini and Chara dasha, for the independent-system cross-check. */
+  confirm: ConfirmContext | null;
   /** One ingress scan per slow body over the whole span, shared by all events. */
   occupancy: Record<string, OccupancyInterval[]>;
   /** Instants at which the double-transit state can change. */
@@ -154,6 +157,7 @@ export function buildTimingContext(opts: {
     from,
     to,
     now,
+    confirm: buildConfirmContext(chart),
     occupancy,
     boundaries,
   };
@@ -450,6 +454,8 @@ export interface EventWindow {
   phase: "past" | "current" | "future";
   /** Tightest sub-stretch inside the window, when one stands out. */
   peak: EventPeak | null;
+  /** Independent dasha systems agreeing with the window ("Yogini", "Chara"). */
+  confirmedBy: string[];
   reasons: TimingReason[];
 }
 
@@ -688,6 +694,19 @@ export function findEventWindows(
         }
       }
 
+      // --- Independent dasha systems ---------------------------------------
+      // Yogini and Chara dasha read the same stretch from different bases
+      // (nakshatra, sign). Agreement is a fifth classical limb.
+      let conditional = false;
+      const confirmedBy: string[] = [];
+      if (ctx.confirm) {
+        const c = confirmWindow(ctx.confirm, start, end, spec.primaryHouses, spec.karakas);
+        for (const r of c.reasons) add(r.text, r.weight);
+        conditional = c.yogini || c.chara;
+        if (c.yogini) confirmedBy.push("Yogini");
+        if (c.chara) confirmedBy.push("Chara");
+      }
+
       // --- Age prior -------------------------------------------------------
       if (agePrior !== undefined) {
         const w = 30 * (agePrior - 0.5);
@@ -727,7 +746,8 @@ export function findEventWindows(
         start,
         end,
         score,
-        confidence: confidenceOf(score, { mahaSig, antarSig, doubleFraction, coverage, promise }),
+        confidence: confidenceOf(score, { mahaSig, antarSig, doubleFraction, coverage, promise, conditional }),
+        confirmedBy,
         dasha: { maha: md.lord, antar: ad.lord },
         mahaClaims: mahaSig.claims,
         antarClaims: antarSig.claims,
@@ -887,6 +907,8 @@ function confidenceOf(
     doubleFraction: number;
     coverage: number;
     promise: NatalPromise;
+    /** Yogini or Chara dasha agrees with the window. */
+    conditional: boolean;
   }
 ): number {
   const limbs = [
@@ -895,6 +917,7 @@ function confidenceOf(
     parts.doubleFraction > 0.25,
     parts.coverage > 0.25,
     parts.promise.score >= 55,
+    parts.conditional,
   ].filter(Boolean).length;
   // Two agreeing limbs is the neutral case; each further one adds, each
   // missing one subtracts.

@@ -1,7 +1,7 @@
 import { getAyanamsha } from "./ayanamsha";
 import { tropicalAscMc } from "./ascendant";
 import { PLANETS } from "./constants";
-import { dailySpeed, isRetrograde, tropicalLongitude } from "./ephemeris";
+import { dailySpeed, eclipticLatitude, isRetrograde, tropicalLongitude } from "./ephemeris";
 import { bhavaOf, sripatiHouses } from "./houses";
 import { degInSign, houseFromSign, nakshatraOf, norm360, padaOf, signOf } from "./math";
 import { applyGrahaYuddha, computeDignity, isCombust, nakshatraRelation } from "./states";
@@ -58,6 +58,7 @@ export function computeAutoChart(
       combust: id !== "Su" && isCombust(id, lonSid, sunLon, retro),
       speed: dailySpeed(id, utc, nodeMode),
       dignity: computeDignity(id, lonSid, longitudes),
+      latitude: eclipticLatitude(id, utc),
     };
   });
   applyGrahaYuddha(planets);

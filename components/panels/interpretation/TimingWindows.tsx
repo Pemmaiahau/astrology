@@ -51,9 +51,21 @@ function WindowRow({ w }: { w: TimingWindow }) {
           {w.grade}
         </span>
         <span className="text-[10px] text-fg-subtle">{w.confidence}% confidence</span>
+        {w.confirmedBy?.map((c) => (
+          <span key={c} className="rounded-full bg-good-soft px-1.5 py-0.5 text-[10px] font-semibold text-good">
+            {c} ✓
+          </span>
+        ))}
       </div>
       {w.reasons.length > 0 && (
-        <div className="mt-0.5 text-[11px] text-fg-muted">{w.reasons.join(" · ")}</div>
+        <details className="mt-0.5 text-[11px] text-fg-muted">
+          <summary className="cursor-pointer select-none text-fg-subtle">why</summary>
+          <ul className="mt-0.5 list-disc space-y-0.5 pl-4">
+            {w.reasons.map((r, k) => (
+              <li key={k}>{r}</li>
+            ))}
+          </ul>
+        </details>
       )}
       {w.subWindows && w.subWindows.length > 0 && (
         <ul className="mt-1 space-y-0.5 border-l border-line pl-3">

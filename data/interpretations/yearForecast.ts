@@ -1,5 +1,8 @@
 import { HOUSE_SIGNIFICATIONS, PLANET_NAMES, SIGNS } from "@/utils/astrology/constants";
 import { activeDashaAt } from "@/utils/astrology/dasha";
+import { computeAshtakavarga, type AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
+import { buildConfirmContext, conditionalDashaLabel } from "@/utils/astrology/dashaConfirm";
+import { gocharaAt } from "@/utils/astrology/gochara";
 import { boundariesWithin, periodsOverlapping, signChangeEvents } from "@/utils/astrology/scan";
 import { currentTransits, sadeSatiPhase } from "@/utils/astrology/transits";
 import type {
@@ -98,6 +101,11 @@ export interface TransitLine {
   houseFromLagna: number;
   retrograde: boolean;
   text: string;
+  /** Classical gochara from the Moon: favourable house, and the vedha that cancels it if any. */
+  favourable: boolean;
+  vedhaBy: PlanetId | null;
+  /** The planet's own natal BAV bindus in the transited sign (null for the nodes). */
+  bindus: number | null;
 }
 
 export interface PratyantarLine {
@@ -114,6 +122,8 @@ export interface TimelineSegment {
   maha?: PlanetId;
   antar?: PlanetId;
   antarText?: string;
+  /** Yogini and Chara dasha running at the segment midpoint, e.g. "Yogini Ulka–Siddha · Chara Virgo–Leo". */
+  conditional?: string;
   transits: TransitLine[];
   pratyantars: PratyantarLine[];
 }
@@ -125,6 +135,8 @@ export interface MonthBlock {
   start: Date;
   end: Date;
   dashaLine?: string;
+  /** Yogini and Chara dasha at the month midpoint. */
+  conditional?: string;
   paragraphs: string[];
 }
 
@@ -139,12 +151,21 @@ export interface YearForecast {
   months: MonthBlock[];
 }
 
-function slowTransitLines(chart: ChartData, ayanamsha: AyanamshaId, at: Date): TransitLine[] {
+function slowTransitLines(
+  chart: ChartData,
+  ayanamsha: AyanamshaId,
+  at: Date,
+  av: AshtakavargaResult | null
+): TransitLine[] {
   const transits = currentTransits(chart, ayanamsha, at);
+  // Gochara with vedha for all four slow bodies; vedha needs every graha's
+  // position, which gocharaAt reads from one snapshot.
+  const gochara = gocharaAt(chart, ayanamsha, at, SLOW_BODIES);
   const lines: TransitLine[] = [];
   for (const id of SLOW_BODIES) {
     const t = transits.find((x) => x.id === id);
     const table = TRANSIT_TABLES[id];
+    const g = gochara.find((x) => x.id === id);
     if (!t || !table) continue;
     lines.push({
       id,
@@ -153,9 +174,19 @@ function slowTransitLines(chart: ChartData, ayanamsha: AyanamshaId, at: Date): T
       houseFromLagna: t.houseFromLagna,
       retrograde: t.retrograde,
       text: table[t.houseFromMoon - 1],
+      favourable: Boolean(g?.auspicious && !g.vedhaBy),
+      vedhaBy: g?.vedhaBy ?? null,
+      bindus: av && av.bav[id] ? av.bav[id][t.sign] : null,
     });
   }
   return lines;
+}
+
+function ashtakavargaOf(chart: ChartData): AshtakavargaResult | null {
+  const signs: Partial<Record<PlanetId, number>> = {};
+  for (const p of chart.planets) signs[p.id] = p.sign;
+  if (["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa"].some((id) => signs[id as PlanetId] === undefined)) return null;
+  return computeAshtakavarga(signs, chart.ascendant.sign);
 }
 
 function pratyantarsIn(
@@ -237,6 +268,8 @@ export function buildYearForecast(
   const edges = [start.getTime(), ...merged.map((m) => m.t), end.getTime()];
   const reasons = ["Window begins", ...merged.map((m) => m.reason)];
 
+  const av = ashtakavargaOf(chart);
+  const confirm = buildConfirmContext(chart);
   const timeline: TimelineSegment[] = [];
   for (let i = 0; i < edges.length - 1; i++) {
     const segStart = new Date(edges[i]);
@@ -254,7 +287,8 @@ export function buildYearForecast(
       antarText: active
         ? dashaLordAssessment(chart, active.antar.lord, `Antardasha of ${PLANET_NAMES[active.antar.lord]}`)
         : undefined,
-      transits: slowTransitLines(chart, ayanamsha, mid),
+      conditional: confirm ? conditionalDashaLabel(confirm, mid) ?? undefined : undefined,
+      transits: slowTransitLines(chart, ayanamsha, mid, av),
       pratyantars: hasDasha ? pratyantarsIn(dashaTree!, segStart, segEnd) : [],
     });
   }
@@ -298,6 +332,7 @@ export function buildMonthlyBreakdown(
   const hasDasha = Boolean(dashaTree && chart.birthUtc);
   const blocks: MonthBlock[] = [];
   const cursor = new Date(start);
+  const confirm = buildConfirmContext(chart);
 
   for (let i = 0; i < 12 && cursor.getTime() < end.getTime(); i++) {
     const next = new Date(cursor);
@@ -319,6 +354,7 @@ export function buildMonthlyBreakdown(
       start: new Date(cursor),
       end: blockEnd,
       dashaLine,
+      conditional: confirm ? conditionalDashaLabel(confirm, mid) ?? undefined : undefined,
       paragraphs: fastTransitParagraphs(transits),
     });
 

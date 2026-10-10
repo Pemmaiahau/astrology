@@ -1,11 +1,12 @@
 import { AGE_BANDS, agePriorFor, dateAtAge } from "@/utils/astrology/ageBands";
 import type { AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
-import { PLANET_NAMES, SIGN_LORDS } from "@/utils/astrology/constants";
+import { PLANET_NAMES, SIGN_LORDS, SIGNS } from "@/utils/astrology/constants";
+import { aspectedSigns } from "@/utils/astrology/aspects";
 import { findActivationWindows } from "@/utils/astrology/scan";
 import type { PlanetStrength } from "@/utils/astrology/strength";
 import { vargaPositionOf, type VargaSet } from "@/utils/astrology/varga";
 import type { AyanamshaId, ChartData, DashaPeriod, PlanetId, YogaFinding } from "@/utils/astrology/types";
-import type { Evidence, RankedItem, SectionReport, TimingWindow } from "./report";
+import type { Evidence, RankedItem, SectionExtras, SectionReport, TimingWindow } from "./report";
 import { plain, toTimingWindow, verdictOf } from "./report";
 import { ordinal } from "./synthesis";
 
@@ -50,7 +51,8 @@ export function buildWealthReport(
   chart: ChartData,
   vargas: VargaSet | null,
   strengths: Partial<Record<PlanetId, PlanetStrength>>,
-  yogas: YogaFinding[]
+  yogas: YogaFinding[],
+  extras: SectionExtras = {}
 ): WealthReport {
   const lagna = chart.ascendant.sign;
   const caveats: string[] = [];
@@ -107,6 +109,32 @@ export function buildWealthReport(
           source: { work: "BPHS", ref: "Dhana Yoga chapter" },
         });
       }
+    }
+  }
+
+  // ---- Indu Lagna (the classical wealth ascendant) ---------------------------
+  // Benefics occupying or aspecting the Indu Lagna sign raise accumulated
+  // wealth; malefics alone there restrict it (Jataka Parijata; PVR Narasimha
+  // Rao's reading). It feeds the accumulation stream, which is what it measures.
+  const indu = extras.special?.induLagna;
+  if (indu) {
+    const sign = (lagna + indu.house - 1) % 12;
+    const touching = chart.planets.filter(
+      (p) => p.sign === sign || (p.sign !== sign && aspectedSigns(p.id, p.sign).includes(sign))
+    );
+    const ben = touching.filter((p) => ["Ju", "Ve", "Me", "Mo"].includes(p.id) && !p.combust).map((p) => p.id);
+    const mal = touching.filter((p) => ["Sa", "Ma", "Su", "Ra", "Ke"].includes(p.id)).map((p) => p.id);
+    const weight = ben.length ? Math.min(10, 4 * ben.length) - (mal.length ? 2 : 0) : mal.length ? -6 : 0;
+    const row = rawScores.find((r) => r.def.key === "passive");
+    if (row && weight !== 0) {
+      row.score += weight;
+      row.evidence.push({
+        text: ben.length
+          ? `Your Indu Lagna — the classical wealth point — falls in ${SIGNS[sign]} (your ${indu.house}th), touched by ${ben.map((id) => PLANET_NAMES[id]).join(", ")}: accumulated wealth is well supported${mal.length ? ", though " + mal.map((id) => PLANET_NAMES[id]).join(", ") + " also bear on it" : ""}`
+          : `Your Indu Lagna — the classical wealth point — falls in ${SIGNS[sign]} (your ${indu.house}th) with only ${mal.map((id) => PLANET_NAMES[id]).join(", ")} bearing on it: savings build slowly and need protecting`,
+        weight,
+        source: { work: "Jataka Parijata", ref: "Indu Lagna" },
+      });
     }
   }
 

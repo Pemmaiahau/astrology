@@ -40,6 +40,8 @@ export interface MangalDosha {
   present: boolean;
   fromLagna: boolean;
   fromMoon: boolean;
+  /** Counted from Venus (South Indian practice). */
+  fromVenus: boolean;
   cancellations: string[];
   /** present && cancellations.length === 0 */
   effective: boolean;
@@ -63,18 +65,32 @@ const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x
 export function checkMangalDosha(chart: ChartData): MangalDosha {
   const mars = chart.planets.find((p) => p.id === "Ma");
   const moon = chart.planets.find((p) => p.id === "Mo");
+  const venus = chart.planets.find((p) => p.id === "Ve");
   if (!mars) {
-    return { present: false, fromLagna: false, fromMoon: false, cancellations: [], effective: false, text: "Mars is not placed in this chart, so there is nothing to assess Mangal Dosha against. Treat the question as unanswered here rather than answered in your favour." };
+    return { present: false, fromLagna: false, fromMoon: false, fromVenus: false, cancellations: [], effective: false, text: "Mars is not placed in this chart, so there is nothing to assess Mangal Dosha against. Treat the question as unanswered here rather than answered in your favour." };
   }
   const DOSHA_HOUSES = [1, 4, 7, 8, 12];
-  const fromLagna = DOSHA_HOUSES.includes(mars.house);
-  const fromMoon = moon ? DOSHA_HOUSES.includes(((mars.sign - moon.sign + 12) % 12) + 1) : false;
-  const present = fromLagna || fromMoon;
+  const houseFrom = (sign: number) => ((mars.sign - sign + 12) % 12) + 1;
+
+  // The dosha is read from three references: the Lagna, the Moon and Venus
+  // (the South Indian practice). Each reference is judged separately — the
+  // house number differs between them, and the sign exemptions below are
+  // defined per house.
+  const refs = [
+    { key: "lagna", label: "your rising sign", house: mars.house },
+    ...(moon ? [{ key: "moon", label: "your Moon", house: houseFrom(moon.sign) }] : []),
+    ...(venus ? [{ key: "venus", label: "Venus", house: houseFrom(venus.sign) }] : []),
+  ].filter((r) => DOSHA_HOUSES.includes(r.house));
+  const fromLagna = refs.some((r) => r.key === "lagna");
+  const fromMoon = refs.some((r) => r.key === "moon");
+  const fromVenus = refs.some((r) => r.key === "venus");
+  const present = refs.length > 0;
 
   const cancellations: string[] = [];
   if (present) {
     // Widely-attested cancellation list (conservative subset; these are
-    // matching-tradition rules, not BPHS sutras):
+    // matching-tradition rules, not BPHS sutras). These apply to Mars
+    // itself, so they cancel the dosha from every reference at once:
     if (["own", "moolatrikona", "exalted"].includes(mars.dignity)) {
       cancellations.push(
         `Mars stands in ${mars.dignity === "exalted" ? "exaltation" : "its own sign"} (${SIGNS[mars.sign]}) — a dignified Mars is held not to afflict`
@@ -86,28 +102,32 @@ export function checkMangalDosha(chart: ChartData): MangalDosha {
     }
     const withJu = chart.planets.some((p) => p.id === "Ju" && p.sign === mars.sign);
     if (withJu) cancellations.push("Jupiter conjoins Mars in the same sign");
-    // Mars in 2nd in Gemini/Virgo, 4th in own, 7th in Cancer/Capricorn, 8th in
-    // Sagittarius/Pisces, 12th in Taurus/Libra — the sign-specific exemption
-    // list as commonly published; implemented for the houses in our set.
+    // Sign exemptions, as commonly published: Mars in the 4th in Aries or
+    // Scorpio, the 7th in Cancer or Capricorn, the 8th in Sagittarius or
+    // Pisces, the 12th in Taurus or Libra. An exemption only clears the
+    // reference whose house it names, so the dosha is cancelled this way only
+    // when EVERY reference that forms it is exempt.
     const signExempt: Record<number, number[]> = { 4: [0, 7], 7: [3, 9], 8: [8, 11], 12: [1, 6] };
-    const exemptSigns = signExempt[mars.house];
-    if (exemptSigns?.includes(mars.sign) && !cancellations.length) {
-      cancellations.push(`Mars in the ${ordinal(mars.house)} in ${SIGNS[mars.sign]} is on the traditional exemption list for that house`);
+    const exempt = refs.filter((r) => signExempt[r.house]?.includes(mars.sign));
+    if (exempt.length === refs.length) {
+      cancellations.push(
+        `Mars in ${SIGNS[mars.sign]} is on the traditional exemption list for ${exempt
+          .map((r) => `the ${ordinal(r.house)} from ${r.label}`)
+          .join(" and ")}`
+      );
     }
   }
 
   const effective = present && cancellations.length === 0;
-  const where = [fromLagna ? "from the Lagna" : null, fromMoon ? "from the Moon" : null]
-    .filter(Boolean)
-    .join(" and ");
+  const where = refs.map((r) => `the ${ordinal(r.house)} from ${r.label}`).join(", and ");
 
   const text = !present
-    ? "You do not have Mangal Dosha. Mars stays clear of the 1st, 4th, 7th, 8th and 12th houses counted from both your rising sign and your Moon, which are the placements the matching tradition watches for. In practical terms, the question that worries so many families at the matching stage simply does not arise in your chart."
+    ? "You do not have Mangal Dosha. Mars stays clear of the 1st, 4th, 7th, 8th and 12th houses counted from your rising sign, your Moon and Venus, which are the placements the matching tradition watches for. In practical terms, the question that worries so many families at the matching stage simply does not arise in your chart."
     : effective
-      ? `Mars sits in your ${ordinal(mars.house)} house, so Mangal Dosha forms ${where}, and none of the standard cancellations applies. What tradition is describing is heat: you bring force and impatience into close partnership, and the early married years are where that shows — quick reactions, a low tolerance for being managed. It settles with maturity, and the practical work is learning to slow your first response down. This is a factor to work with, not a prohibition on marrying.`
-      : `Mars sits in your ${ordinal(mars.house)} house, which technically forms Mangal Dosha ${where} — but your chart cancels it: ${cancellations.join("; ")}. That means the heat is there without the affliction the tradition warns about. In daily life it reads as directness rather than damage: you say the difficult thing early, which is usually kinder than the alternative.`;
+      ? `Mars stands in ${where}, so Mangal Dosha forms, and none of the standard cancellations applies. What tradition is describing is heat: you bring force and impatience into close partnership, and the early married years are where that shows — quick reactions, a low tolerance for being managed. It settles with maturity, and the practical work is learning to slow your first response down. This is a factor to work with, not a prohibition on marrying.`
+      : `Mars stands in ${where}, which technically forms Mangal Dosha — but your chart cancels it: ${cancellations.join("; ")}. That means the heat is there without the affliction the tradition warns about. In daily life it reads as directness rather than damage: you say the difficult thing early, which is usually kinder than the alternative.`;
 
-  return { present, fromLagna, fromMoon, cancellations, effective, text };
+  return { present, fromLagna, fromMoon, fromVenus, cancellations, effective, text };
 }
 
 // ---------------------------------------------------------------------------

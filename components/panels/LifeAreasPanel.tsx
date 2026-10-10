@@ -25,6 +25,8 @@ import {
   type LifeAreaReport,
 } from "@/data/interpretations/lifeAreas";
 import { PLANET_NAMES } from "@/utils/astrology/constants";
+import { oneSentence } from "@/data/interpretations/brief";
+import { FullReasoning } from "@/components/panels/interpretation/BriefView";
 import type { AreaLever } from "@/data/interpretations/lifeAreaOptions";
 
 const AREA_ICONS: Record<LifeAreaKey, LucideIcon> = {
@@ -116,170 +118,227 @@ function AreaCard({ report }: { report: LifeAreaReport }) {
 
       {open && (
         <div className="space-y-4 border-t border-line-soft p-4">
-          <p className="text-xs italic leading-relaxed text-fg-subtle">Scope: {report.blurb}.</p>
-
-          {report.possibilities.length > 0 && (
-            <Section title="What this area can be — ranked by the chart">
-              <p className="mb-2 text-[11px] leading-relaxed text-fg-faint">
-                Each entry is a graha&apos;s own classical signification for this area, surfaced because
-                that graha won the most votes from the area&apos;s house lords, occupants, karakas,
-                drishti and its own divisional chart. Fit is relative to the top-ranked graha, then
-                scaled by how capable that graha actually is in this chart.
-              </p>
-              <div className="space-y-2">
-                {report.possibilities.map((p) => (
-                  <div key={p.planet} className="rounded-lg border border-line-soft bg-surface-3 p-2.5">
-                    <div className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="font-serif text-sm font-bold text-fg-2">{p.label}</span>
-                      <span className="text-[11px] font-medium text-eyebrow">
-                        via {PLANET_NAMES[p.planet]}
+          <div className="space-y-3 rounded-lg border border-primary-border-soft bg-primary-wash/40 p-3">
+            {report.hasDasha && (
+              <div>
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Now</div>
+                {report.activationNow.length > 0 ? (
+                  report.activationNow.map((l, i) => (
+                    <p key={i} className="text-sm leading-snug text-good">● {l}</p>
+                  ))
+                ) : (
+                  <p className="text-sm leading-snug text-fg-muted">
+                    No running dasha lord connects to this area — it idles until a connected period opens.
+                  </p>
+                )}
+              </div>
+            )}
+            {report.windows.length > 0 && (
+              <div>
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Next windows</div>
+                <ul className="space-y-0.5">
+                  {report.windows.slice(0, 3).map((w, i) => (
+                    <li key={i} className="text-sm text-fg">
+                      <span className="font-mono text-xs">{fmt(w.start)} → {fmt(w.end)}</span>{" "}
+                      <span className={w.grade === "strong" ? "font-semibold text-heading" : "text-fg-2"}>{w.label}</span>
+                      <span className="text-xs text-fg-muted">
+                        {" "}· {w.grade}
+                        {w.confirmedBy.length ? ` · confirmed by ${w.confirmedBy.join(" + ")}` : ""}
                       </span>
-                      <div className="ml-auto flex items-center gap-2">
-                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-inset-2">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-cta-from-hover to-cta-to-hover"
-                            style={{ width: `${p.fit}%` }}
-                          />
-                        </div>
-                        <span className="font-mono text-[11px] text-fg-muted">{p.fit}%</span>
-                      </div>
-                    </div>
-                    <p className="mt-1 text-xs leading-relaxed text-fg">{p.detail}.</p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-fg-faint">
-                      Why: {PLANET_NAMES[p.planet]} {p.reasons.join("; ")}.
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {report.levers.length > 0 && (
-            <Section title="Best options — what to do with this">
-              <div className="space-y-2">
-                {report.levers.map((l, i) => (
-                  <LeverCard key={i} lever={l} />
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {report.corroboration.length > 0 && (
-            <Section title="Divisional & strength corroboration">
-              <div className="space-y-1.5 rounded-lg border border-line-soft bg-surface-3 p-2.5">
-                {report.corroboration.map((c, i) => (
-                  <p key={i} className="text-[11px] leading-relaxed text-fg-muted">
-                    {c}
-                  </p>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {report.houses.map((h) => (
-            <Section key={h.house} title={`House Analysis — ${h.house}`}>
-              <div className="space-y-1.5">
-                {h.lines.map((l, i) => (
-                  <p key={i} className="text-sm leading-relaxed text-fg">
-                    {l}
-                  </p>
-                ))}
-              </div>
-            </Section>
-          ))}
-
-          {report.karakas.length > 0 && (
-            <Section title="Karakas (Natural Significators)">
-              <div className="space-y-1.5">
-                {report.karakas.map((l, i) => (
-                  <p key={i} className="text-sm leading-relaxed text-fg">
-                    {l}
-                  </p>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {report.nakshatra.length > 0 && (
-            <Section title="Nakshatra Threads">
-              <div className="space-y-1.5">
-                {report.nakshatra.map((l, i) => (
-                  <p key={i} className="text-xs leading-relaxed text-fg-muted">
-                    {l}
-                  </p>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {report.yogas.length > 0 && (
-            <Section title="Yogas Touching This Area">
-              <div className="space-y-1.5">
-                {report.yogas.map((l, i) => (
-                  <p key={i} className="text-xs leading-relaxed text-fg-muted">
-                    {l}
-                  </p>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {report.cautions.length > 0 && (
-            <div className="rounded-lg border border-bad-border bg-bad-wash p-3">
-              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-bad-strong">Cautions</p>
-              <div className="space-y-1">
-                {report.cautions.map((l, i) => (
-                  <p key={i} className="text-xs leading-relaxed text-bad-2">
-                    {l}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {report.hasDasha && (
-            <Section title="Dasha Activation">
-              {report.activationNow.length > 0 ? (
-                <div className="mb-2 space-y-1">
-                  {report.activationNow.map((l, i) => (
-                    <p key={i} className="text-sm leading-relaxed text-good">
-                      ● Active now — {l}
-                    </p>
+                    </li>
                   ))}
-                </div>
-              ) : (
-                <p className="mb-2 text-xs text-fg-subtle">
-                  None of the currently running dasha lords connect to this area — it idles until a connected
-                  period opens.
+                </ul>
+              </div>
+            )}
+            {report.possibilities.length > 0 && (
+              <div>
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Most likely</div>
+                <ul className="space-y-0.5">
+                  {report.possibilities.slice(0, 2).map((p) => (
+                    <li key={p.planet} className="text-sm leading-snug text-fg">
+                      <span className="font-semibold text-fg-2">{p.label}</span>{" "}
+                      <span className="font-mono text-xs text-fg-muted">{p.fit}% · via {PLANET_NAMES[p.planet]}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {report.cautions.length > 0 && (
+              <div>
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Watch</div>
+                {report.cautions.slice(0, 3).map((l, i) => (
+                  <p key={i} className="text-sm leading-snug text-bad-2">▼ {oneSentence(l)}</p>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <FullReasoning>
+            <p className="text-xs italic leading-relaxed text-fg-subtle">Scope: {report.blurb}.</p>
+
+            {report.possibilities.length > 0 && (
+              <Section title="What this area can be — ranked by the chart">
+                <p className="mb-2 text-[11px] leading-relaxed text-fg-faint">
+                  Each entry is a graha&apos;s own classical signification for this area, surfaced because
+                  that graha won the most votes from the area&apos;s house lords, occupants, karakas,
+                  drishti and its own divisional chart. Fit is relative to the top-ranked graha, then
+                  scaled by how capable that graha actually is in this chart.
                 </p>
-              )}
-              {report.windows.length > 0 && (
-                <div className="space-y-1 rounded-lg border border-line-soft bg-surface-3 p-2.5">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">
-                    Key windows (next 20 years)
-                  </p>
-                  {report.windows.map((w, i) => (
-                    <p key={i} className="text-xs leading-relaxed text-fg-muted">
-                      <span
-                        className={`font-semibold ${w.grade === "strong" ? "text-heading" : "text-fg"}`}
-                      >
-                        {w.label}
-                      </span>{" "}
-                      <span className="font-mono text-fg-subtle">
-                        {fmt(w.start)} → {fmt(w.end)}
-                      </span>
-                      {w.grade === "strong" && (
-                        <span className="ml-1.5 rounded-full bg-primary-soft px-1.5 text-[10px] font-bold text-heading">
-                          strong
+                <div className="space-y-2">
+                  {report.possibilities.map((p) => (
+                    <div key={p.planet} className="rounded-lg border border-line-soft bg-surface-3 p-2.5">
+                      <div className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-serif text-sm font-bold text-fg-2">{p.label}</span>
+                        <span className="text-[11px] font-medium text-eyebrow">
+                          via {PLANET_NAMES[p.planet]}
                         </span>
-                      )}{" "}
-                      — {w.reason}
+                        <div className="ml-auto flex items-center gap-2">
+                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-inset-2">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-cta-from-hover to-cta-to-hover"
+                              style={{ width: `${p.fit}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-[11px] text-fg-muted">{p.fit}%</span>
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-fg">{p.detail}.</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-fg-faint">
+                        Why: {PLANET_NAMES[p.planet]} {p.reasons.join("; ")}.
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {report.levers.length > 0 && (
+              <Section title="Best options — what to do with this">
+                <div className="space-y-2">
+                  {report.levers.map((l, i) => (
+                    <LeverCard key={i} lever={l} />
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {report.corroboration.length > 0 && (
+              <Section title="Divisional & strength corroboration">
+                <div className="space-y-1.5 rounded-lg border border-line-soft bg-surface-3 p-2.5">
+                  {report.corroboration.map((c, i) => (
+                    <p key={i} className="text-[11px] leading-relaxed text-fg-muted">
+                      {c}
                     </p>
                   ))}
                 </div>
-              )}
-            </Section>
-          )}
+              </Section>
+            )}
+
+            {report.houses.map((h) => (
+              <Section key={h.house} title={`House Analysis — ${h.house}`}>
+                <div className="space-y-1.5">
+                  {h.lines.map((l, i) => (
+                    <p key={i} className="text-sm leading-relaxed text-fg">
+                      {l}
+                    </p>
+                  ))}
+                </div>
+              </Section>
+            ))}
+
+            {report.karakas.length > 0 && (
+              <Section title="Karakas (Natural Significators)">
+                <div className="space-y-1.5">
+                  {report.karakas.map((l, i) => (
+                    <p key={i} className="text-sm leading-relaxed text-fg">
+                      {l}
+                    </p>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {report.nakshatra.length > 0 && (
+              <Section title="Nakshatra Threads">
+                <div className="space-y-1.5">
+                  {report.nakshatra.map((l, i) => (
+                    <p key={i} className="text-xs leading-relaxed text-fg-muted">
+                      {l}
+                    </p>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {report.yogas.length > 0 && (
+              <Section title="Yogas Touching This Area">
+                <div className="space-y-1.5">
+                  {report.yogas.map((l, i) => (
+                    <p key={i} className="text-xs leading-relaxed text-fg-muted">
+                      {l}
+                    </p>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {report.cautions.length > 0 && (
+              <div className="rounded-lg border border-bad-border bg-bad-wash p-3">
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-bad-strong">Cautions</p>
+                <div className="space-y-1">
+                  {report.cautions.map((l, i) => (
+                    <p key={i} className="text-xs leading-relaxed text-bad-2">
+                      {l}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {report.hasDasha && (
+              <Section title="Dasha Activation">
+                {report.activationNow.length > 0 ? (
+                  <div className="mb-2 space-y-1">
+                    {report.activationNow.map((l, i) => (
+                      <p key={i} className="text-sm leading-relaxed text-good">
+                        ● Active now — {l}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mb-2 text-xs text-fg-subtle">
+                    None of the currently running dasha lords connect to this area — it idles until a connected
+                    period opens.
+                  </p>
+                )}
+                {report.windows.length > 0 && (
+                  <div className="space-y-1 rounded-lg border border-line-soft bg-surface-3 p-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">
+                      Key windows (next 20 years)
+                    </p>
+                    {report.windows.map((w, i) => (
+                      <p key={i} className="text-xs leading-relaxed text-fg-muted">
+                        <span
+                          className={`font-semibold ${w.grade === "strong" ? "text-heading" : "text-fg"}`}
+                        >
+                          {w.label}
+                        </span>{" "}
+                        <span className="font-mono text-fg-subtle">
+                          {fmt(w.start)} → {fmt(w.end)}
+                        </span>
+                        {w.grade === "strong" && (
+                          <span className="ml-1.5 rounded-full bg-primary-soft px-1.5 text-[10px] font-bold text-heading">
+                            strong
+                          </span>
+                        )}{" "}
+                        — {w.reason}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </Section>
+            )}
+          </FullReasoning>
         </div>
       )}
     </div>

@@ -38,7 +38,24 @@ export function vimshottariTree(moonSiderealLon: number, birthUtc: Date): DashaP
   return periods;
 }
 
-function buildSubPeriods(parentLord: PlanetId, startMs: number, parentDurMs: number, level: 2 | 3): DashaPeriod[] {
+/**
+ * The next level down of any period — used for Sookshma (level 4) under a
+ * Pratyantardasha. Built on demand rather than stored in the tree: a stored
+ * fourth level would multiply the tree by nine for every chart, including the
+ * 62 the rectifier builds per sweep, to serve one table in the export.
+ */
+export function subPeriodsOf(period: DashaPeriod): DashaPeriod[] {
+  if (period.level >= 4) return [];
+  const start = period.start.getTime();
+  return buildSubPeriods(
+    period.lord,
+    start,
+    period.end.getTime() - start,
+    (period.level + 1) as 2 | 3 | 4
+  ).map((p) => ({ ...p, children: undefined }));
+}
+
+function buildSubPeriods(parentLord: PlanetId, startMs: number, parentDurMs: number, level: 2 | 3 | 4): DashaPeriod[] {
   const seqStart = DASHA_SEQUENCE.indexOf(parentLord);
   const out: DashaPeriod[] = [];
   let t = startMs;

@@ -1,4 +1,5 @@
 import { naturalBenefics, planetsAspecting } from "./aspects";
+import { baladi, lajjitadi } from "./avasthas";
 import type { AshtakavargaResult } from "./ashtakavarga";
 import { NAKSHATRAS, PLANET_NAMES, PLANETS } from "./constants";
 import { separation } from "./math";
@@ -112,6 +113,31 @@ export function computeStrength(
     const bindus = ashtakavarga.bav[id][p.sign];
     const delta = Math.max(-8, Math.min(8, (bindus - 4) * 2));
     add(`Ashtakavarga ${bindus} bindus in sign`, delta);
+  }
+
+  // Avasthas (BPHS 45) — only the states that add information the factors
+  // above do not already carry. Jagradadi, most of Deeptadi and Garvita are
+  // functions of dignity, and Kopa is combustion, so counting them again would
+  // double-weigh dignity. Kshudhita and Mudita fire for almost every graha
+  // (any conjunction with or aspect from a natural enemy/friend qualifies), so
+  // they carry no signal and are left to the display.
+  if (id !== "Ra" && id !== "Ke") {
+    // Zero-mean across the five equal 6° bands, so Baladi re-ranks planets
+    // without shifting the chart-wide average the verdict thresholds were
+    // calibrated on. Order follows BPHS: Yuva full results > Kumara half >
+    // Bala quarter > Vriddha meagre > Mrita none.
+    const BALADI_DELTA: Record<string, number> = { Yuva: 5, Kumara: 2, Bala: 0, Vriddha: -2, Mrita: -5 };
+    const b = baladi(p.sign, p.degInSign);
+    add(`Baladi avastha: ${b.state} — ${b.result}`, BALADI_DELTA[b.state.split(" ")[0]] ?? 0);
+  }
+  // Vikala (joined by a natural malefic) is display-only too: on a 400-chart
+  // sample it fired for 46% of planets, so as a penalty it mostly shifted the
+  // chart-wide average rather than distinguishing planets.
+  const lajjita = lajjitadi(chart, id);
+  const LAJJITADI_DELTA: Record<string, number> = { Lajjita: -3, Trushita: -2, Kshobhita: -2 };
+  for (const state of lajjita) {
+    const delta = LAJJITADI_DELTA[state.split(" ")[0]];
+    if (delta) add(`${state} avastha`, delta);
   }
 
   const raw = BASE + factors.reduce((s, f) => s + f.delta, 0);

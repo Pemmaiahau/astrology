@@ -1,5 +1,7 @@
 "use client";
 
+import BriefView, { FullReasoning } from "./BriefView";
+import { briefOfSection } from "@/data/interpretations/brief";
 import { Briefcase } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
@@ -13,13 +15,13 @@ import WhyList from "./WhyList";
 
 /** Career & profession: ranked options, job-vs-business, timing windows. */
 export default function CareerCard() {
-  const { chart, vargas, jaimini, shadbala, strengths, yogas, dashaTree, ayanamsha, ashtakavarga, now } =
+  const { chart, vargas, jaimini, shadbala, strengths, yogas, extendedYogas, specialPoints, dashaTree, ayanamsha, ashtakavarga, now } =
     useChart();
   const [showTiming, setShowTiming] = useState(false);
 
   const report = useMemo(
-    () => (chart ? buildCareerReport(chart, vargas, jaimini, shadbala, strengths, yogas) : null),
-    [chart, vargas, jaimini, shadbala, strengths, yogas]
+    () => (chart ? buildCareerReport(chart, vargas, jaimini, shadbala, strengths, yogas, { extended: extendedYogas, special: specialPoints }) : null),
+    [chart, vargas, jaimini, shadbala, strengths, yogas, extendedYogas, specialPoints]
   );
 
   // Transit scanning is the expensive part — computed only when requested.
@@ -34,6 +36,7 @@ export default function CareerCard() {
   const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
+  const brief = briefOfSection(report, timing);
 
   return (
     <SectionCard
@@ -44,6 +47,8 @@ export default function CareerCard() {
       verdict={report.verdict}
       confidence={report.confidence}
     >
+      <BriefView brief={brief} topTitle="Best-fitting career directions" />
+      <FullReasoning>
       {report.blocks.map((b) => (
         <Section key={b.heading} title={b.heading}>
           {b.paragraphs.map((p, i) => (
@@ -55,6 +60,7 @@ export default function CareerCard() {
           {b.reasons && b.reasons.length > 0 && <WhyList reasons={b.reasons} />}
         </Section>
       ))}
+      </FullReasoning>
 
       <Section title="Best periods for career moves">
         <BandNote

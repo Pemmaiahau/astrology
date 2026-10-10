@@ -1,4 +1,4 @@
-import { SHADBALA_PLANETS, SIGN_LORDS, type PlanetId7 } from "./constants";
+import { SHADBALA_PLANETS, SIGN_LORDS, signMobility, type PlanetId7 } from "./constants";
 import { vargaSign } from "./varga";
 import type { ChartData, PlanetId } from "./types";
 
@@ -42,6 +42,8 @@ export interface JaiminiInfo {
   arudhaLagna: number;
   /** Upapada Lagna (UL, arudha of the 12th house) sign. */
   upapada: number;
+  /** Arudha padas A1…A12 (index 0 = A1 = Arudha Lagna, index 11 = A12 = Upapada). */
+  padas: number[];
   /** Argala/virodha per house 1–12 (index 0 = house 1). */
   argala: ArgalaOnHouse[];
 }
@@ -62,15 +64,89 @@ export function arudhaSign(houseSign: number, lordSign: number): number {
   return pada;
 }
 
+/**
+ * Jaimini gives Scorpio and Aquarius two lords each: Mars and Ketu, Saturn and
+ * Rahu. Every other sign has the single Parashari lord.
+ */
+export const CO_LORDS: Partial<Record<number, [PlanetId, PlanetId]>> = {
+  7: ["Ma", "Ke"],
+  10: ["Sa", "Ra"],
+};
+
+/**
+ * The sign to count to when a sign's lordship has to be resolved to one
+ * placement — the arudha count and the Chara dasha duration both need it.
+ *
+ * Single-lord signs return that lord's sign. For Scorpio and Aquarius the
+ * standard Jaimini resolution (as taught by PVR Narasimha Rao and K.N. Rao):
+ *   1. both co-lords in the sign itself → the sign itself;
+ *   2. exactly one of them in the sign → the other one (the one "outside");
+ *   3. otherwise the stronger: conjoined with more planets; then exalted over
+ *      not exalted; then by sign nature, dual > fixed > movable; then the
+ *      higher degree in sign. A full tie keeps the Parashari lord.
+ * Returns the sign index and which lord was used.
+ */
+export function resolvedLordSign(chart: ChartData, sign: number): { lord: PlanetId; sign: number } {
+  const place = (id: PlanetId) => chart.planets.find((p) => p.id === id);
+  const pair = CO_LORDS[sign];
+  if (!pair) {
+    const lordId = SIGN_LORDS[sign];
+    const lord = place(lordId);
+    // Unplaced lord cannot occur for the seven sign lords in a full chart,
+    // but guard for degenerate manual input.
+    return { lord: lordId, sign: lord ? lord.sign : sign };
+  }
+  const [a, b] = pair.map(place);
+  if (!a || !b) {
+    const only = a ?? b;
+    return only ? { lord: only.id, sign: only.sign } : { lord: pair[0], sign };
+  }
+  const aIn = a.sign === sign;
+  const bIn = b.sign === sign;
+  if (aIn && bIn) return { lord: a.id, sign };
+  if (aIn !== bIn) {
+    const outside = aIn ? b : a;
+    return { lord: outside.id, sign: outside.sign };
+  }
+  const company = (p: typeof a) => chart.planets.filter((q) => q.id !== p.id && q.sign === p.sign).length;
+  const nature = (s: number) => {
+    const m = signMobility(s);
+    return m === "dual" ? 3 : m === "fixed" ? 2 : 1;
+  };
+  const keys = (p: typeof a): number[] => [
+    company(p),
+    p.dignity === "exalted" ? 1 : 0,
+    nature(p.sign),
+    p.degInSign,
+  ];
+  const ka = keys(a);
+  const kb = keys(b);
+  for (let i = 0; i < ka.length; i++) {
+    if (ka[i] !== kb[i]) {
+      const winner = ka[i] > kb[i] ? a : b;
+      return { lord: winner.id, sign: winner.sign };
+    }
+  }
+  return { lord: a.id, sign: a.sign };
+}
+
 /** Arudha pada of house `house` (1–12) of the rashi chart. */
 export function arudhaOfHouse(chart: ChartData, house: number): number {
   const houseSign = (chart.ascendant.sign + house - 1) % 12;
-  const lordId = SIGN_LORDS[houseSign];
-  const lord = chart.planets.find((p) => p.id === lordId);
-  // Unplaced lord cannot occur for the seven sign lords in a full chart,
-  // but guard for degenerate manual input.
-  const lordSign = lord ? lord.sign : houseSign;
-  return arudhaSign(houseSign, lordSign);
+  return arudhaSign(houseSign, resolvedLordSign(chart, houseSign).sign);
+}
+
+/**
+ * Jaimini rashi drishti (sign aspects, Upadesa Sutras 1.1.2–4): a movable sign
+ * aspects the three fixed signs except the one next to it; a fixed sign
+ * aspects the three movable signs except the one before it; a dual sign
+ * aspects the other three dual signs. Planets aspect with their sign.
+ */
+export function rashiDrishti(sign: number): number[] {
+  const m = signMobility(sign);
+  if (m === "dual") return [2, 5, 8, 11].filter((s) => s !== sign);
+  if (m === "movable") return [1, 4, 7, 10].filter((s) => s !== (sign + 1) % 12);
+  return [0, 3, 6, 9].filter((s) => s !== (sign + 11) % 12);
 }
 
 /**
@@ -119,8 +195,9 @@ export function computeJaimini(chart: ChartData): JaiminiInfo {
   const karakamsa = vargaSign("D9", ak.longitude);
 
   // --- Arudha Lagna and Upapada.
-  const arudhaLagna = arudhaOfHouse(chart, 1);
-  const upapada = arudhaOfHouse(chart, 12);
+  const padas = Array.from({ length: 12 }, (_, i) => arudhaOfHouse(chart, i + 1));
+  const arudhaLagna = padas[0];
+  const upapada = padas[11];
 
   // --- Argala per house: intervention from the 2nd, 4th and 11th signs,
   // obstruction from the 12th, 10th and 3rd respectively (Jaimini Upadesa
@@ -136,5 +213,5 @@ export function computeJaimini(chart: ChartData): JaiminiInfo {
     });
   }
 
-  return { karakas, karakamsa, arudhaLagna, upapada, argala };
+  return { karakas, karakamsa, arudhaLagna, upapada, padas, argala };
 }

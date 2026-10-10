@@ -63,6 +63,12 @@ export interface PlanetPosition {
   warWith?: PlanetId;
   /** True if this planet wins the war */
   warWinner?: boolean;
+  /**
+   * Geocentric ecliptic latitude in degrees (+ north). Set for the five tara
+   * grahas in ephemeris charts; absent in manual charts, which have no
+   * latitude to read.
+   */
+  latitude?: number;
 }
 
 export interface AscendantInfo {
@@ -109,7 +115,7 @@ export interface DashaPeriod {
   lord: PlanetId;
   start: Date;
   end: Date;
-  level: 1 | 2 | 3;
+  level: 1 | 2 | 3 | 4;
   children?: DashaPeriod[];
 }
 

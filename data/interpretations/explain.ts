@@ -50,10 +50,11 @@ export type Because =
 /** How much of the chain to render. */
 export type Depth = "plain" | "expert";
 
-const DASHA_LEVEL: Record<1 | 2 | 3, string> = {
+const DASHA_LEVEL: Record<1 | 2 | 3 | 4, string> = {
   1: "main period",
   2: "sub-period",
   3: "sub-sub-period",
+  4: "fourth-level period",
 };
 
 const p = (id: PlanetId): string => PLANET_NAMES[id];

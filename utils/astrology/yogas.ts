@@ -1,5 +1,7 @@
 import { EXALTATION, OWN_SIGNS, PLANET_NAMES, SIGN_LORDS } from "./constants";
+import { aspectedSigns, naturalBenefics } from "./aspects";
 import { ordinal } from "./format";
+import { vargaSign } from "./varga";
 import type { ChartData, PlanetId, YogaFinding } from "./types";
 
 const KENDRA = [1, 4, 7, 10];
@@ -43,17 +45,47 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
       if (moonHouse && dispHouse && KENDRA.includes(((dispHouse - moonHouse + 12) % 12) + 1)) {
         conditions.push(`its dispositor stands in a kendra from the Moon`);
       }
+      const kendraFromMoon = (h: number | undefined): boolean =>
+        Boolean(moonHouse && h && KENDRA.includes(((h - moonHouse + 12) % 12) + 1));
       if (exaltedHere) {
         const exHouse = houseOf(chart, exaltedHere);
         if (exHouse && KENDRA.includes(exHouse)) {
           conditions.push(
             `${PLANET_NAMES[exaltedHere]}, exalted in that very sign's field, occupies a kendra`
           );
+        } else if (kendraFromMoon(exHouse)) {
+          conditions.push(
+            `${PLANET_NAMES[exaltedHere]}, exalted in that very sign's field, occupies a kendra from the Moon`
+          );
         }
       }
       const dispDignity = chart.planets.find((q) => q.id === dispositor)?.dignity;
       if (dispDignity === "exalted") {
         conditions.push(`its dispositor ${PLANET_NAMES[dispositor]} is itself exalted`);
+      }
+      // The remaining classical cancellations (BPHS Neecha-bhanga adhyaya,
+      // Phaladeepika 7.26–30): the lord of the planet's own exaltation sign in
+      // a kendra from the Lagna or the Moon; the dispositor casting drishti on
+      // the debilitated planet; the planet exalted in the Navamsa.
+      const exSign = EXALTATION[p.id]?.sign;
+      if (exSign !== undefined) {
+        const exLord = SIGN_LORDS[exSign];
+        if (exLord !== p.id) {
+          const exLordHouse = houseOf(chart, exLord);
+          if (exLordHouse && KENDRA.includes(exLordHouse)) {
+            conditions.push(`the lord of its exaltation sign, ${PLANET_NAMES[exLord]}, occupies a kendra from Lagna`);
+          } else if (kendraFromMoon(exLordHouse)) {
+            conditions.push(`the lord of its exaltation sign, ${PLANET_NAMES[exLord]}, occupies a kendra from the Moon`);
+          }
+        }
+        const dispSign = signOfPlanet(chart, dispositor);
+        if (dispositor !== p.id && dispSign !== undefined && dispSign !== debSign &&
+            aspectedSigns(dispositor, dispSign).includes(debSign)) {
+          conditions.push(`its dispositor ${PLANET_NAMES[dispositor]} casts drishti on it`);
+        }
+        if (vargaSign("D9", p.longitude) === exSign) {
+          conditions.push(`it is exalted in the Navamsa`);
+        }
       }
       if (conditions.length > 0) {
         out.push({
@@ -81,8 +113,16 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
   }
 
   // --- Gajakesari ---
+  // Jupiter in a kendra from the Moon, and Jupiter itself not debilitated,
+  // combust or in an enemy's sign — the standard qualifying conditions
+  // (Phaladeepika 6; B.V. Raman, "Three Hundred Important Combinations"). A
+  // broken Jupiter in the right house does not deliver the yoga.
   const ju = houseOf(chart, "Ju");
-  if (ju && moonHouse && KENDRA.includes(((ju - moonHouse + 12) % 12) + 1)) {
+  const juPlanet = chart.planets.find((p) => p.id === "Ju");
+  const juSound = Boolean(
+    juPlanet && !juPlanet.combust && !["debilitated", "enemy", "greatEnemy"].includes(juPlanet.dignity)
+  );
+  if (ju && moonHouse && juSound && KENDRA.includes(((ju - moonHouse + 12) % 12) + 1)) {
     out.push({
       key: "gajakesari",
       name: "Gajakesari Yoga",
@@ -93,14 +133,19 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
   }
 
   // --- Budhaditya ---
+  // Sun and Mercury in one sign with Mercury NOT combust. Mercury never strays
+  // more than ~28° from the Sun, so a bare same-sign test fires in most
+  // charts; the yoga is only counted when Mercury stands clear of the Sun's
+  // rays (beyond its combustion orb), which is the condition practitioners
+  // apply before crediting it.
   const su = chart.planets.find((p) => p.id === "Su");
   const me = chart.planets.find((p) => p.id === "Me");
-  if (su && me && su.sign === me.sign) {
+  if (su && me && su.sign === me.sign && !me.combust) {
     out.push({
       key: "budhaditya",
       name: "Budhaditya Yoga",
       planets: ["Su", "Me"],
-      description: `Sun and Mercury conjoin in the ${ordinal(su.house)} house: sharp administrative intellect and articulate authority${me.combust ? ", though Mercury's combustion demands you learn to separate ego from analysis" : ""}.`,
+      description: `Sun and Mercury conjoin in the ${ordinal(su.house)} house, with Mercury clear of combustion: sharp administrative intellect and articulate authority.`,
     });
   }
 
@@ -189,10 +234,17 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
     const pb = planetOf(b);
     return Boolean(pa && pb && a !== b && pa.sign === pb.sign);
   };
-  const mutualSeventh = (a: PlanetId, b: PlanetId): boolean => {
+  // Mutual graha drishti — each casts a full Parashari aspect on the other's
+  // sign, special aspects included (Saturn 3/10, Jupiter 5/9, Mars 4/8), not
+  // only the universal 7th.
+  const mutualAspect = (a: PlanetId, b: PlanetId): boolean => {
     const pa = planetOf(a);
     const pb = planetOf(b);
-    return Boolean(pa && pb && a !== b && (pb.sign - pa.sign + 12) % 12 === 6);
+    return Boolean(
+      pa && pb && a !== b && pa.sign !== pb.sign &&
+      aspectedSigns(a, pa.sign).includes(pb.sign) &&
+      aspectedSigns(b, pb.sign).includes(pa.sign)
+    );
   };
   const inExchange = (a: PlanetId, b: PlanetId): boolean => {
     const pa = planetOf(a);
@@ -220,7 +272,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
           ? "exchange signs"
           : sameSign(k, t)
             ? "conjoin"
-            : mutualSeventh(k, t)
+            : mutualAspect(k, t)
               ? "stand in mutual aspect"
               : null;
         if (!how) continue;
@@ -247,7 +299,7 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
         ? "exchange signs"
         : sameSign(second, eleventh)
           ? "conjoin"
-          : mutualSeventh(second, eleventh)
+          : mutualAspect(second, eleventh)
             ? "stand in mutual aspect"
             : null;
       if (how) {
@@ -265,14 +317,15 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
       for (const wealthHouse of [2, 11]) {
         const w = lordOfHouse(wealthHouse);
         if (t === w || t === "Ra" || t === "Ke") continue;
-        if (sameSign(t, w) || inExchange(t, w)) {
+        const joined = sameSign(t, w) || inExchange(t, w);
+        if (joined || mutualAspect(t, w)) {
           const key = `dhana-${trine}-${wealthHouse}`;
           if (out.some((y) => y.key === key)) continue;
           out.push({
             key,
             name: `Dhana Yoga (${nth(trine)}–${nth(wealthHouse)} lords)`,
             planets: [t, w],
-            description: `The ${nth(trine)} lord ${PLANET_NAMES[t]} joins the ${nth(wealthHouse)} lord ${PLANET_NAMES[w]} — fortune's lord touching the wealth axis. Money arrives through merit, timing or backing rather than grind alone.`,
+            description: `The ${nth(trine)} lord ${PLANET_NAMES[t]} ${joined ? "joins" : "stands in mutual aspect with"} the ${nth(wealthHouse)} lord ${PLANET_NAMES[w]} — fortune's lord touching the wealth axis. Money arrives through merit, timing or backing rather than grind alone.`,
           });
         }
       }
@@ -495,7 +548,9 @@ export function detectYogas(chart: ChartData): YogaFinding[] {
   {
     const tenthSign = (lagna + 9) % 12;
     const moonTenthSign = mo ? (mo.sign + 9) % 12 : null;
-    const NATURAL_BENEFIC: PlanetId[] = ["Ju", "Ve", "Me", "Mo"];
+    // Benefic status is chart-specific, as everywhere else in the engine: the
+    // Moon only when waxing, Mercury only when unafflicted (`naturalBenefics`).
+    const NATURAL_BENEFIC: PlanetId[] = naturalBenefics(chart);
     const occupants = (sign: number) => chart.planets.filter((p) => p.sign === sign);
     for (const [from, sign] of [["Lagna", tenthSign], ["the Moon", moonTenthSign]] as const) {
       if (sign === null) continue;

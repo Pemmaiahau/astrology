@@ -6,7 +6,7 @@ import { periodsOverlapping } from "@/utils/astrology/scan";
 import type { ChartData, DashaPeriod, PlanetId, YogaFinding } from "@/utils/astrology/types";
 import { ownedHouses } from "@/utils/astrology/yogas";
 import { badhakaFor, FUNCTIONAL_ROLES, marakasFor } from "./lordships";
-import type { Evidence, SectionReport, TimingWindow } from "./report";
+import type { Evidence, SectionExtras, SectionReport, TimingWindow } from "./report";
 import { ordinal } from "./synthesis";
 
 /**
@@ -41,7 +41,8 @@ export function buildCautionsReport(
   shadbala: ShadbalaSet | null,
   yogas: YogaFinding[],
   dashaTree: DashaPeriod[] | null,
-  now: Date
+  now: Date,
+  extras: SectionExtras = {}
 ): CautionsReport {
   const lagna = chart.ascendant.sign;
   const roles = FUNCTIONAL_ROLES[lagna];
@@ -86,14 +87,17 @@ export function buildCautionsReport(
   // --- 3. Marakas: framed as health-attention periods, never as fear ---
   {
     const ms = marakasFor(lagna);
+    // One planet owns both houses for Aries and Libra Lagnas (Venus, Mars).
+    const one = ms.length === 1;
     cautions.push({
       caution: {
-        text: `${ms.map((m) => PLANET_NAMES[m]).join(" and ")} rule your 2nd and 7th houses, which classically makes them the planets whose main periods are worth a little extra care about health and energy. That is the whole of the claim — a prompt to keep up with the ordinary things, not a warning about anything dramatic.`,
+        text: `${ms.map((m) => PLANET_NAMES[m]).join(" and ")} ${one ? "rules both" : "rule"} your 2nd and 7th houses, which classically makes ${one ? "it the planet whose main period is" : "them the planets whose main periods are"} worth a little extra care about health and energy. That is the whole of the claim — a prompt to keep up with the ordinary things, not a warning about anything dramatic.`,
         weight: -3,
         source: { work: "BPHS", ref: "maraka: lords of the 2nd and 7th" },
       },
-      counterMeasure:
-        "During these planets' main periods, keep routine check-ups current, insurance in force, and the basics — sleep, food, movement — non-negotiable. Prevention is the entire remedy here, and it is the kind that works whether or not you believe any of the astrology.",
+      counterMeasure: one
+        ? `During ${PLANET_NAMES[ms[0]]}'s main period, keep routine check-ups current, insurance in force, and the basics — sleep, food, movement — non-negotiable. Prevention is the entire remedy here, and it is the kind that works whether or not you believe any of the astrology.`
+        : "During these planets' main periods, keep routine check-ups current, insurance in force, and the basics — sleep, food, movement — non-negotiable. Prevention is the entire remedy here, and it is the kind that works whether or not you believe any of the astrology.",
     });
   }
 
@@ -192,6 +196,26 @@ export function buildCautionsReport(
             : y.key === "daridra"
               ? "Automate saving so the money leaves before it can be spent, and get income arriving from more than one place. This one responds far better to plumbing than to discipline."
               : "Work with the chapter structure rather than against it: push hard when a door is open, and use the plateaus to consolidate instead of forcing. The flat stretches are doing something, even when it does not feel like it.",
+    });
+  }
+
+  // --- 7b. Doshas from the extended set ---
+  const DOSHA_COUNTER: Record<string, string> = {
+    "guru-chandala": "Check advice and teachers against a second, conventional source before acting on them, and keep commitments in writing. The combination distorts judgement on matters of principle; the counter is verification, not suspicion.",
+    "grahan-surya": "Build authority through documented results rather than standing, and give the father/boss relationship deliberate attention. The eclipse is on recognition, so make the work visible on its own merits.",
+    "grahan-chandra": "Protect sleep and routine, and name worries out loud to someone steady rather than carrying them alone. The eclipse is on the mind's calm, which responds to structure.",
+    shrapit: "Expect delays on the first attempt and plan for a second one; finish old obligations before starting new ones. The pattern rewards patience and punishes shortcuts.",
+    angarak: "Slow down every decision made in anger and treat physical risk (driving, machinery, sport) with extra margin. The heat is real; the counter is a deliberate pause.",
+    vish: "Guard against heaviness of mood with daylight, movement and company, and avoid isolating during low phases. This responds to habit far more than to effort of will.",
+    gandanta: "Treat the matters of this planet as needing untangling more than once; patience at the junction phases (dashas of the planet and its nakshatra lord) matters more than force.",
+    "papa-kartari": "Create room around the hemmed-in area deliberately — fewer simultaneous commitments, more slack in plans. Pressure from both sides is the pattern; space is the remedy.",
+  };
+  for (const d of (extras.extended ?? []).filter((x) => x.kind === "dosha")) {
+    const family = Object.keys(DOSHA_COUNTER).find((k) => d.key.startsWith(k));
+    if (!family) continue;
+    cautions.push({
+      caution: { text: `${d.name}: ${d.description}`, weight: -3, source: { work: "classical dosha literature", ref: d.name } },
+      counterMeasure: DOSHA_COUNTER[family],
     });
   }
 

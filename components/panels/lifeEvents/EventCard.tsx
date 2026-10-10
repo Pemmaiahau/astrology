@@ -96,6 +96,11 @@ export default function EventCard({
           >
             {w.confidence}% confidence
           </span>
+          {w.confirmedBy?.map((c) => (
+            <span key={c} className="rounded-full bg-good-soft px-1.5 py-0.5 text-[10px] font-semibold text-good">
+              {c} ✓
+            </span>
+          ))}
         </span>
       </button>
 

@@ -7,7 +7,7 @@ import type { ShadbalaSet } from "@/utils/astrology/shadbala";
 import type { PlanetStrength } from "@/utils/astrology/strength";
 import { houseInVarga, vargaPositionOf, type VargaSet } from "@/utils/astrology/varga";
 import type { AyanamshaId, ChartData, DashaPeriod, PlanetId, YogaFinding } from "@/utils/astrology/types";
-import type { Evidence, RankedItem, SectionReport, TimingWindow } from "./report";
+import type { Evidence, RankedItem, SectionExtras, SectionReport, TimingWindow } from "./report";
 import { plain, toTimingWindow, verdictOf } from "./report";
 import { ordinal } from "./synthesis";
 
@@ -25,7 +25,7 @@ import { ordinal } from "./synthesis";
  */
 
 /** Career fields classically signified by each planet. */
-const CAREER_FIELDS: Record<PlanetId, { label: string; fields: string }> = {
+export const CAREER_FIELDS: Record<PlanetId, { label: string; fields: string }> = {
   Su: { label: "Authority & administration", fields: "government service, administration, leadership roles, medicine, politics, senior management" },
   Mo: { label: "Public-facing & care", fields: "hospitality, healthcare and nursing, psychology, travel, marine/liquids trades, public relations" },
   Ma: { label: "Technical & courage-driven", fields: "engineering, defence and police, surgery, sports, real estate and construction, manufacturing" },
@@ -51,7 +51,8 @@ export function buildCareerReport(
   jaimini: JaiminiInfo | null,
   shadbala: ShadbalaSet | null,
   strengths: Partial<Record<PlanetId, PlanetStrength>>,
-  yogas: YogaFinding[]
+  yogas: YogaFinding[],
+  extras: SectionExtras = {}
 ): CareerReport {
   const lagna = chart.ascendant.sign;
   const caveats: string[] = [];
@@ -142,6 +143,21 @@ export function buildCareerReport(
         creditedYogas.add(credit);
         addVote(pid, `${y.name} forms in your chart and ${PLANET_NAMES[pid]} is part of it, which lifts everything that planet governs`, 8);
       }
+    }
+  }
+
+  // Extended yogas with a career reading: the Jaimini Raja Yoga (Atmakaraka
+  // with Amatyakaraka — status through one's own work), Saraswati (learning,
+  // eloquence) and Adhi (rise to authority). One vote per yoga and planet.
+  const CAREER_EXTENDED: Record<string, number> = { "jaimini-raja-ak-amk": 8, saraswati: 6, adhi: 6 };
+  for (const y of extras.extended ?? []) {
+    const w = CAREER_EXTENDED[y.key] ?? (y.key.startsWith("adhi") ? 6 : 0);
+    if (!w) continue;
+    for (const pid of y.planets) {
+      const credit = `${pid}|${y.name}`;
+      if (creditedYogas.has(credit)) continue;
+      creditedYogas.add(credit);
+      addVote(pid, `${y.name} forms in your chart and ${PLANET_NAMES[pid]} is part of it, which lifts the work that planet governs`, w);
     }
   }
 

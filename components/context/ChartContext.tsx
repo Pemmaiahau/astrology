@@ -1,5 +1,8 @@
 "use client";
 
+import { buildConfirmContext, type ConfirmContext } from "@/utils/astrology/dashaConfirm";
+import { detectExtendedYogas, type ExtendedFinding } from "@/utils/astrology/extendedYogas";
+import { computeSpecialPoints, type SpecialPoints } from "@/utils/astrology/specialPoints";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { computeAutoChart, computeManualChart } from "@/utils/astrology/chart";
 import { activeDashaAt, vimshottariTree, type ActiveDasha } from "@/utils/astrology/dasha";
@@ -91,6 +94,12 @@ interface ChartContextValue {
   /** Classical six-fold strength; null when the chart lacks a real birth anchor. */
   shadbala: ShadbalaSet | null;
   bhavaBala: BhavaBala[] | null;
+  /** Kartari, Adhi, Saraswati, solar and Jaimini yogas, and the conjunction doshas. */
+  extendedYogas: ExtendedFinding[];
+  /** Gulika/Mandi, upagrahas, special lagnas, Indu Lagna, Yogi; null without a birth anchor. */
+  specialPoints: SpecialPoints | null;
+  /** Yogini and Chara dasha, for cross-checking Vimshottari timing. */
+  confirm: ConfirmContext | null;
   /**
    * Whether the two adult-scope sections (Speculation, Intimacy) are revealed.
    * See `advancedAccess.ts` for the rule and why it lives in one place.
@@ -285,6 +294,12 @@ export function ChartProvider({ children }: { children: ReactNode }) {
     [chart, shadbala]
   );
 
+  // The extended yoga/dosha set, the special points and the two
+  // cross-checking dasha systems — all cheap, all pure functions of the chart.
+  const extendedYogas = useMemo(() => (chart ? detectExtendedYogas(chart, jaimini) : []), [chart, jaimini]);
+  const specialPoints = useMemo(() => (chart ? computeSpecialPoints(chart, ayanamsha) : null), [chart, ayanamsha]);
+  const confirm = useMemo(() => (chart ? buildConfirmContext(chart) : null), [chart]);
+
   // The house-by-house reading now consumes the divisional/bala/Ashtakavarga
   // layer as well, so it has to be built AFTER them. Each is optional and the
   // synthesis degrades to the Rashi-only reading when one is null — which is
@@ -363,6 +378,9 @@ export function ChartProvider({ children }: { children: ReactNode }) {
       jaimini,
       shadbala,
       bhavaBala,
+      extendedYogas,
+      specialPoints,
+      confirm,
       advancedUnlocked,
       now,
     }),
@@ -371,7 +389,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
       speculationYear, speculationWindow,
       chart, chartError, committed, dashaTree, activeDasha, transits, sadeSati, panchang, ashtakavarga,
       yogas, strengths, houseReadings, personality, vargas, jaimini, shadbala,
-      bhavaBala, advancedUnlocked, now,
+      bhavaBala, extendedYogas, specialPoints, confirm, advancedUnlocked, now,
     ]
   );
 

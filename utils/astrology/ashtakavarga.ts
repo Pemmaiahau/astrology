@@ -127,3 +127,23 @@ export function computeAshtakavarga(planetSigns: Partial<Record<PlanetId, number
   }
   return { bav, sav };
 }
+
+/**
+ * Prastara (contributor-level) lookup: does `contributor` give a bindu to
+ * `target`'s Bhinnashtakavarga in `sign`? The summed `bav` grid cannot answer
+ * this — Kakshya transit analysis needs to know *which* contributor's bindu a
+ * sign holds, not just how many.
+ */
+export function contributesBindu(
+  target: PlanetId | "As",
+  contributor: PlanetId | "As",
+  sign: number,
+  planetSigns: Partial<Record<PlanetId, number>>,
+  lagnaSign: number
+): boolean {
+  const houses = T[target]?.[contributor];
+  if (!houses) return false;
+  const from = contributor === "As" ? lagnaSign : planetSigns[contributor];
+  if (from === undefined) return false;
+  return houses.includes(((sign - from + 12) % 12) + 1);
+}

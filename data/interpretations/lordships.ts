@@ -1,5 +1,6 @@
-import { SIGN_LORDS, signMobility } from "@/utils/astrology/constants";
-import type { PlanetId } from "@/utils/astrology/types";
+import { aspectedSigns } from "@/utils/astrology/aspects";
+import { PLANET_NAMES, SIGN_LORDS, signMobility } from "@/utils/astrology/constants";
+import type { ChartData, PlanetId } from "@/utils/astrology/types";
 
 export interface FunctionalRoles {
   yogakaraka: PlanetId | null;
@@ -44,9 +45,12 @@ export const FUNCTIONAL_ROLES: FunctionalRoles[] = [
     // Cancer
     yogakaraka: "Ma",
     benefics: ["Ma", "Ju", "Mo"],
-    malefics: ["Ve", "Me"],
-    neutrals: ["Su", "Sa"],
-    note: "For Cancer rising, Mars is the yogakaraka — it rules your 5th house of intelligence and your 10th house of career, so it converts intelligence into achievement. Jupiter, ruling your 9th house of fortune, blesses. Venus (your 4th and 11th) and Mercury (your 3rd and 12th) run counter to your interests. Saturn rules your 7th and 8th, which makes it one of the two planets to watch for health in its periods.",
+    // Saturn owns the 7th and the 8th. Its 7th (kendra) lordship does not
+    // soften the 8th, and BPHS names it maraka for this Lagna, so it is
+    // classed malefic, not neutral (decision logged in SOURCES.md).
+    malefics: ["Ve", "Me", "Sa"],
+    neutrals: ["Su"],
+    note: "For Cancer rising, Mars is the yogakaraka — it rules your 5th house of intelligence and your 10th house of career, so it converts intelligence into achievement. Jupiter, ruling your 9th house of fortune, blesses. Venus (your 4th and 11th) and Mercury (your 3rd and 12th) run counter to your interests. Saturn rules your 7th and your 8th, so it works against you too: its periods bring delay and strain, and it is one of the two planets to watch for health.",
   },
   {
     // Leo
@@ -119,6 +123,59 @@ export function marakasFor(lagnaSign: number): PlanetId[] {
   const second = SIGN_LORDS[(lagnaSign + 1) % 12];
   const seventh = SIGN_LORDS[(lagnaSign + 6) % 12];
   return second === seventh ? [second] : [second, seventh];
+}
+
+export interface MarakaSet {
+  /** Lords of the 2nd and 7th — the primary marakas. */
+  primary: PlanetId[];
+  /** Secondary marakas with the rule that made each one. */
+  secondary: { id: PlanetId; reasons: string[] }[];
+}
+
+/**
+ * The full maraka picture for a chart (BPHS Maraka adhyaya): the 2nd and 7th
+ * lords first; then, as secondary marakas, planets occupying the 2nd or 7th,
+ * planets conjoined with a primary maraka, the 12th lord, and Saturn when it
+ * is connected to the maraka houses or lords (in the 2nd/7th, with a maraka
+ * lord, or aspecting the 2nd/7th).
+ *
+ * Reporting only: health-caution timing (`cautions.ts`) deliberately keeps
+ * using `marakasFor`, the primary lords, so this list widens what is shown
+ * without widening the windows that are flagged.
+ */
+export function marakaPlanets(chart: ChartData): MarakaSet {
+  const lagna = chart.ascendant.sign;
+  const primary = marakasFor(lagna);
+  const secondary = new Map<PlanetId, string[]>();
+  const add = (id: PlanetId, reason: string) => {
+    if (primary.includes(id)) return;
+    secondary.set(id, [...(secondary.get(id) ?? []), reason]);
+  };
+  const at = (id: PlanetId) => chart.planets.find((p) => p.id === id);
+  const marakaSigns = [(lagna + 1) % 12, (lagna + 6) % 12];
+
+  for (const p of chart.planets) {
+    if (p.house === 2 || p.house === 7) add(p.id, `occupies the ${p.house === 2 ? "2nd" : "7th"}`);
+    for (const m of primary) {
+      const mp = at(m);
+      if (mp && p.id !== m && p.sign === mp.sign) add(p.id, `conjoined with the maraka lord ${PLANET_NAMES[m]}`);
+    }
+  }
+  add(SIGN_LORDS[(lagna + 11) % 12], "lord of the 12th");
+
+  const sa = at("Sa");
+  if (sa) {
+    const connected =
+      marakaSigns.includes(sa.sign) ||
+      primary.some((m) => at(m)?.sign === sa.sign) ||
+      aspectedSigns("Sa", sa.sign).some((s) => marakaSigns.includes(s));
+    if (connected) add("Sa", "Saturn connected to the maraka houses or lords");
+  }
+
+  return {
+    primary,
+    secondary: [...secondary.entries()].map(([id, reasons]) => ({ id, reasons: [...new Set(reasons)] })),
+  };
 }
 
 /**

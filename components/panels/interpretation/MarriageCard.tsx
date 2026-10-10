@@ -1,5 +1,7 @@
 "use client";
 
+import BriefView, { FullReasoning } from "./BriefView";
+import { briefOfSection } from "@/data/interpretations/brief";
 import { HeartHandshake } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
@@ -32,6 +34,7 @@ export default function MarriageCard() {
   const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
+  const brief = briefOfSection(report, timing);
 
   return (
     <SectionCard
@@ -41,6 +44,8 @@ export default function MarriageCard() {
       score={report.score}
       confidence={report.confidence}
     >
+      <BriefView brief={brief} />
+      <FullReasoning>
       {report.blocks.map((b) => (
         <Section key={b.heading} title={b.heading}>
           {b.paragraphs.map((p, i) => (
@@ -53,6 +58,7 @@ export default function MarriageCard() {
           )}
         </Section>
       ))}
+      </FullReasoning>
 
       <Section title="Most probable marriage windows">
         <p className="mb-2 text-[11px] leading-relaxed text-fg-subtle">

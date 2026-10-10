@@ -12,7 +12,7 @@ import {
   VARA_LORDS,
   type PlanetId7,
 } from "./constants";
-import { declination, nextSunrise, sunriseFor, sunsetFor } from "./ephemeris";
+import { declination, nextSunrise, nextSunset, sunriseFor, sunsetFor } from "./ephemeris";
 import { norm360, separation, signOf } from "./math";
 import { naturalRelation, temporalRelation } from "./states";
 import type { ChartData, PlanetId, PlanetPosition } from "./types";
@@ -127,7 +127,11 @@ function ojhaYugmaBala(id: PlanetId7, lon: number): number {
   return (rashiOk ? 15 : 0) + (navOk ? 15 : 0);
 }
 
-/** Kendradi: 60 in a kendra, 30 in a panaphara, 15 in an apoklima (whole-sign from Lagna). */
+/**
+ * Kendradi: 60 in a kendra, 30 in a panaphara, 15 in an apoklima. Counted by
+ * bhava (Sripati), as BPHS reads it; charts without cusps pass the whole-sign
+ * house, which `PlanetPosition.bhava` already falls back to.
+ */
 function kendradiBala(house: number): number {
   const offset = (house - 1) % 3;
   return offset === 0 ? 60 : offset === 1 ? 30 : 15;
@@ -426,7 +430,7 @@ export function computeShadbala(chart: ChartData): ShadbalaSet | null {
       { label: "Uchcha", virupas: uchchaBala(id, p.longitude) },
       { label: "Saptavargaja", virupas: saptavargajaBala(id, p.longitude, rashiSigns) },
       { label: "Ojha-Yugma", virupas: ojhaYugmaBala(id, p.longitude) },
-      { label: "Kendradi", virupas: kendradiBala(p.house) },
+      { label: "Kendradi", virupas: kendradiBala(p.bhava) },
       { label: "Drekkana", virupas: drekkanaBala(id, p.longitude) },
     ];
     const dig: BalaFactor[] = [{ label: "Dig", virupas: digBala(id, p.longitude, chart) }];
@@ -536,11 +540,47 @@ function bhavaDigBala(house: number, sign: number): number {
   return Math.max(0, 60 - 10 * dist);
 }
 
+/** Sirshodaya (head-rising) signs: Gemini, Leo, Virgo, Libra, Scorpio, Aquarius. */
+const SIRSHODAYA = [2, 4, 5, 6, 7, 10];
+/** Prishtodaya (back-rising) signs: Aries, Taurus, Cancer, Sagittarius, Capricorn. */
+const PRISHTODAYA = [0, 1, 3, 8, 9];
+/** One ghati either side of sunrise or sunset counts as twilight (sandhya). */
+const TWILIGHT_MS = 24 * 60000;
+
+type BirthPhase = "day" | "night" | "twilight" | null;
+
+/** Day, night or twilight birth, for the rising-type component of Bhava Bala. */
+function birthPhaseOf(chart: ChartData): BirthPhase {
+  const { birthUtc, lat, lon } = chart;
+  if (!birthUtc || lat === undefined || lon === undefined) return null;
+  const t = birthUtc.getTime();
+  const events = [
+    sunriseFor(birthUtc, lat, lon), sunsetFor(birthUtc, lat, lon),
+    nextSunrise(birthUtc, lat, lon), nextSunset(birthUtc, lat, lon),
+  ].filter((d): d is Date => d !== null);
+  if (events.some((d) => Math.abs(d.getTime() - t) <= TWILIGHT_MS)) return "twilight";
+  const frame = dayFrame(chart);
+  return frame ? (frame.isDay ? "day" : "night") : null;
+}
+
+/**
+ * Raman's day/night component: a bhava in a sirshodaya sign gains 15 virupas
+ * for a day birth, one in a prishtodaya sign 15 for a night birth, and Pisces
+ * (ubhayodaya) 15 for a twilight birth. Zero when the birth phase is unknown.
+ */
+function risingTypeBala(sign: number, phase: BirthPhase): number {
+  if (phase === "twilight") return sign === 11 ? 15 : 0;
+  if (phase === "day") return SIRSHODAYA.includes(sign) ? 15 : 0;
+  if (phase === "night") return PRISHTODAYA.includes(sign) ? 15 : 0;
+  return 0;
+}
+
 export function computeBhavaBala(chart: ChartData, shadbala: ShadbalaSet): BhavaBala[] {
   const moon = chart.planets.find((p) => p.id === "Mo");
   const sun = chart.planets.find((p) => p.id === "Su");
   const moonWaxing =
     moon && sun ? norm360(moon.longitude - sun.longitude) < 180 : true;
+  const birthPhase = birthPhaseOf(chart);
 
   const result: BhavaBala[] = [];
   for (let house = 1; house <= 12; house++) {
@@ -563,10 +603,22 @@ export function computeBhavaBala(chart: ChartData, shadbala: ShadbalaSet): Bhava
       else malefic += value;
     }
 
+    // Occupation (B.V. Raman, "Graha and Bhava Balas"): +60 for each of
+    // Jupiter and Mercury in the bhava, −60 for each of Saturn, Mars and the
+    // Sun. Counted by Sripati bhava, the same frame as the madhya above.
+    let occupation = 0;
+    for (const p of chart.planets) {
+      if (p.bhava !== house) continue;
+      if (p.id === "Ju" || p.id === "Me") occupation += 60;
+      if (p.id === "Sa" || p.id === "Ma" || p.id === "Su") occupation -= 60;
+    }
+
     const factors: BalaFactor[] = [
       { label: "Bhavadhipati (lord's Shadbala)", virupas: lordBala },
       { label: "Bhava Dig", virupas: bhavaDigBala(house, sign) },
       { label: "Bhava Drishti", virupas: (benefic - malefic) / 4 },
+      { label: "Bhava Occupation", virupas: occupation },
+      { label: "Bhava Day/Night (rising type)", virupas: risingTypeBala(sign, birthPhase) },
     ];
     const totalVirupas = sum(factors);
     result.push({ house, factors, totalVirupas, rupas: totalVirupas / 60 });

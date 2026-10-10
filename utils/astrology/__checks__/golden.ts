@@ -33,6 +33,8 @@ import { allStrengths } from "../strength";
 import { currentTransits, sadeSatiPhase } from "../transits";
 import { computeVargaSet, VARGA_IDS } from "../varga";
 import { detectYogas } from "../yogas";
+import { detectExtendedYogas } from "../extendedYogas";
+import { computeSpecialPoints } from "../specialPoints";
 import { computeNumerology } from "../numerology";
 import { PLANETS, SHADBALA_PLANETS, SIGNS } from "../constants";
 import { fmtDeg } from "../math";
@@ -47,6 +49,9 @@ import { buildCautionsReport } from "../../../data/interpretations/cautions";
 import { buildLuckyReport } from "../../../data/interpretations/lucky";
 import { buildLifeAreaReports } from "../../../data/interpretations/lifeAreas";
 import { buildYearForecast } from "../../../data/interpretations/yearForecast";
+import { briefOfCautions, briefOfPersonality, briefOfSection } from "../../../data/interpretations/brief";
+import { buildReading, buildReadingContext } from "../../../data/interpretations/reading";
+import { buildConfirmContext } from "../dashaConfirm";
 
 /** Pinned "today". Every time-relative reading is computed against this. */
 const NOW = new Date("2026-06-15T00:00:00.000Z");
@@ -292,6 +297,7 @@ function snapshotInterpretation(chart: ChartData): void {
   const vargas = computeVargaSet(chart);
   const jaimini = computeJaimini(chart);
   const yogas = detectYogas(chart);
+  const extras = { extended: detectExtendedYogas(chart, jaimini), special: computeSpecialPoints(chart, "lahiri") };
   const moon = chart.planets.find((p) => p.id === "Mo");
   const tree = chart.birthUtc && moon ? vimshottariTree(moon.longitude, chart.birthUtc) : null;
 
@@ -324,11 +330,11 @@ function snapshotInterpretation(chart: ChartData): void {
   }
 
   const reports = [
-    ["career", buildCareerReport(chart, vargas, jaimini, shadbala, strengths, yogas)],
-    ["wealth", buildWealthReport(chart, vargas, strengths, yogas)],
+    ["career", buildCareerReport(chart, vargas, jaimini, shadbala, strengths, yogas, extras)],
+    ["wealth", buildWealthReport(chart, vargas, strengths, yogas, extras)],
     ["marriage", buildMarriageReport(chart, vargas, jaimini, strengths, yogas)],
     ["foreign", buildForeignReport(chart, vargas, strengths)],
-    ["cautions", buildCautionsReport(chart, strengths, shadbala, yogas, tree, NOW)],
+    ["cautions", buildCautionsReport(chart, strengths, shadbala, yogas, tree, NOW, extras)],
     ["lucky", buildLuckyReport(chart, strengths, shadbala, computeNumerology(chart.meta.localDateTime?.slice(0, 10), chart.meta.name, chart.meta.gender))],
   ] as const;
 
@@ -362,6 +368,40 @@ function snapshotInterpretation(chart: ChartData): void {
         for (const e of it.reasons) w(`        why(${e.weight}) ${e.text}`);
       }
       for (const win of b.windows ?? []) w(`     window ${win.label} grade=${win.grade} confidence=${win.confidence}`);
+    }
+  }
+
+  // The default-visible digest of each section (brief.ts). Pinned so that a
+  // change to the selection rules, or to the evidence they select from, shows
+  // up as a readable diff of exactly what the reader sees first.
+  section("briefs (default-visible digest)");
+  for (const b of briefOfPersonality(per)) w(`  personality [${b.heading}] ${b.line}`);
+  for (const [name, rep] of reports) {
+    if (name === "lucky" || name === "cautions") continue;
+    const b = briefOfSection(rep as never);
+    for (const t of b.top) w(`  ${name} top ${t.score} ${t.verdict} :: ${t.label}`);
+    for (const p of b.points) w(`  ${name} ${p.lean} ${p.text}`);
+  }
+  const cautionsRep = reports.find(([n]) => n === "cautions")![1] as unknown as { cautions: Parameters<typeof briefOfCautions>[0] };
+  for (const c of briefOfCautions(cautionsRep.cautions)) w(`  cautions ${c.text} || ${c.remedy}`);
+
+  // The chart reading (Parts 1–7), as the Interpretation tab shows it.
+  section("chart reading (parts 1-7)");
+  {
+    const rc = buildReadingContext({
+      chart, ayanamsha: "lahiri", now: NOW, vargas, jaimini, shadbala,
+      bhavaBala: shadbala ? computeBhavaBala(chart, shadbala) : null, av, strengths, yogas,
+      extended: extras.extended, special: extras.special, dashaTree: tree,
+      confirm: buildConfirmContext(chart),
+    });
+    for (const part of buildReading(rc, { withTiming: true })) {
+      w(`  == Part ${part.number}: ${part.title}`);
+      for (const sub of part.subsections) {
+        w(`     # ${sub.heading}`);
+        for (const l of sub.lead) w(`       ${l}`);
+        for (const b of sub.bullets) w(`       - ${b}`);
+      }
+      for (const l of part.summary) w(`     summary: ${l}`);
     }
   }
 

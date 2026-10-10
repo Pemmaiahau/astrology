@@ -2,7 +2,7 @@
 
 import { Shield, Swords, Scale } from "lucide-react";
 import { useChart } from "@/components/context/ChartContext";
-import { FUNCTIONAL_ROLES, marakasFor } from "@/data/interpretations/lordships";
+import { FUNCTIONAL_ROLES, marakaPlanets } from "@/data/interpretations/lordships";
 import { PLANET_NAMES, SIGNS } from "@/utils/astrology/constants";
 
 /** Sidebar: functional benefics / malefics / neutrals for the running Lagna. */
@@ -11,7 +11,7 @@ export default function FunctionalLords() {
   if (!chart) return null;
   const lagna = chart.ascendant.sign;
   const roles = FUNCTIONAL_ROLES[lagna];
-  const marakas = marakasFor(lagna);
+  const marakas = marakaPlanets(chart);
 
   return (
     <div className="rounded-xl border border-line bg-surface p-4">
@@ -36,7 +36,12 @@ export default function FunctionalLords() {
           <div>
             <span className="font-semibold text-bad">Functional Malefics: </span>
             <span className="text-fg">{roles.malefics.map((p) => PLANET_NAMES[p]).join(", ")}</span>
-            <span className="text-fg-muted"> · Marakas: {marakas.map((p) => PLANET_NAMES[p]).join(", ")}</span>
+            <span className="text-fg-muted"> · Marakas: {marakas.primary.map((p) => PLANET_NAMES[p]).join(", ")}</span>
+            {marakas.secondary.length > 0 && (
+              <span className="text-fg-muted">
+                {" "}· Secondary marakas: {marakas.secondary.map((s) => PLANET_NAMES[s.id]).join(", ")}
+              </span>
+            )}
           </div>
         </div>
         {roles.neutrals.length > 0 && (

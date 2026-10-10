@@ -162,7 +162,7 @@ Two house systems coexist:
   2. Otherwise: **naisargika** (natural, fixed per `NATURAL_FRIENDS`/`NATURAL_ENEMIES`) relationship to the sign's dispositor, combined with **tatkalika** (temporal — where the dispositor currently sits *relative to this planet*, houses 2/3/4/10/11/12 = temporal friendship) into a −2..+2 score, mapped to the 5 middle dignity grades.
   - This is the standard Parashari "compound relationship" method — natural + temporal, not natural alone.
 - **`isCombust(id, longitude, sunLongitude, retro)`** — separation from Sun ≤ classical orb (`COMBUSTION_ORBS`, direct vs retrograde orbs differ per planet). Sun itself is never combust (checked at the call site in `chart.ts`).
-- **`applyGrahaYuddha(planets)`** — mutates planets in place: among the five *tara grahas* (Ma/Me/Ju/Ve/Sa), any pair within 1° of each other is a "planetary war"; **the lower sidereal longitude wins** — the graha behind in zodiacal order (classical texts vary on the tie-break — flag if a different convention is wanted). The comparison is on the longitude, not the degree-in-sign, because a war straddling a sign boundary puts the *higher* degInSign on the graha that is actually behind. When 3+ grahas fall inside 1°, each records its **nearest** opponent (`PlanetPosition` holds one opponent per graha), and the result is independent of array order.
+- **`applyGrahaYuddha(planets)`** — mutates planets in place: among the five *tara grahas* (Ma/Me/Ju/Ve/Sa), any pair within 1° of each other is a "planetary war"; **the more northerly ecliptic latitude wins** (Surya Siddhanta 7 / Brihat Samhita 17), read from `PlanetPosition.latitude`, which ephemeris charts carry for the five tara grahas. When a latitude is missing (manual charts) or the two are equal, the fallback is the older convention: **the lower sidereal longitude wins** — the graha behind in zodiacal order. For the fallback the comparison is on the longitude, not the degree-in-sign, because a war straddling a sign boundary puts the *higher* degInSign on the graha that is actually behind. When 3+ grahas fall inside 1°, each records its **nearest** opponent (`PlanetPosition` holds one opponent per graha), and the result is independent of array order.
 - `DIGNITY_LABELS` / `DIGNITY_SHORT` — display strings.
 
 ---
@@ -437,7 +437,7 @@ These were deliberate, verified choices — see also the `aipems-astrology` memo
 - **Lahiri ayanamsha is a linear+quadratic approximation** anchored at J2000, not a lookup against IAU precession tables. Verified against the published ~24°11' for 2024; accuracy degrades slowly outside roughly ±150 years of J2000 — flag any request involving historical charts far outside that window.
 - **Pushya ayanamsha is Lahiri minus a constant** (−1.122°), which is valid *because* both share the same precession-rate model in this implementation — if Pushya were ever computed independently (its own anchor star), this shortcut would need revisiting.
 - **Dignity, lordship, yogas and interpretation text are all whole-sign-house based.** Bhava Chalit only affects the *reported* house for narrative "where do results show up" purposes (`PlanetPosition.bhava` vs `.house`), never dignity/strength calculations. Don't let a "make Bhava Chalit affect yoga detection" request slip through without flagging this is a deliberate scope boundary, not an oversight.
-- **Graha Yuddha winner = lower sidereal longitude** (the graha behind in zodiacal order). This is one defensible convention among a few in classical literature; if a user cites a different tie-break rule they were taught, it's a one-line change in `applyGrahaYuddha` (states.ts), not a deep fix. **Do not "simplify" this back to a degree-in-sign comparison** — that was a live bug: it awarded a cross-boundary war (Mars 29°42' Aries vs Venus 0°12' Taurus) to Venus, and `computeShadbala` then transferred the whole virupa difference the wrong way. Pinned by a Phase 7 harness check.
+- **Graha Yuddha winner = more northerly ecliptic latitude** (changed 2026-10 from "lower sidereal longitude", which survives as the fallback for charts without latitudes). **Do not "simplify" the fallback back to a degree-in-sign comparison** — that was a live bug: it awarded a cross-boundary war (Mars 29°42' Aries vs Venus 0°12' Taurus) to Venus, and `computeShadbala` then transferred the whole virupa difference the wrong way. Pinned by a Phase 7 harness check.
 - **"Now" for the *current*-state computations is frozen at page load** (`now` in ChartContext), not a live clock. A request for "live updating countdown to dasha change" or similar needs an actual timer (`setInterval`/`Date.now()` re-read), which this architecture doesn't currently provide. Note this does **not** limit the year forecast (§17a) — that takes an explicit selected year and computes transits/dasha at arbitrary past/future instants via `scan.ts`.
 - **Solar-return mode is a *sidereal* solar return** (Sun back to natal *sidereal* longitude), which is why consecutive returns are one sidereal year apart. It is **not** the full classical Varshaphal/Tajika annual-chart system (no muntha, year-lord, sahams, or mudda dasha) — it's the existing snapshot techniques re-based to a birthday-to-birthday window. A true Tajika build would be a separate, much larger feature.
 - **Drishti is whole-sign and binary** — no Parashari partial aspects (3/4, 1/2, 1/4) and no degree-based orbs. **Rahu/Ketu are given 5/7/9 drishti** (BPHS reading); traditions that deny nodal aspects would edit `SPECIAL_DRISHTI` in aspects.ts. Conjunction (same sign) is intentionally *not* counted as an aspect anywhere. The *interpretation* layer now distinguishes **which** drishti landed (`Drishti.offset`), but that is narrative granularity only — it does not reintroduce partial-strength aspects into any calculation.
@@ -976,3 +976,109 @@ All four are harness-checked, including a regex gate on the moral vocabulary and
 | Change the intimacy adults-only scan floor | the `dateAtAge(ctx.birthUtc, 18)` in `intimacyTiming.ts` — deliberately *not* an `AGE_BANDS` entry |
 | Reword or extend the Trimsamsa claim | `TRIMSAMSA_LORD` in `data/interpretations/trimsamsaClaim.ts` — the moral-vocabulary gate in `verify.ts` applies to anything added |
 
+---
+
+## 26. Expert export layers and the 2026-10 correctness pass
+
+The Markdown export (`utils/export/markdownReport.ts`) now carries the extra
+material an astrologer needs to cross-check timing. The heavy parts are
+computed by **`utils/export/expertLayers.ts`** when the download button is
+pressed, never on the `ChartContext` cascade, and passed in as the optional
+`expert` input; without it every new section states that it is missing.
+
+### 26.1 Engine corrections (these change on-screen readings too)
+
+| Fix | File | Effect |
+|---|---|---|
+| Moon/Mercury moolatrikona bands reachable | `states.ts` (`dignityInSign`) | Moon 3°–30° Taurus → moolatrikona; Mercury 15°–20° Virgo → moolatrikona, 20°–30° → own |
+| Varga tatkalika from the rashi chart | `varga.ts` (`computeVargaChart`, new `temporalFromSign` arg) | D-chart dignities and Vimshopaka now agree with Saptavargaja bala |
+| Scorpio/Aquarius co-lords | `jaimini.ts` (`resolvedLordSign`, `CO_LORDS`) | Arudha padas for those houses; also used by Chara dasha |
+| Full Neechabhanga | `yogas.ts` | Adds exaltation-sign lord in a kendra (Lagna or Moon), dispositor's drishti, Navamsa exaltation, and the Moon-kendra test for the exalted occupant |
+| Sambandha by any mutual graha drishti | `yogas.ts` (`mutualAspect`) | Raja and Dhana yogas through Saturn 3/10, Jupiter 5/9, Mars 4/8 |
+
+### 26.2 New modules
+
+- `yogini.ts` — Yogini dasha (MD + AD), 365.25-day years like Vimshottari.
+- `charaDasha.ts` — K.N. Rao Chara dasha, two cycles, equal antardashas.
+- `specialPoints.ts` — Gulika/Mandi, Dhuma…Upaketu, Bhava/Hora/Ghati Lagna, Pranapada, Sree Lagna, Indu Lagna, Yogi/Avayogi, Bhrigu Bindu.
+- `extendedYogas.ts` — Kartari, Adhi, Vesi/Vasi/Ubhayachari, Saraswati, Jaimini AK–AmK Raja yoga, Guru-Chandala, Grahan, Shrapit, Angarak, Vish, Gandanta. **Export-only by design** (see SOURCES.md).
+- `dasha.ts` `subPeriodsOf` — Sookshma on demand; `DashaPeriod.level` widened to 4.
+- `jaimini.ts` `padas` (A1–A12) and `rashiDrishti`; `ashtakavarga.ts` `contributesBindu` (Prastara lookup for kakshya); `varga.ts` `shashtiamsaDeity`.
+
+### 26.3 Export sections
+
+Special Points (§6), varga houses/dignity plus D60 deities (§8), extended doshas
+and yogas (§9–10), A1–A12 and rashi drishti (§15), dasha balance and Sookshma
+(§16), Yogini (§17), Chara (§18), and a full nine-graha gochara (§19): vedha, own
+BAV, SAV, kakshya, Tara/Chandra bala, Saturn's stance, double transit, contacts
+with natal points within 3°, lifetime Sade Sati dates, 24 months of ingresses and
+12 months of retrograde periods. All of it is pinned by `verify.ts` Phase 11.
+
+### 26.4 Audit fixes A1–A9 and avasthas (2026-10)
+
+| Fix | File | What changed |
+|---|---|---|
+| A1 Mangal Dosha | `marriage.ts` (`checkMangalDosha`) | Read from the Lagna, the Moon **and Venus**; house exemptions apply per reference and cancel only when every forming reference is exempt; the text names the references (`fromVenus` added to `MangalDosha`) |
+| A2 Budhaditya | `yogas.ts` | Credited only when Mercury is not combust |
+| A3 Gajakesari | `yogas.ts` | Jupiter must not be debilitated, combust or in an enemy's / great enemy's sign |
+| A4 Amala | `yogas.ts` | Benefics are `naturalBenefics(chart)` (waxing Moon, unafflicted Mercury) |
+| A5 Cancer Lagna | `lordships.ts` | Saturn (7th + 8th lord) moved from neutral to malefic. Aquarius' Sun stays neutral; its maraka role is reported via A9 |
+| A6 Graha yuddha | `states.ts`, `ephemeris.ts` (`eclipticLatitude`), `chart.ts` | Winner by northern latitude; lower longitude is the fallback |
+| A7 Bhava Bala | `shadbala.ts` | Kendradi bala by bhava; Bhava Bala gains Occupation (±60) and Day/Night rising-type (15) components |
+| A8 Label | `states.ts` | "Exalted (Uchcha)" — "Parama Ucha" is the deep-exaltation degree only |
+| A9 Marakas | `lordships.ts` (`marakaPlanets`) | Secondary marakas (occupants of the 2nd/7th, planets with a maraka lord, the 12th lord, a connected Saturn) shown in the MD file and the Functional Roles panel. **Health-caution timing still uses the primary lords only** |
+| Avasthas | `avasthas.ts` | Baladi, Jagradadi, Deeptadi, Lajjitadi, Shayanadi — rendered in the MD file (§5) via `expertLayers.ts` |
+
+All pinned by `verify.ts` Phase 12.
+
+---
+
+## 27. Precise default view, and the MD-only layers feeding the website (2026-10)
+
+### 27.1 What now feeds verdicts and timing
+
+| Input | Where | Effect |
+|---|---|---|
+| Yogini + Chara dasha | `dashaConfirm.ts` → `scan.ts` (`findActivationWindows`), `eventTiming.ts`, `lifeAreas.ts`, `yearForecast.ts` | Each window is cross-checked against the theme's **anchor house** (first house listed) and karakas: +4/+7 per agreeing system, −10 when neither agrees. Calibrated on 150 charts to ≈ neutral on average (+1…+2); ~27% of periods get no support. Windows carry `confirmedBy`; Life Events counts agreement as a sixth confidence limb; a Life Areas window is "strong" only when confirmed |
+| Avasthas | `strength.ts` | Baladi (zero-mean: Yuva +5, Kumara +2, Bala 0, Vriddha −2, Mrita −5; nodes excluded), Lajjita −3, Trushita −2, Kshobhita −2. Vikala, Kshudhita and Mudita are display-only — they fire for ~46% / most planets and only shifted the average. Net bias on a 400-chart sample: −0.65 per planet |
+| Extended yogas / doshas | `ChartContext` → `SectionExtras` | Career: Jaimini Raja (AK–AmK) +8, Saraswati/Adhi +6. Cautions: Guru-Chandala, Grahan, Shrapit, Angarak, Vish, Gandanta, Papa Kartari, each with a counter-measure. Shown in the Yogas list with ▲/▼ |
+| Indu Lagna | `wealth.ts` | Benefics on/aspecting it raise the accumulation stream; malefics alone lower it |
+| Vedha, own BAV | `yearForecast.ts` | Every slow transit in the timeline carries favourable / vedha / bindus |
+
+### 27.2 The brief layer — `data/interpretations/brief.ts`
+
+Every default-visible digest is **selected** from evidence the builders already weighted — never re-judged:
+`briefOfSection` (≤6 decisive points by |weight|, both directions always shown, top-3 options, next windows),
+`briefOfCautions` (weightiest 5, one-template-many-planets merged), `briefOfPersonality` (the chart-specific
+sentence per facet, never the definitional opener). Text rules, pinned in `verify.ts` Phase 13b: glossary
+parentheticals stripped; a short paired aside is removed, never cut at; a dash after a short opener is
+structure (list separators) and is kept; only a single trailing gloss after a ≥50-char clause is dropped.
+
+UI: `components/panels/interpretation/BriefView.tsx` (`BriefView`, `BriefPoints`, `FullReasoning`). Every card,
+Life Area, forecast segment and house keeps its full text under a "Full reasoning" toggle. `SectionCard` shows
+the headline while collapsed. Houses render as one row each (`HouseInterpretation.verdict` — the convergence
+verdict as data). Measured on the canonical chart: ≈19,400 default-visible words → ≈2,500.
+
+Golden snapshot now includes a "briefs" section, so any change to what the reader sees first is a reviewable diff.
+
+---
+
+## 28. The chart reading — Parts 1–7 (`data/interpretations/reading/`)
+
+The Interpretation tab now opens with an astrologer's report in a fixed format, modelled on a reference reading the user supplied: each part is a set of headed subsections, each subsection a **factual lead** (degrees, nakshatra and pada, dignity, Shadbala ratio, SAV, Bhava Bala) followed by **bullets that interpret it**, then a **summary**. Voice: second person ("you"), by the user's choice.
+
+| Part | Builder | Draws on |
+|---|---|---|
+| 1 Personality | `personality.ts` | Lagna + planets on it (≤3° = "on the Ascendant degree"), Lagna lord (house table, Shadbala, D9/D2/D10 dignity), the Moon (conjunctions, aspects, paksha, lunar yogas, SAV extremes, Navamsa dignity, Arudha Lagna), the Atmakaraka (gandanta, Karakamsa and the other grahas in it), Mercury (yogas, Baladi, Vimshopaka, Neecha Bhanga), every remaining planet; summary with `strongerPeriodAhead` |
+| 2 Career | `career.ts` | 10th house (`houseSubsection`), Sun/Saturn, 10th from Moon, D10, Amatyakaraka, status yogas, scored fields, job vs business, `careerTimingWindows` |
+| 3 Wealth | `wealth.ts` | 2nd and 11th houses, wealth yogas + Indu Lagna, D2 Hora tally, scored streams, `wealthTimingWindows` |
+| 4 Marriage | `marriage.ts` | 7th house + Saturn delay marker, Venus (+ Jupiter for a woman's chart), Darakaraka, Upapada and its 2nd, D9 7th, Mangal Dosha, spouse indications, `marriageTimingWindows` |
+| 5 Foreign | `foreign.ts` | 12th and 9th houses, Rahu, the three scored foreign lives, `foreignTimingWindows` |
+| 6 Health | `health.ts` | Lagna/Lagna lord/Sun/Moon vitality, 6th and 8th houses, sub-strength / debilitated / gandanta / Mrita planets and doshas (with `PLANET_BODY`), marakas, Saturn's stance and Sade Sati, cautions with remedies |
+| 7 Timing | `timing.ts` | Running MD/AD/PD/Sookshma with Yogini/Chara cross-check, the next four Mahadashas, the strongest and most demanding Antardashas in 15 years |
+
+`lordQuality` (context.ts) decides whether a dasha lord "delivers": a working planet (functional benefic, yogakaraka or Lagna lord) that meets its Shadbala requirement **or is dignified in ≥2 of D9/D2/D10** — the reference reading's own argument ("Jupiter … far better than its D1 strength suggests … stronger from 2028"). New text tables live in `reading/tables.ts` (sign tone, Lagna shadow and physique, planet-on-Lagna body, Lagna lord by house, Karakamsa grahas, planet body areas); everything else reuses the curated second-person tables.
+
+UI: `components/panels/interpretation/ReadingView.tsx`. Part 1 opens by default; every other part is **built on first open** (`withTiming: true`), because the window scans cost a few hundred milliseconds each. The scored cards, yogas and the houses table remain below as "Scores, windows and full reasoning".
+
+**Reference pin.** `verify.ts` Phase 14 reconstructs the reference chart (1986-04-11 23:50 IST, Bengaluru — Sun and Moon agree with the sample to 0.009°) and asserts 19 of its conclusions verbatim-in-substance. Known, deliberate differences from the reference: Mercury at 0°23' Pisces reads Mrita (BPHS reverses Baladi in even signs; the reference said "infant"); Vimshopaka uses the 16-varga scheme (9.15 vs the reference's 5.25); this engine's Shadbala ranks Mercury (0.81×) below Jupiter (0.88×).

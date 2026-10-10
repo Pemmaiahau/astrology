@@ -6,6 +6,7 @@ import {
 } from "@/utils/astrology/ashtakavarga";
 import {
   NAKSHATRAS,
+  NAKSHATRA_LORDS,
   PLANETS,
   PLANET_NAMES,
   PLANET_SANSKRIT,
@@ -29,7 +30,7 @@ import {
 } from "@/utils/astrology/jaimini";
 import { norm360 } from "@/utils/astrology/math";
 import { naturalRelation, temporalRelation, DIGNITY_LABELS } from "@/utils/astrology/states";
-import type { ActiveDasha } from "@/utils/astrology/dasha";
+import { activeDashaAt, type ActiveDasha } from "@/utils/astrology/dasha";
 import type { BhavaBala, ShadbalaSet } from "@/utils/astrology/shadbala";
 import {
   VARGA_IDS,
@@ -48,20 +49,26 @@ import type {
   TransitInfo,
   YogaFinding,
 } from "@/utils/astrology/types";
-import { FUNCTIONAL_ROLES, marakasFor, badhakaFor } from "@/data/interpretations/lordships";
+import { FUNCTIONAL_ROLES, marakasFor, marakaPlanets, badhakaFor } from "@/data/interpretations/lordships";
 import { checkMangalDosha } from "@/data/interpretations/marriage";
 import { traitOf } from "@/data/interpretations/nakshatraTraits";
 import type { SpeculationReport } from "@/data/interpretations/speculation";
 import type { IntimacyReport } from "@/data/interpretations/intimacy";
+import { rashiDrishti } from "@/utils/astrology/jaimini";
+import { shashtiamsaDeity } from "@/utils/astrology/varga";
+import { ordinal } from "@/utils/astrology/format";
+import type { ExpertLayers } from "./expertLayers";
 
 /**
  * The whole chart as one Markdown document, for handing to an AI assistant.
  *
- * Everything here is a *rendering* of values the app has already computed —
- * this module runs no astronomy of its own beyond the two panchang day-part
- * calls, which the Panchang tab makes the same way at render time. If a number
- * appears in the file it appears on screen too, so the export can never drift
- * into asserting something the app does not show.
+ * Everything here is a *rendering* of values computed elsewhere — this module
+ * runs no astronomy of its own beyond the two panchang day-part calls, which
+ * the Panchang tab makes the same way at render time. Most sections render the
+ * same values the app shows on screen. The `expert` layers (Sookshma, Yogini
+ * and Chara dasha, special points, the extended yoga/dosha set, the full
+ * gochara table) are computed by `expertLayers.ts` at download time and are
+ * export-only; they are engine outputs all the same, never computed here.
  *
  * The document is deliberately tables-only: no interpretive prose blocks, no
  * paragraph readings. A model consuming it should get positions, strengths,
@@ -93,6 +100,8 @@ export interface MarkdownReportInput {
   /** Built by the caller only when the advanced gate is open; null otherwise. */
   speculation: SpeculationReport | null;
   intimacy: IntimacyReport | null;
+  /** Export-only expert layers; omitted sections say so when absent. */
+  expert?: ExpertLayers | null;
   generatedAt: Date;
 }
 
@@ -145,6 +154,23 @@ function heading(level: number, text: string): string[] {
 /** Date as YYYY-MM-DD in UTC — stable, sortable, and timezone-argument-free. */
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** UTC date and minute — Sookshma periods last days, so the date alone is too coarse. */
+function isoDateTime(d: Date): string {
+  return `${d.toISOString().slice(0, 16).replace("T", " ")} UTC`;
+}
+
+const YEAR_MS = 365.25 * 86400000;
+
+/** Fractional years as "Ny Nm Nd" on 365.25-day years and 30.4375-day months. */
+function fmtYMD(years: number): string {
+  const totalDays = Math.max(0, years * 365.25);
+  const y = Math.floor(totalDays / 365.25);
+  const restDays = totalDays - y * 365.25;
+  const m = Math.floor(restDays / 30.4375);
+  const d = Math.floor(restDays - m * 30.4375);
+  return `${y}y ${m}m ${d}d`;
 }
 
 function clockIn(d: Date, timeZone?: string): string {
@@ -326,6 +352,10 @@ function coreSignatures(input: MarkdownReportInput): string[] {
     ["Functional malefics", roles.malefics.map((p) => PLANET_NAMES[p]).join(", ")],
     ["Functional neutrals", roles.neutrals.length ? roles.neutrals.map((p) => PLANET_NAMES[p]).join(", ") : DASH],
     ["Marakas (2nd/7th lords)", marakasFor(asc.sign).map((p) => PLANET_NAMES[p]).join(", ")],
+    [
+      "Secondary marakas",
+      marakaPlanets(chart).secondary.map((s) => `${PLANET_NAMES[s.id]} (${s.reasons.join("; ")})`).join(", ") || DASH,
+    ],
     ["Badhaka", `${PLANET_NAMES[badhaka.lord]} (lord of the ${badhaka.house}th)`]
   );
 
@@ -411,6 +441,28 @@ function planetaryPositions(input: MarkdownReportInput): string[] {
     );
   }
 
+  const avasthas = input.expert?.avasthas;
+  if (avasthas?.length) {
+    out.push(...heading(3, "Avasthas (planetary states, BPHS Ch. 45)"));
+    out.push(
+      "Baladi = age by degree (how much of its result a graha can give); Jagradadi = awake/dreaming/asleep by dignity; Deeptadi = mood (combustion overrides; Vikala added when joined by a natural malefic); Lajjitadi = conditions from placement, association and aspect (several can hold); Shayanadi = activity state from the BPHS formula (completed ghatis since sunrise; navamsa counted 1–9 within the sign).",
+      ""
+    );
+    out.push(
+      ...table(
+        ["Planet", "Baladi", "Jagradadi", "Deeptadi", "Lajjitadi", "Shayanadi"],
+        avasthas.map((a) => [
+          planetName(a.id),
+          `${a.baladi.state} — ${a.baladi.result}`,
+          `${a.jagradadi.state} — ${a.jagradadi.result}`,
+          a.deeptadi.alsoVikala ? `${a.deeptadi.state}; also Vikala (crippled)` : a.deeptadi.state,
+          a.lajjitadi.join(", ") || DASH,
+          a.shayanadi ? `${a.shayanadi.index}. ${a.shayanadi.state}` : "needs birth time and sunrise",
+        ])
+      )
+    );
+  }
+
   out.push(...heading(3, "House-wise Planetary Grouping"));
   out.push(...table(["House", "Sign", "Planets Present"], grouping));
 
@@ -447,7 +499,7 @@ function aspectsSection(input: MarkdownReportInput): string[] {
   });
 
   return [
-    ...heading(2, "6. Planetary Aspects (Graha Drishti)"),
+    ...heading(2, "7. Planetary Aspects (Graha Drishti)"),
     "Whole-sign Parashari drishti: every graha aspects the 7th from itself; Mars adds the 4th and 8th, Jupiter the 5th and 9th, Saturn the 3rd and 10th, Rahu and Ketu the 5th and 9th. Occupancy is not counted as an aspect.",
     "",
     ...table(["Planet", "In House", "Houses Aspected", "Signs Aspected", "Planets Aspected"], rows),
@@ -458,7 +510,7 @@ function aspectsSection(input: MarkdownReportInput): string[] {
 const DETAILED_VARGAS: VargaId[] = ["D2", "D7", "D9", "D10"];
 
 function vargaSection(input: MarkdownReportInput): string[] {
-  const out = heading(2, "7. Divisional Charts (Shodasavarga)");
+  const out = heading(2, "8. Divisional Charts (Shodasavarga)");
   const { vargas } = input;
   if (!vargas) {
     return [...out, "_Divisional charts could not be computed for this chart._", ""];
@@ -489,14 +541,35 @@ function vargaSection(input: MarkdownReportInput): string[] {
   }
 
   const compact = VARGA_IDS.filter((id) => id !== "D1" && !DETAILED_VARGAS.includes(id));
-  out.push(...heading(3, "Remaining vargas — sign placements"));
+  out.push(...heading(3, "Remaining vargas — placements, houses and dignity"));
+  out.push(
+    "House is counted whole-sign from that varga's own Lagna; dignity is judged at sign level with temporal friendship taken from the Rashi chart. In D60 each placement also carries its Shashtiamsa deity (BPHS; even signs run the list in reverse).",
+    ""
+  );
   for (const id of compact) {
     const vc = vargas.charts[id];
-    out.push(`**${id} — ${VARGA_NAMES[id]}** (${VARGA_SIGNIFICATIONS[id]}); varga Lagna ${SIGNS[vc.ascendant]}.`, "");
+    const isD60 = id === "D60";
+    const lagnaDeity = isD60 ? shashtiamsaDeity(input.chart.ascendant.longitude) : null;
+    out.push(
+      `**${id} — ${VARGA_NAMES[id]}** (${VARGA_SIGNIFICATIONS[id]}); varga Lagna ${SIGNS[vc.ascendant]}${
+        lagnaDeity ? ` — Lagna in part ${lagnaDeity.part}, ${lagnaDeity.name} (${lagnaDeity.benefic ? "benefic" : "malefic"})` : ""
+      }.`,
+      ""
+    );
     out.push(
       ...table(
-        ["Planet", "Sign"],
-        vc.positions.map((p) => [PLANET_NAMES[p.id], SIGNS[p.sign]])
+        ["Planet", "Sign", "House", "Dignity", ...(isD60 ? ["Shashtiamsa deity"] : [])],
+        vc.positions.map((p) => {
+          const lon = input.chart.planets.find((q) => q.id === p.id)?.longitude;
+          const deity = isD60 && lon !== undefined ? shashtiamsaDeity(lon) : null;
+          return [
+            PLANET_NAMES[p.id],
+            SIGNS[p.sign],
+            houseInVarga(vc, p.sign),
+            DIGNITY_LABELS[p.dignity],
+            ...(isD60 ? [deity ? `${deity.part}. ${deity.name} (${deity.benefic ? "benefic" : "malefic"})` : DASH] : []),
+          ];
+        })
       )
     );
   }
@@ -542,6 +615,7 @@ function doshaSection(input: MarkdownReportInput): string[] {
     [
       mangal.fromLagna ? "forms from the Lagna" : null,
       mangal.fromMoon ? "forms from the Moon" : null,
+      mangal.fromVenus ? "forms from Venus" : null,
       mangal.cancellations.length ? `cancellations: ${mangal.cancellations.join("; ")}` : null,
     ]
       .filter(Boolean)
@@ -552,6 +626,10 @@ function doshaSection(input: MarkdownReportInput): string[] {
     rows.push([y.name, y.name.includes("cancelled") ? "Present but cancelled" : "Present", y.description]);
   }
 
+  for (const f of input.expert?.extendedYogas.filter((x) => x.kind === "dosha") ?? []) {
+    rows.push([f.name, "Present", f.description]);
+  }
+
   rows.push([
     "Sade Sati",
     sadeSati ? `Running — ${sadeSati} phase` : "Not running at the report date",
@@ -559,18 +637,19 @@ function doshaSection(input: MarkdownReportInput): string[] {
   ]);
 
   return [
-    ...heading(2, "8. Doshas Present"),
+    ...heading(2, "9. Doshas Present"),
     ...table(["Dosha", "Status", "Detail"], rows),
   ];
 }
 
 function yogaSection(input: MarkdownReportInput): string[] {
   const auspicious = input.yogas.filter((y) => !isDoshaYoga(y));
+  const extended = input.expert?.extendedYogas.filter((x) => x.kind === "yoga") ?? [];
   return [
-    ...heading(2, "9. Yogas Present"),
+    ...heading(2, "10. Yogas Present"),
     ...table(
       ["Yoga", "Planets Involved", "Description"],
-      auspicious.map((y) => [y.name, y.planets.map((p) => PLANET_NAMES[p]).join(", ") || DASH, y.description])
+      [...auspicious, ...extended].map((y) => [y.name, y.planets.map((p) => PLANET_NAMES[p]).join(", ") || DASH, y.description])
     ),
   ];
 }
@@ -609,7 +688,7 @@ function friendshipSection(input: MarkdownReportInput): string[] {
   });
 
   return [
-    ...heading(2, "10. Planetary Friendship"),
+    ...heading(2, "11. Planetary Friendship"),
     ...heading(3, "Naisargika (natural, permanent) relations"),
     "The classical tables are asymmetric — the Moon calls Mercury a friend while Mercury calls the Moon an enemy — so each row is read outward from the planet named in it.",
     "",
@@ -622,7 +701,7 @@ function friendshipSection(input: MarkdownReportInput): string[] {
 }
 
 function shadbalaSection(input: MarkdownReportInput): string[] {
-  const out = heading(2, "11. Shadbala — six-fold planetary strength");
+  const out = heading(2, "12. Shadbala — six-fold planetary strength");
   const { shadbala } = input;
   if (!shadbala) {
     return [
@@ -683,7 +762,7 @@ function shadbalaSection(input: MarkdownReportInput): string[] {
 }
 
 function bhavaBalaSection(input: MarkdownReportInput): string[] {
-  const out = heading(2, "12. Bhava Bala — house strength");
+  const out = heading(2, "13. Bhava Bala — house strength");
   const { bhavaBala, chart } = input;
   if (!bhavaBala) {
     return [...out, "_Bhava Bala is derived from Shadbala, which could not be computed for this chart._", ""];
@@ -693,7 +772,7 @@ function bhavaBalaSection(input: MarkdownReportInput): string[] {
 
   out.push(
     ...table(
-      ["House", "Sign", "Lord", "Bhavadhipati", "Bhava Dig", "Bhava Drishti", "Total (virupas)", "Rupas", "Rank"],
+      ["House", "Sign", "Lord", "Bhavadhipati", "Bhava Dig", "Bhava Drishti", "Occupation", "Day/Night", "Total (virupas)", "Rupas", "Rank"],
       bhavaBala.map((b) => {
         const sign = (lagna + b.house - 1) % 12;
         const find = (label: string) => b.factors.find((f) => f.label.startsWith(label));
@@ -704,6 +783,8 @@ function bhavaBalaSection(input: MarkdownReportInput): string[] {
           round1(find("Bhavadhipati")?.virupas ?? 0),
           round1(find("Bhava Dig")?.virupas ?? 0),
           round1(find("Bhava Drishti")?.virupas ?? 0),
+          round1(find("Bhava Occupation")?.virupas ?? 0),
+          round1(find("Bhava Day/Night")?.virupas ?? 0),
           round1(b.totalVirupas),
           round2(b.rupas),
           ranked.findIndex((r) => r.house === b.house) + 1,
@@ -715,7 +796,7 @@ function bhavaBalaSection(input: MarkdownReportInput): string[] {
 }
 
 function ashtakavargaSection(input: MarkdownReportInput): string[] {
-  const out = heading(2, "13. Ashtakavarga");
+  const out = heading(2, "14. Ashtakavarga");
   const { ashtakavarga, chart } = input;
   if (!ashtakavarga) {
     return [...out, "_Ashtakavarga needs all seven classical planets placed; it could not be computed for this chart._", ""];
@@ -747,7 +828,7 @@ function ashtakavargaSection(input: MarkdownReportInput): string[] {
 }
 
 function jaiminiSection(input: MarkdownReportInput): string[] {
-  const out = heading(2, "14. Jaimini — Chara Karakas, Padas and Argala");
+  const out = heading(2, "15. Jaimini — Chara Karakas, Padas and Argala");
   const { jaimini, chart, shadbala } = input;
   if (!jaimini) {
     return [...out, "_Jaimini primitives could not be computed for this chart._", ""];
@@ -789,6 +870,44 @@ function jaiminiSection(input: MarkdownReportInput): string[] {
     )
   );
 
+  out.push(...heading(3, "Arudha padas A1–A12"));
+  out.push(
+    "Count from the house to its lord, then as far again; a pada falling in the house itself or its 7th moves to the 10th from there. Scorpio and Aquarius houses use the stronger of their two lords (Mars/Ketu, Saturn/Rahu).",
+    ""
+  );
+  const PADA_NAMES = ["Arudha Lagna", "Dhana pada", "Bhratri pada", "Matri / Sukha pada", "Mantra / Putra pada", "Shatru / Roga pada",
+    "Dara pada", "Mrityu / Randhra pada", "Bhagya / Pitri pada", "Rajya / Karma pada", "Labha pada", "Upapada"];
+  out.push(
+    ...table(
+      ["Pada", "Name", "Sign", "House from Lagna", "Occupants"],
+      jaimini.padas.map((s, i) => [
+        `A${i + 1}`,
+        PADA_NAMES[i],
+        signName(s),
+        houseOfSign(s, lagna),
+        chart.planets.filter((p) => p.sign === s).map((p) => PLANET_NAMES[p.id]).join(", ") || DASH,
+      ])
+    )
+  );
+
+  out.push(...heading(3, "Rashi drishti (Jaimini sign aspects)"));
+  out.push(
+    "Movable signs aspect the fixed signs except the adjacent one; fixed signs aspect the movable signs except the adjacent one; dual signs aspect each other. A planet aspects through its sign.",
+    ""
+  );
+  out.push(
+    ...table(
+      ["Sign", "House", "Aspects signs", "Planets in sign", "Planets thereby aspected"],
+      Array.from({ length: 12 }, (_, i) => {
+        const s = (lagna + i) % 12;
+        const targets = rashiDrishti(s);
+        const occupants = chart.planets.filter((p) => p.sign === s).map((p) => PLANET_NAMES[p.id]);
+        const aspected = chart.planets.filter((p) => targets.includes(p.sign)).map((p) => PLANET_NAMES[p.id]);
+        return [SIGNS[s], i + 1, targets.map((t) => SIGNS[t]).join(", "), occupants.join(", ") || DASH, occupants.length ? aspected.join(", ") || DASH : DASH];
+      })
+    )
+  );
+
   out.push(...heading(3, "Argala (intervention) and Virodha (obstruction) per house"));
   out.push(
     ...table(
@@ -805,14 +924,24 @@ function jaiminiSection(input: MarkdownReportInput): string[] {
 }
 
 function dashaSection(input: MarkdownReportInput): string[] {
-  const out = heading(2, "15. Vimshottari Dasha");
+  const out = heading(2, "16. Vimshottari Dasha");
   const { dashaTree, activeDasha } = input;
   if (!dashaTree) {
     return [...out, "_Vimshottari dasha needs the birth instant and the Moon's longitude; it could not be computed for this chart._", ""];
   }
 
+  const expert = input.expert;
+  if (expert?.dashaBalance) {
+    const { lord, years } = expert.dashaBalance;
+    out.push(
+      `**Balance at birth:** ${PLANET_NAMES[lord]} Mahadasha, ${fmtYMD(years)} remaining (of ${dashaTree[0] ? fmtYMD((dashaTree[0].end.getTime() - dashaTree[0].start.getTime()) / YEAR_MS) : DASH}). Years of 365.25 days.`,
+      ""
+    );
+  }
+
   if (activeDasha) {
     out.push(...heading(3, "Running period at the report date"));
+    const cs = expert?.currentSookshma;
     out.push(
       ...table(
         ["Level", "Lord", "Start", "End"],
@@ -820,9 +949,22 @@ function dashaSection(input: MarkdownReportInput): string[] {
           ["Mahadasha", PLANET_NAMES[activeDasha.maha.lord], isoDate(activeDasha.maha.start), isoDate(activeDasha.maha.end)],
           ["Antardasha", PLANET_NAMES[activeDasha.antar.lord], isoDate(activeDasha.antar.start), isoDate(activeDasha.antar.end)],
           ["Pratyantardasha", PLANET_NAMES[activeDasha.pratyantar.lord], isoDate(activeDasha.pratyantar.start), isoDate(activeDasha.pratyantar.end)],
+          ...(cs ? [["Sookshma", PLANET_NAMES[cs.lord], isoDate(cs.start), isoDate(cs.end)]] : []),
         ]
       )
     );
+  }
+
+  if (expert?.sookshma.length) {
+    out.push(...heading(3, "Sookshma dashas (4th level) — running and next Pratyantardasha"));
+    for (const { pratyantar, periods } of expert.sookshma) {
+      const chain = activeDashaAt(dashaTree, pratyantar.start);
+      const label = chain
+        ? `${PLANET_NAMES[chain.maha.lord]}–${PLANET_NAMES[chain.antar.lord]}–${PLANET_NAMES[pratyantar.lord]}`
+        : PLANET_NAMES[pratyantar.lord];
+      out.push(`**${label}** (${isoDate(pratyantar.start)} to ${isoDate(pratyantar.end)})`, "");
+      out.push(...table(["Sookshma", "Start", "End"], periods.map((s) => [PLANET_NAMES[s.lord], isoDateTime(s.start), isoDateTime(s.end)])));
+    }
   }
 
   out.push(...heading(3, "Mahadasha sequence (whole 120-year cycle)"));
@@ -871,8 +1013,13 @@ function dashaSection(input: MarkdownReportInput): string[] {
 }
 
 function transitSection(input: MarkdownReportInput): string[] {
-  const out = heading(2, "16. Transits at the report date");
+  const out = heading(2, "19. Transits at the report date");
   const { transits, sadeSati, generatedAt } = input;
+  const detail = input.expert?.transit;
+  if (detail) {
+    out.push(`All nine grahas at ${detail.at.toISOString()}, read against the natal chart.`, "");
+    return [...out, ...transitDetailLines(detail, input)];
+  }
   if (!transits) {
     return [...out, "_Transits could not be computed for this chart._", ""];
   }
@@ -977,6 +1124,230 @@ function intimacySection(report: IntimacyReport, sectionNumber: number): string[
   return out;
 }
 
+function specialPointsSection(input: MarkdownReportInput): string[] {
+  const out = heading(2, "6. Special Points — Upagrahas, Special Lagnas, Yogi and Bhrigu Bindu");
+  const sp = input.expert?.special;
+  if (!sp) {
+    return [
+      ...out,
+      "_Special points need the birth instant, coordinates and a Sun that rose and set on the date; they could not be computed for this chart._",
+      "",
+    ];
+  }
+  out.push(
+    ...table(
+      ["Point", "Longitude", "Nakshatra (Pada)", "Nakshatra Lord", "House", "Rule"],
+      sp.points.map((p) => [
+        p.name,
+        fmtAbsolute(p.longitude),
+        `${nakshatraName(p.nakshatra)} (${p.pada})`,
+        PLANET_NAMES[NAKSHATRA_LORD_OF(p.nakshatra)],
+        p.house,
+        p.note,
+      ])
+    )
+  );
+  out.push(
+    ...table(
+      ["Derived", "Value"],
+      [
+        ["Indu Lagna (wealth)", `${signName(sp.induLagna.sign)} — house ${sp.induLagna.house} (kala sum ${sp.induLagna.kalaSum})`],
+        ["Yogi planet (nakshatra lord of the Yogi point)", planetName(sp.yogi.yogi)],
+        ["Duplicate Yogi (sign lord of the Yogi point)", planetName(sp.yogi.duplicateYogi)],
+        ["Avayogi (nakshatra lord of the Avayogi point)", planetName(sp.yogi.avayogi)],
+      ]
+    )
+  );
+  return out;
+}
+
+const NAKSHATRA_LORD_OF = (n: number): PlanetId => NAKSHATRA_LORDS[n];
+
+function yoginiSection(input: MarkdownReportInput): string[] {
+  const out = heading(2, "17. Yogini Dasha (36-year cycle)");
+  const tree = input.expert?.yogini;
+  if (!tree) {
+    return [...out, "_Yogini dasha needs the birth instant and the Moon's longitude; it could not be computed for this chart._", ""];
+  }
+  const t = input.generatedAt.getTime();
+  out.push(
+    "Opening yogini = (birth nakshatra number + 3) mod 8, with the unelapsed fraction of the Moon's nakshatra as the balance. Antardashas run from the mahadasha's own yogini; each lasts MD years × AD years / 36. Cross-check against Vimshottari: an event is firmest when both systems point to it.",
+    ""
+  );
+  out.push(
+    ...table(
+      ["#", "Yogini", "Lord", "Years", "Start", "End", "Status"],
+      tree.map((p, i) => [
+        i + 1, p.yogini.name, PLANET_NAMES[p.yogini.lord], p.yogini.years, isoDate(p.start), isoDate(p.end),
+        t >= p.start.getTime() && t < p.end.getTime() ? "Current" : p.end.getTime() <= t ? "Past" : "Future",
+      ])
+    )
+  );
+  const current = tree.find((p) => t >= p.start.getTime() && t < p.end.getTime());
+  if (current?.children) {
+    out.push(...heading(3, `Antardashas of the running ${current.yogini.name} (${PLANET_NAMES[current.yogini.lord]}) dasha`));
+    out.push(
+      ...table(
+        ["Antardasha", "Lord", "Start", "End", "Status"],
+        current.children.map((a) => [
+          a.yogini.name, PLANET_NAMES[a.yogini.lord], isoDate(a.start), isoDate(a.end),
+          t >= a.start.getTime() && t < a.end.getTime() ? "Current" : a.end.getTime() <= t ? "Past" : "Future",
+        ])
+      )
+    );
+  }
+  return out;
+}
+
+function charaSection(input: MarkdownReportInput): string[] {
+  const out = heading(2, "18. Chara Dasha (Jaimini sign dasha, K.N. Rao method)");
+  const tree = input.expert?.chara;
+  if (!tree) {
+    return [...out, "_Chara dasha needs the birth instant; it could not be computed for this chart._", ""];
+  }
+  const lagna = input.chart.ascendant.sign;
+  const t = input.generatedAt.getTime();
+  out.push(
+    "Starts at birth from the Lagna sign, running zodiacally when the 9th from the Lagna is a savya sign (Ar, Ta, Ge, Li, Sc, Sg), in reverse otherwise. Years = count from the sign to its lord (forward for savya, backward otherwise) minus one; lord in the sign = 12; +1 exalted lord, −1 debilitated lord. Scorpio/Aquarius use the stronger co-lord. Second cycle = 12 − first-cycle years.",
+    ""
+  );
+  out.push(
+    ...table(
+      ["#", "Sign", "House", "Lord used", "Years", "Cycle", "Start", "End", "Status"],
+      tree.map((p, i) => [
+        i + 1, signName(p.sign), houseOfSign(p.sign, lagna), PLANET_NAMES[p.lord], p.years, p.cycle,
+        isoDate(p.start), isoDate(p.end),
+        t >= p.start.getTime() && t < p.end.getTime() ? "Current" : p.end.getTime() <= t ? "Past" : "Future",
+      ])
+    )
+  );
+  const current = tree.find((p) => t >= p.start.getTime() && t < p.end.getTime());
+  if (current) {
+    out.push(...heading(3, `Antardashas of the running ${SIGNS[current.sign]} dasha`));
+    out.push("Twelve equal parts beginning from the sign after the dasha sign (reverse for an apasavya dasha sign), so the dasha sign's own antardasha comes last.", "");
+    out.push(
+      ...table(
+        ["Antardasha sign", "House", "Start", "End", "Status"],
+        current.antardashas.map((a) => [
+          SIGNS[a.sign], houseOfSign(a.sign, lagna), isoDate(a.start), isoDate(a.end),
+          t >= a.start.getTime() && t < a.end.getTime() ? "Current" : a.end.getTime() <= t ? "Past" : "Future",
+        ])
+      )
+    );
+  }
+  return out;
+}
+
+const SATURN_STANCE_LABEL: Record<NonNullable<ExpertLayers["transit"]>["saturnStance"] & string, string> = {
+  "sadeSati-rising": "Sade Sati — rising phase (12th from the Moon)",
+  "sadeSati-peak": "Sade Sati — peak phase (over the Moon)",
+  "sadeSati-setting": "Sade Sati — setting phase (2nd from the Moon)",
+  "kantaka-4": "Kantaka Shani (4th from the Moon)",
+  "kantaka-10": "Kantaka Shani (10th from the Moon)",
+  ashtama: "Ashtama Shani (8th from the Moon)",
+};
+
+/** The full gochara picture when the expert layers are present. */
+function transitDetailLines(detail: NonNullable<ExpertLayers["transit"]>, input: MarkdownReportInput): string[] {
+  const out: string[] = [];
+  const tz = input.chart.meta.timezone;
+  out.push(
+    ...table(
+      ["Planet", "Sign", "Degree", "Nakshatra (Pada)", "Motion", "Speed", "House from Lagna", "House from Moon", "Gochara (from Moon)", "Vedha by", "Own BAV bindus", "SAV", "Kakshya (lord · bindu)"],
+      detail.rows.map((r) => [
+        planetName(r.id),
+        signName(r.sign),
+        fmtDMS(r.longitude % 30),
+        `${nakshatraName(r.nakshatra)} (${r.pada})`,
+        r.retrograde ? "Retrograde" : "Direct",
+        `${r.speed.toFixed(4)}°/day`,
+        r.houseFromLagna,
+        r.houseFromMoon,
+        r.gochara.auspicious ? (r.gochara.vedhaBy ? "Favourable — cancelled by vedha" : "Favourable") : r.gochara.value < 0 ? "Unfavourable" : "Neutral",
+        r.gochara.vedhaBy ? PLANET_NAMES[r.gochara.vedhaBy] : DASH,
+        r.bav ?? "N/A (node)",
+        r.sav,
+        r.kakshya
+          ? `${r.kakshya.index}: ${r.kakshya.lord === "As" ? "Lagna" : PLANET_NAMES[r.kakshya.lord]} · ${r.kakshya.bindu ? "bindu" : "no bindu"}`
+          : DASH,
+      ])
+    )
+  );
+  out.push(
+    "Gochara is judged from the natal Moon with the Phaladeepika vedha table (Rahu/Ketu by the upachaya convention, no vedha). BAV/SAV are the natal Ashtakavarga values of the sign being transited: 4+ own-BAV bindus and SAV 28+ support the transit. Kakshya = which 3°45' eighth of the sign the planet is in; a planet gives results while crossing a kakshya whose lord contributed a bindu.",
+    ""
+  );
+
+  out.push(...heading(3, "Moon-based day quality and slow-planet triggers"));
+  out.push(
+    ...table(
+      ["Measure", "Value"],
+      [
+        ["Tara Bala", `${detail.tara.name} (${detail.tara.tara} of 9; transit Moon is the ${ordinal(detail.tara.count)} nakshatra from the Janma nakshatra) — ${detail.tara.favourable ? "favourable" : "unfavourable"}`],
+        ["Chandra Bala", `Transit Moon in the ${ordinal(detail.chandraBala.house)} from the natal Moon — ${detail.chandraBala.favourable ? "favourable" : "unfavourable"}`],
+        ["Saturn's stance from the Moon", detail.saturnStance ? SATURN_STANCE_LABEL[detail.saturnStance] : "No Sade Sati, Kantaka or Ashtama Shani"],
+        ["Jupiter–Saturn double transit on houses (from Lagna)", detail.doubleTransit.fromLagna.join(", ") || DASH],
+        ["Jupiter–Saturn double transit on houses (from Moon)", detail.doubleTransit.fromMoon.join(", ") || DASH],
+      ]
+    )
+  );
+
+  out.push(...heading(3, "Transit contacts with natal points (within 3°)"));
+  out.push(
+    ...table(
+      ["Transit", "Natal point", "Contact", "Orb"],
+      detail.contacts.map((c) => [
+        PLANET_NAMES[c.transit],
+        c.natal === "As" ? "Ascendant" : PLANET_NAMES[c.natal],
+        c.kind,
+        `${c.orb.toFixed(2)}°`,
+      ])
+    )
+  );
+
+  out.push(...heading(3, "Sade Sati periods (whole life)"));
+  out.push("Phase dates can overlap: when Saturn retrogrades back across a sign boundary, each phase is shown with its full outer bounds.", "");
+  out.push(
+    ...table(
+      ["#", "Start", "End", "Phases", "Status"],
+      detail.sadeSati.map((p) => [
+        p.index,
+        p.clippedStart ? `before ${isoDate(p.start)}` : isoDate(p.start),
+        p.clippedEnd ? `after ${isoDate(p.end)}` : isoDate(p.end),
+        p.phases.map((ph) => `${ph.phase} (${SIGNS[ph.sign]}) ${isoDate(ph.start)} → ${isoDate(ph.end)}`).join("; "),
+        p.status,
+      ])
+    )
+  );
+
+  out.push(...heading(3, `Sign ingresses ${isoDate(detail.window.from)} → ${isoDate(detail.window.ingressTo)} (Mars, Jupiter, Saturn, Rahu, Ketu)`));
+  out.push(
+    ...table(
+      ["Date", "Planet", "From", "To", "Motion"],
+      detail.ingresses.map((e) => [
+        `${dateIn(e.date, tz)} ${clockIn(e.date, tz)}`,
+        PLANET_NAMES[e.id],
+        SIGNS[e.fromSign],
+        SIGNS[e.toSign],
+        e.retrograde ? "Retrograde" : "Direct",
+      ])
+    )
+  );
+
+  out.push(...heading(3, `Retrograde periods ${isoDate(detail.window.from)} → ${isoDate(detail.window.retroTo)}`));
+  out.push(
+    ...table(
+      ["Planet", "Retrograde from", "Direct again"],
+      detail.retrogrades.map((r) => [
+        PLANET_NAMES[r.id],
+        r.start.getTime() <= detail.window.from.getTime() ? `already retrograde (${isoDate(r.start)})` : isoDate(r.start),
+        r.end.getTime() >= detail.window.retroTo.getTime() ? `after ${isoDate(r.end)}` : isoDate(r.end),
+      ])
+    )
+  );
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Document
 // ---------------------------------------------------------------------------
@@ -987,7 +1358,7 @@ export function buildMarkdownReport(input: MarkdownReportInput): string {
   const lines: string[] = [
     `# Vedic Birth Chart — ${name}`,
     "",
-    "Generated by Jyotisha Studio. Sidereal positions from an astronomy-engine ephemeris; every table below is the same computation the app displays on screen.",
+    "Generated by Jyotisha Studio. Sidereal positions from an astronomy-engine ephemeris; most tables are the same computation the app displays on screen; the expert layers (special points, Sookshma, Yogini and Chara dasha, extended yogas and doshas, the full gochara picture) are computed for this export by the same engine.",
     "",
     ...birthDetails(input),
     "---",
@@ -1002,6 +1373,9 @@ export function buildMarkdownReport(input: MarkdownReportInput): string {
     "---",
     "",
     ...planetaryPositions(input),
+    "---",
+    "",
+    ...specialPointsSection(input),
     "---",
     "",
     ...aspectsSection(input),
@@ -1034,10 +1408,16 @@ export function buildMarkdownReport(input: MarkdownReportInput): string {
     ...dashaSection(input),
     "---",
     "",
+    ...yoginiSection(input),
+    "---",
+    "",
+    ...charaSection(input),
+    "---",
+    "",
     ...transitSection(input),
   ];
 
-  let nextSection = 17;
+  let nextSection = 20;
   if (input.speculation) {
     lines.push("---", "", ...speculationSection(input.speculation, nextSection));
     nextSection += 1;

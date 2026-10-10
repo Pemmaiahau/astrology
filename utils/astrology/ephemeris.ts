@@ -35,6 +35,17 @@ export function tropicalLongitude(id: PlanetId, date: Date, nodeMode: NodeMode =
   }
 }
 
+/**
+ * Geocentric ecliptic latitude (degrees, + = north) of a tara graha — the
+ * input the Surya Siddhanta graha yuddha rule needs. Undefined for the Sun
+ * (always ~0), the Moon and the nodes, which never fight a planetary war.
+ */
+export function eclipticLatitude(id: PlanetId, date: Date): number | undefined {
+  const body = BODY_MAP[id];
+  if (!body) return undefined;
+  return Astronomy.Ecliptic(Astronomy.GeoVector(body, date, true)).elat;
+}
+
 /** Mean ascending lunar node (tropical), Meeus polynomial. */
 export function meanLunarNode(date: Date): number {
   const T = centuriesFromJ2000(date);

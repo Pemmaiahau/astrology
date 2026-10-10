@@ -1,3 +1,4 @@
+import { buildConfirmContext, confirmWindow } from "@/utils/astrology/dashaConfirm";
 import { aspectedSigns, aspectsOnHouse, naturalBenefics } from "@/utils/astrology/aspects";
 import type { AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
 import {
@@ -138,6 +139,8 @@ export interface ActivationWindow {
   end: Date;
   reason: string;
   grade: "strong" | "moderate";
+  /** Independent dasha systems agreeing with the window ("Yogini", "Chara"). */
+  confirmedBy: string[];
 }
 
 export interface LifeAreaReport {
@@ -226,6 +229,7 @@ export function buildLifeAreaReports(
   const benefics = naturalBenefics(chart);
   const roles = FUNCTIONAL_ROLES[lagna];
   const hasDasha = Boolean(dashaTree && chart.birthUtc);
+  const confirmCtx = hasDasha ? buildConfirmContext(chart) : null;
 
   return AREA_CONFIGS.map((cfg) => {
     const houses: AreaHouseReading[] = [];
@@ -402,12 +406,17 @@ export function buildLifeAreaReports(
           const parts: string[] = [];
           if (mdReason) parts.push(`${PLANET_NAMES[md.lord]}: ${mdReason}`);
           if (adReason) parts.push(`${PLANET_NAMES[ad.lord]}: ${adReason}`);
+          // A window is graded strong only when both dasha lords connect AND
+          // an independent system (Yogini or Chara dasha) agrees.
+          const confirm = confirmCtx ? confirmWindow(confirmCtx, ad.start, ad.end, cfg.primary, cfg.karakas) : null;
+          const confirmedBy = confirm ? [...(confirm.yogini ? ["Yogini"] : []), ...(confirm.chara ? ["Chara"] : [])] : [];
           windows.push({
             label: `${PLANET_NAMES[md.lord]}–${PLANET_NAMES[ad.lord]}`,
             start: ad.start,
             end: ad.end,
             reason: parts.join(" · "),
-            grade: mdReason && adReason ? "strong" : "moderate",
+            grade: mdReason && adReason && confirmedBy.length > 0 ? "strong" : "moderate",
+            confirmedBy,
           });
           if (windows.length >= 8) break;
         }

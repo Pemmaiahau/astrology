@@ -67,7 +67,12 @@ export default function SectionCard({
           <ChevronRight className="h-4 w-4 shrink-0 text-fg-subtle" />
         )}
         <Icon className="h-4 w-4 shrink-0 text-primary" />
-        <span className="flex-1 font-serif text-base font-bold text-heading">{title}</span>
+        <span className="flex-1">
+          <span className="block font-serif text-base font-bold text-heading">{title}</span>
+          {headline && !open && (
+            <span className="mt-0.5 block text-xs font-medium leading-snug text-heading-2">{headline}</span>
+          )}
+        </span>
         {verdict && (
           <span
             className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset ${VERDICT_STYLE[verdict]}`}
@@ -90,7 +95,7 @@ export default function SectionCard({
       </button>
       {open && (
         <div className="space-y-4 px-4 pb-4">
-          {headline && <p className="text-sm font-medium italic text-heading-2">{headline}</p>}
+          {headline && <p className="text-sm font-medium text-heading-2">{headline}</p>}
           {everOpened ? children : null}
         </div>
       )}

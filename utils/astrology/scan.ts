@@ -1,3 +1,4 @@
+import { buildConfirmContext, confirmWindow } from "./dashaConfirm";
 import { aspectedSigns } from "./aspects";
 import type { AshtakavargaResult } from "./ashtakavarga";
 import { getAyanamsha } from "./ayanamsha";
@@ -296,6 +297,8 @@ export interface ActivationWindow {
   phase: "past" | "current" | "future";
   /** The agePriorAt value at the window midpoint, when supplied. */
   agePrior?: number;
+  /** Which independent dasha systems (beyond Vimshottari) agree on the window. */
+  confirmedBy: ("yogini" | "chara")[];
   reasons: WindowReason[];
 }
 
@@ -378,6 +381,8 @@ export function findActivationWindows(
     targetSigns.some((s) => doubleTransitOnSign(s, juSignAt(t).sign, saSignAt(t).sign));
 
   const windows: ActivationWindow[] = [];
+  // Yogini and Chara dasha, built once per scan, cross-check every window.
+  const confirmCtx = buildConfirmContext(chart);
   const maha = periodsOverlapping(tree, 1, from, to);
   for (const md of maha) {
     const mahaReasons = connectionReasons(chart, md.lord, criteria);
@@ -432,6 +437,16 @@ export function findActivationWindows(
         }
       }
 
+      // Independent dasha systems: an event is firmest when Yogini and Chara
+      // dasha point at the same stretch as Vimshottari (see dashaConfirm.ts).
+      let confirmedBy: ActivationWindow["confirmedBy"] = [];
+      if (confirmCtx) {
+        const c = confirmWindow(confirmCtx, start, end, criteria.houses, criteria.karakas ?? []);
+        score += c.weight;
+        reasons.push(...c.reasons);
+        confirmedBy = [...(c.yogini ? ["yogini" as const] : []), ...(c.chara ? ["chara" as const] : [])];
+      }
+
       // Age prior: how commonly this kind of event happens at this stage of a
       // life. Supplied by the caller (see `ageBands.ts`) so this module holds
       // no domain tables of its own.
@@ -471,6 +486,7 @@ export function findActivationWindows(
         doubleTransit: hasDouble,
         phase,
         agePrior,
+        confirmedBy,
         reasons,
       });
     }

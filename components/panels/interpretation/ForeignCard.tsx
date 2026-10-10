@@ -1,5 +1,7 @@
 "use client";
 
+import BriefView, { FullReasoning } from "./BriefView";
+import { briefOfSection } from "@/data/interpretations/brief";
 import { Plane } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChart } from "@/components/context/ChartContext";
@@ -31,6 +33,7 @@ export default function ForeignCard() {
   const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
+  const brief = briefOfSection(report, timing);
 
   return (
     <SectionCard
@@ -41,6 +44,8 @@ export default function ForeignCard() {
       verdict={report.verdict}
       confidence={report.confidence}
     >
+      <BriefView brief={brief} topTitle="Most likely form of foreign connection" />
+      <FullReasoning>
       {report.blocks.map((b) => (
         <Section key={b.heading} title={b.heading}>
           {b.paragraphs.map((p, i) => (
@@ -51,6 +56,7 @@ export default function ForeignCard() {
           {b.items && <RankedList items={b.items} />}
         </Section>
       ))}
+      </FullReasoning>
 
       <Section title="When foreign doors open">
         <BandNote

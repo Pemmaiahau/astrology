@@ -34,7 +34,7 @@ import { DIGNITY_INLINE, DIGNITY_PLAIN, ordinal } from "./synthesis";
  */
 
 /** Rising sign → bodily bearing and outward temperament. */
-const LAGNA_TEMPERAMENT: string[] = [
+export const LAGNA_TEMPERAMENT: string[] = [
   "direct, competitive and quick to start — a pioneer's bearing that would rather act and correct than wait and be certain. Physical courage is real; patience is the lesson of the life.",
   "steady, sensual and immovable once settled, built for accumulation and endurance rather than speed. Comfort is sought sincerely and change resisted instinctively.",
   "quick, curious and verbally agile, sampling widely and committing late. Versatility is the gift; depth is a choice you have to keep making deliberately.",
@@ -50,7 +50,7 @@ const LAGNA_TEMPERAMENT: string[] = [
 ];
 
 /** Moon sign → the mind's habitual weather. */
-const MOON_MIND: string[] = [
+export const MOON_MIND: string[] = [
   "reacts before it deliberates — fast, hot and honest about it. Emotions arrive at full strength and clear just as quickly.",
   "is steady, sensory and slow to disturb; once settled on something it does not let go. Comfort and routine are genuine emotional needs here, not indulgences.",
   "is restless and verbal, processing feeling by talking about it. Moods turn over quickly and are rarely as serious as they sound.",
@@ -66,7 +66,7 @@ const MOON_MIND: string[] = [
 ];
 
 /** Sun sign → the shape of the will and the core self. */
-const SUN_CORE: string[] = [
+export const SUN_CORE: string[] = [
   "pioneering and self-starting: your identity is built on being first and being brave.",
   "patient and acquisitive: your identity rests on what has been built and held.",
   "curious and communicative: your identity rests on knowing things and saying them well.",

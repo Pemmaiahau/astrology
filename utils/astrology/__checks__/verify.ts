@@ -58,6 +58,25 @@ import {
   CHOGHADIYA_MEANING, computeDayParts, computeLimbTimings, karanaNameOfHalf, nightKaalas,
 } from "../dayParts";
 import { computePanchang } from "../panchang";
+import { SIGN_LORDS as SIGN_LORDS_V, EXALTATION as EXALT_V, OWN_SIGNS as OWN_V, MOOLATRIKONA as MT_V, SHADBALA_PLANETS } from "../constants";
+import { contributesBindu } from "../ashtakavarga";
+import { charaDasha, charaDashaYears } from "../charaDasha";
+import { activeDashaAt, subPeriodsOf } from "../dasha";
+import { detectExtendedYogas } from "../extendedYogas";
+import { rashiDrishti } from "../jaimini";
+import { computeSpecialPoints } from "../specialPoints";
+import { yoginiDasha } from "../yogini";
+import { buildExpertLayers } from "../../export/expertLayers";
+import { buildMarkdownReport } from "../../export/markdownReport";
+import { buildReading as buildReading14, buildReadingContext as buildReadingContext14 } from "../../../data/interpretations/reading";
+import { compactPoint as compactPoint13, stripGlosses as stripGlosses13 } from "../../../data/interpretations/brief";
+import { buildConfirmContext as buildConfirmContext13, confirmWindow as confirmWindow13 } from "../dashaConfirm";
+import { briefOfSection as briefOfSection13, decisive as decisive13, oneSentence as oneSentence13 } from "../../../data/interpretations/brief";
+import { buildYearForecast as buildYearForecast13 } from "../../../data/interpretations/yearForecast";
+import { FUNCTIONAL_ROLES as FUNCTIONAL_ROLES_12, marakaPlanets } from "../../../data/interpretations/lordships";
+import { checkMangalDosha } from "../../../data/interpretations/marriage";
+import { DIGNITY_LABELS as DIGNITY_LABELS_12 } from "../states";
+import { baladi, computeAvasthas, deeptadi, jagradadi } from "../avasthas";
 import { interpretFullChart } from "../../../data/interpretations/synthesis";
 import { buildLifeAreaReports } from "../../../data/interpretations/lifeAreas";
 import { AREA_OPTIONS, AREA_VARGA } from "../../../data/interpretations/lifeAreaOptions";
@@ -140,7 +159,7 @@ console.log("\n=== Phase 1A: dignity refactor + ephemeris helpers ===");
   check("Sun in Libra is debilitated", dignityInSign("Su", 6, 10, noSigns) === "debilitated");
   check("Sun in Leo 5° is moolatrikona", dignityInSign("Su", 4, 5, noSigns) === "moolatrikona");
   check("Sun in Leo 25° is own", dignityInSign("Su", 4, 25, noSigns) === "own");
-  check("Moon in Taurus is exalted", dignityInSign("Mo", 1, 10, noSigns) === "exalted");
+  check("Moon in Taurus 2° is exalted", dignityInSign("Mo", 1, 2, noSigns) === "exalted");
   check("Jupiter in Capricorn is debilitated", dignityInSign("Ju", 9, 10, noSigns) === "debilitated");
   check("Mars in Aries 5° is moolatrikona", dignityInSign("Ma", 0, 5, noSigns) === "moolatrikona");
   check("Mars in Aries 20° is own", dignityInSign("Ma", 0, 20, noSigns) === "own");
@@ -3261,6 +3280,626 @@ console.log("\n=== Phase 6: birth time rectification ===");
     check("The rectify API rejects a birth date outside the ayanamsha window", bad.ok === false);
     const good = validateRectifyRequest(mkReq("1990-01-24"));
     check("...and still accepts a modern one", good.ok === true);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 11: expert-export layer (2026-10) — dignity bands, varga temporal
+// friendship, Jaimini co-lords/padas/rashi drishti, Neechabhanga and
+// mutual-aspect sambandha, Sookshma, Yogini, Chara dasha, special points,
+// extended yogas, Prastara bindus, and the Markdown export end to end.
+// Expected values are derived by hand from the classical rule, not by
+// re-running the implementation.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 11: expert export layers ===");
+  const noSigns: Partial<Record<PlanetId, number>> = {};
+
+  // -- Moon/Mercury: exaltation band, then moolatrikona (and own for Mercury)
+  check("Moon in Taurus 2° is exalted", dignityInSign("Mo", 1, 2, noSigns) === "exalted");
+  check("Moon in Taurus 10° is moolatrikona", dignityInSign("Mo", 1, 10, noSigns) === "moolatrikona");
+  check("Mercury in Virgo 10° is exalted", dignityInSign("Me", 5, 10, noSigns) === "exalted");
+  check("Mercury in Virgo 17° is moolatrikona", dignityInSign("Me", 5, 17, noSigns) === "moolatrikona");
+  check("Mercury in Virgo 25° is own", dignityInSign("Me", 5, 25, noSigns) === "own");
+  check("Sign-level (no degree): Moon in Taurus stays exalted", dignityInSign("Mo", 1, undefined, noSigns) === "exalted");
+
+  // -- Varga dignity: temporal friendship counted from the RASHI chart
+  {
+    const vs = computeVargaSet(chart);
+    const rashi: Partial<Record<PlanetId, number>> = {};
+    for (const p of chart.planets) rashi[p.id] = p.sign;
+    const ok = vs.charts.D9.positions.every((vp) => {
+      const p = chart.planets.find((q) => q.id === vp.id)!;
+      const lord = SIGN_LORDS_V[vp.sign];
+      const ex = EXALT_V[vp.id];
+      if (ex && ex.sign === vp.sign) return vp.dignity === "exalted";
+      if (ex && (ex.sign + 6) % 12 === vp.sign) return vp.dignity === "debilitated";
+      if (lord === vp.id || OWN_V[vp.id].includes(vp.sign) || MT_V[vp.id]?.sign === vp.sign) return true;
+      const score = naturalRelation(vp.id, lord) + temporalRelation(p.sign, rashi[lord]!);
+      const want = score >= 2 ? "greatFriend" : score === 1 ? "friend" : score === 0 ? "neutral" : score === -1 ? "enemy" : "greatEnemy";
+      return vp.dignity === want;
+    });
+    check("D9 compound dignity uses the planet's and dispositor's rashi signs for tatkalika", ok);
+  }
+
+  const mk = (lagnaSign: number, pl: [PlanetId, number, number][]) =>
+    computeManualChart(
+      {
+        lagnaSign,
+        ascDeg: 15,
+        planets: pl.map(([id, house, deg]) => ({ id, house, deg, retro: id === "Ra" || id === "Ke" })),
+        anchor: { dateISO: "", time: "", place: null },
+      },
+      "lahiri"
+    );
+
+  // -- Arudha with co-lords
+  {
+    // Scorpio Lagna, Mars in Scorpio, Ketu in Pisces: one co-lord sits in the
+    // sign, so count to the other (Ketu): Scorpio→Pisces = 5, Pisces+4 = Cancer.
+    const c1 = mk(7, [["Su", 2, 5], ["Mo", 3, 5], ["Ma", 1, 10], ["Me", 2, 8], ["Ju", 4, 5], ["Ve", 3, 9], ["Sa", 6, 5], ["Ra", 11, 4], ["Ke", 5, 4]]);
+    check("Arudha: Scorpio Lagna, Mars in it, Ketu in Pisces → A1 Cancer", computeJaimini(c1).arudhaLagna === 3,
+      `got ${computeJaimini(c1).arudhaLagna}`);
+    // Aquarius Lagna, Saturn alone in Aries, Rahu in Gemini with Mars and
+    // Venus: Rahu has more company → Aquarius→Gemini = 5, Gemini+4 = Libra.
+    const c2 = mk(10, [["Su", 2, 5], ["Mo", 7, 5], ["Ma", 5, 10], ["Me", 2, 8], ["Ju", 9, 5], ["Ve", 5, 9], ["Sa", 3, 5], ["Ra", 5, 4], ["Ke", 11, 4]]);
+    check("Arudha: Aquarius Lagna, Rahu conjoined (stronger) → A1 Libra", computeJaimini(c2).arudhaLagna === 6,
+      `got ${computeJaimini(c2).arudhaLagna}`);
+    const j = computeJaimini(chart);
+    check("Padas: A1 is the Arudha Lagna and A12 the Upapada", j.padas.length === 12 && j.padas[0] === j.arudhaLagna && j.padas[11] === j.upapada);
+  }
+
+  // -- Rashi drishti
+  check("Rashi drishti: Aries → Leo, Scorpio, Aquarius", JSON.stringify(rashiDrishti(0)) === JSON.stringify([4, 7, 10]));
+  check("Rashi drishti: Taurus → Cancer, Libra, Capricorn", JSON.stringify(rashiDrishti(1)) === JSON.stringify([3, 6, 9]));
+  check("Rashi drishti: Gemini → Virgo, Sagittarius, Pisces", JSON.stringify(rashiDrishti(2)) === JSON.stringify([5, 8, 11]));
+  check("Rashi drishti is mutual for every sign pair",
+    Array.from({ length: 12 }, (_, s) => s).every((s) => rashiDrishti(s).every((t) => rashiDrishti(t).includes(s))));
+
+  // -- Neechabhanga: the two new conditions
+  {
+    // Aries Lagna; Sun debilitated in Libra (7th); dispositor Venus in Gemini
+    // (3rd, not a kendra from Lagna or from the Moon in Taurus); Saturn in
+    // Virgo (6th — not a kendra from either); Mars, lord of Aries where the
+    // Sun exalts, in Capricorn (10th) → cancellation.
+    const c = mk(0, [["Su", 7, 10], ["Mo", 2, 10], ["Ma", 10, 10], ["Me", 6, 20], ["Ju", 12, 5], ["Ve", 3, 9], ["Sa", 6, 5], ["Ra", 9, 4], ["Ke", 3, 4]]);
+    const nb = detectYogas(c).find((y) => y.key === "nbrj-Su");
+    check("Neechabhanga via the lord of the exaltation sign in a kendra", Boolean(nb && nb.description.includes("lord of its exaltation sign, Mars")),
+      nb?.description ?? "not detected");
+    // Sun at Libra 21° falls in the Aries navamsa (Libra's 7th pada) → exalted in D9.
+    const c2 = mk(0, [["Su", 7, 21], ["Mo", 2, 10], ["Ma", 3, 10], ["Me", 6, 20], ["Ju", 12, 5], ["Ve", 3, 9], ["Sa", 6, 5], ["Ra", 9, 4], ["Ke", 3, 4]]);
+    const nb2 = detectYogas(c2).find((y) => y.key === "nbrj-Su");
+    check("Neechabhanga via exaltation in the Navamsa", Boolean(nb2 && nb2.description.includes("exalted in the Navamsa")), nb2?.description ?? "not detected");
+  }
+
+  // -- Raja yoga through a special-aspect mutual drishti
+  {
+    // Cancer Lagna; Saturn (7th lord, a kendra) in Taurus (11th), Mars (5th
+    // lord, a trikona) in Aquarius (8th): Saturn's 10th aspect falls on
+    // Aquarius and Mars's 4th on Taurus — mutual, but not 7th-apart, not
+    // conjoined and not an exchange, so only the special-aspect rule finds it.
+    const c = mk(3, [["Su", 1, 10], ["Mo", 2, 10], ["Ma", 8, 10], ["Me", 1, 20], ["Ju", 3, 5], ["Ve", 4, 9], ["Sa", 11, 5], ["Ra", 6, 4], ["Ke", 12, 4]]);
+    const ry = detectYogas(c).find((y) => y.key === "raja-Ma-Sa");
+    check("Raja yoga detected through Saturn-10th / Mars-4th mutual aspect", Boolean(ry && ry.description.includes("mutual aspect")), ry?.description ?? "not detected");
+  }
+
+  // -- Sookshma
+  {
+    const tree = vimshottariTree(chart.planets.find((p) => p.id === "Mo")!.longitude, chart.birthUtc!);
+    const pd = tree[2].children![3].children![4];
+    const ss = subPeriodsOf(pd);
+    const span = ss[ss.length - 1].end.getTime() - ss[0].start.getTime();
+    check("Sookshma: nine periods from the Pratyantar lord, tiling it exactly",
+      ss.length === 9 && ss[0].lord === pd.lord && ss.every((s) => s.level === 4) &&
+      ss[0].start.getTime() === pd.start.getTime() && Math.abs(span - (pd.end.getTime() - pd.start.getTime())) < 2);
+  }
+
+  // -- Yogini
+  {
+    const b = new Date("2000-01-01T00:00:00Z");
+    check("Yogini: Ardra opens with Mangala", yoginiDasha(5 * (360 / 27) + 0.0001, b)[0].yogini.name === "Mangala");
+    check("Yogini: Ashwini opens with Bhramari", yoginiDasha(0.0001, b)[0].yogini.name === "Bhramari");
+    const y = yoginiDasha(0, b);
+    const YR = 365.25 * 86400000;
+    check("Yogini: nakshatra start → full first dasha from birth (Bhramari 4y)",
+      y[0].start.getTime() === b.getTime() && Math.abs((y[0].end.getTime() - b.getTime()) / YR - 4) < 1e-9);
+    check("Yogini: eight dashas make a 36-year cycle",
+      Math.abs((y[8].start.getTime() - y[0].start.getTime()) / YR - 36) < 1e-9);
+    const md = y[3];
+    check("Yogini: antardashas start with the MD's yogini and tile it",
+      md.children![0].yogini.name === md.yogini.name &&
+      Math.abs(md.children![7].end.getTime() - md.end.getTime()) < 2);
+    check("Yogini covers 120 years after birth", y[y.length - 1].end.getTime() >= b.getTime() + 120 * YR);
+  }
+
+  // -- Chara dasha (K.N. Rao)
+  {
+    // Aries Lagna: 9th = Sagittarius (savya) → zodiacal order.
+    // Aries (savya): Mars in Leo → count 5 → 4 years.
+    // Taurus (savya): Venus exalted in Pisces → count 11 → 10 + 1 = 11 years.
+    // Cancer (apasavya): Moon exalted at 1° Taurus → reverse count Cancer,
+    // Gemini, Taurus = 3 → 2 + 1 = 3.
+    const c = mk(0, [["Su", 7, 10], ["Mo", 2, 1], ["Ma", 5, 10], ["Me", 6, 20], ["Ju", 10, 5], ["Ve", 12, 9], ["Sa", 6, 5], ["Ra", 9, 4], ["Ke", 3, 4]]);
+    check("Chara: Aries with Mars in Leo → 4 years", charaDashaYears(c, 0).years === 4, `got ${charaDashaYears(c, 0).years}`);
+    check("Chara: Taurus with Venus exalted in Pisces → 11 years", charaDashaYears(c, 1).years === 11, `got ${charaDashaYears(c, 1).years}`);
+    check("Chara: Cancer (reverse count) with Moon exalted in Taurus → 3 years", charaDashaYears(c, 3).years === 3, `got ${charaDashaYears(c, 3).years}`);
+    const cd = charaDasha(c, new Date("2000-01-01T00:00:00Z"));
+    check("Chara: sequence starts at the Lagna and runs zodiacally here", cd[0].sign === 0 && cd[1].sign === 1 && cd[2].sign === 2);
+    check("Chara: the dasha sign's own antardasha comes last", cd.every((p) => p.antardashas[11].sign === p.sign));
+    check("Chara: second cycle = 12 − first", cd.filter((p) => p.cycle === 2).every((p) => {
+      const first = cd.find((q) => q.cycle === 1 && q.sign === p.sign);
+      return !first || first.years + p.years === 12;
+    }));
+  }
+
+  // -- Special points (canonical chart, hand-derived)
+  {
+    const sp = computeSpecialPoints(chart, "lahiri");
+    check("Special points compute for the canonical chart", sp !== null);
+    if (sp) {
+      const sun = chart.planets.find((p) => p.id === "Su")!;
+      const at = (k: string) => sp.points.find((p) => p.key === k)!;
+      const sepOk = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180) < 1e-6;
+      check("Upaketu = Sun − 30°", sepOk(at("upaketu").longitude, sun.longitude - 30));
+      check("Vyatipata + Dhuma = 360°", sepOk(at("vyatipata").longitude + at("dhuma").longitude, 0));
+      // Aries Lagna → 9th Sagittarius, Jupiter 10 kalas; Moon Sagittarius →
+      // 9th Leo, Sun 30 kalas; 40 mod 12 = 4 → 4th from Sagittarius = Pisces.
+      check("Indu Lagna (canonical) = Pisces", sp.induLagna.sign === 11, `got ${sp.induLagna.sign}`);
+      // Sun 280.3129 + Moon 250.2429 + 93.3333 = 263.889 → Purva Ashadha (Venus), sign Sagittarius (Jupiter);
+      // +186.6667 = 90.556 → Punarvasu (Jupiter).
+      check("Yogi = Venus, duplicate Yogi = Jupiter, Avayogi = Jupiter",
+        sp.yogi.yogi === "Ve" && sp.yogi.duplicateYogi === "Ju" && sp.yogi.avayogi === "Ju",
+        `${sp.yogi.yogi}/${sp.yogi.duplicateYogi}/${sp.yogi.avayogi}`);
+      // Rahu 293.5106, Moon 250.2429 → midpoint of the Rahu→Moon arc = 91.876.
+      check("Bhrigu Bindu (canonical) ≈ 91.88°", Math.abs(at("bhrigu-bindu").longitude - 91.8768) < 0.01, at("bhrigu-bindu").longitude.toFixed(4));
+      const parts = computeDayParts(chart.birthUtc!, chart.lat!, chart.lon!, chart.meta.timezone)!;
+      const mins = (chart.birthUtc!.getTime() - parts.sunrise.getTime()) / 60000;
+      check("Ghati Lagna advances 5× as fast as Bhava Lagna from sunrise",
+        sepOk(at("ghati-lagna").longitude - at("bhava-lagna").longitude, (mins / 24) * 30 - (mins / 120) * 30));
+    }
+  }
+
+  // -- Prastara: per-contributor bindus sum back to the BAV grid
+  {
+    const signs: Partial<Record<PlanetId, number>> = {};
+    for (const p of chart.planets) signs[p.id] = p.sign;
+    const av = computeAshtakavarga(signs, chart.ascendant.sign);
+    const contributors: (PlanetId | "As")[] = ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "As"];
+    const ok = contributors.every((target) =>
+      Array.from({ length: 12 }, (_, s) => s).every((s) =>
+        contributors.filter((c) => contributesBindu(target, c, s, signs, chart.ascendant.sign)).length === av.bav[target][s]));
+    check("Prastara bindus by contributor sum to every BAV cell", ok);
+  }
+
+  // -- Extended yogas/doshas
+  {
+    // Aries Lagna; Jupiter + Rahu in Cancer (Guru-Chandala); Moon at 28° Pisces
+    // (Gandanta); Saturn 12th & Mars 2nd from Lagna (Papa Kartari on Lagna);
+    // Jupiter 12th and Mercury 2nd from the Sun in Leo (Ubhayachari).
+    const c = mk(0, [["Su", 5, 10], ["Mo", 12, 28], ["Ma", 2, 10], ["Me", 6, 20], ["Ju", 4, 5], ["Ve", 7, 9], ["Sa", 12, 5], ["Ra", 4, 4], ["Ke", 10, 4]]);
+    const ex = detectExtendedYogas(c, computeJaimini(c));
+    const has = (k: string) => ex.some((x) => x.key === k);
+    check("Extended: Guru-Chandala (Jupiter + Rahu)", has("guru-chandala-ra"));
+    check("Extended: Moon at 28° Pisces is Gandanta", has("gandanta-Mo"));
+    check("Extended: Saturn 12th + Mars 2nd → Papa Kartari on Lagna", has("papa-kartari-lagna"));
+    check("Extended: Jupiter 12th + Mercury 2nd from the Sun → Ubhayachari (not Vesi)", has("ubhayachari") && !has("vesi"));
+    check("Extended: Moon with Saturn in Pisces → Vish", has("vish"));
+  }
+
+  // -- The Markdown export end to end (canonical chart, pinned date)
+  {
+    const NOW8 = new Date("2026-06-15T00:00:00Z");
+    const signs: Partial<Record<PlanetId, number>> = {};
+    for (const p of chart.planets) signs[p.id] = p.sign;
+    const av = computeAshtakavarga(signs, chart.ascendant.sign);
+    const tree = vimshottariTree(chart.planets.find((p) => p.id === "Mo")!.longitude, chart.birthUtc!);
+    const active = activeDashaAt(tree, NOW8);
+    const jai = computeJaimini(chart);
+    const sb = computeShadbala(chart);
+    const tr = currentTransits(chart, "lahiri", NOW8);
+    const expert = buildExpertLayers({ chart, ayanamsha: "lahiri", nodeMode: "mean", now: NOW8, dashaTree: tree, activeDasha: active, ashtakavarga: av, jaimini: jai });
+    check("Transit detail covers all nine grahas", expert.transit!.rows.length === 9);
+    check("Transit contacts are all within the 3° orb", expert.transit!.contacts.every((x) => x.orb <= 3));
+    check("Current Sookshma lies inside the running Pratyantar",
+      Boolean(expert.currentSookshma && active && expert.currentSookshma.start >= active.pratyantar.start && expert.currentSookshma.end <= active.pratyantar.end));
+    check("Dasha balance is positive and shorter than the opening Mahadasha",
+      expert.dashaBalance !== null && expert.dashaBalance.years > 0 &&
+      expert.dashaBalance.years * 365.25 * 86400000 < tree[0].end.getTime() - tree[0].start.getTime());
+    const base = {
+      chart, ayanamsha: "lahiri" as const, nodeMode: "mean" as const, dashaTree: tree, activeDasha: active, transits: tr,
+      sadeSati: sadeSatiPhase(tr), ashtakavarga: av, yogas: detectYogas(chart), vargas: computeVargaSet(chart),
+      jaimini: jai, shadbala: sb, bhavaBala: sb ? computeBhavaBala(chart, sb) : null,
+      speculation: null, intimacy: null, generatedAt: NOW8,
+    };
+    const md = buildMarkdownReport({ ...base, expert });
+    const numbers = [...md.matchAll(/^## (\d+)\. /gm)].map((m) => Number(m[1]));
+    check("Export: sections are numbered 1…19 in order", JSON.stringify(numbers) === JSON.stringify(Array.from({ length: 19 }, (_, i) => i + 1)),
+      numbers.join(","));
+    check("Export: no undefined / NaN leaks", !/undefined|NaN/.test(md));
+    for (const needle of ["Balance at birth", "Sookshma", "Yogini Dasha", "Chara Dasha", "Gulika", "Hora Lagna", "Indu Lagna",
+      "Arudha padas A1–A12", "Rashi drishti", "Shashtiamsa deity", "Tara Bala", "Sade Sati periods", "Kakshya", "Retrograde periods"]) {
+      check(`Export contains "${needle}"`, md.includes(needle));
+    }
+    const noExpert = buildMarkdownReport(base);
+    check("Export without expert layers degrades with stated notes, no leaks", !/undefined|NaN/.test(noExpert) && noExpert.includes("could not be computed"));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 12: audit fixes A1–A9 and avasthas (2026-10). Expected values are
+// derived by hand from the stated rule.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 12: audit fixes A1–A9 + avasthas ===");
+  const mk12 = (lagnaSign: number, pl: [PlanetId, number, number][]) =>
+    computeManualChart(
+      {
+        lagnaSign,
+        ascDeg: 15,
+        planets: pl.map(([id, house, deg]) => ({ id, house, deg, retro: id === "Ra" || id === "Ke" })),
+        anchor: { dateISO: "", time: "", place: null },
+      },
+      "lahiri"
+    );
+
+  // -- A1 Mangal Dosha: exemptions are per reference; Venus is a reference
+  {
+    // Capricorn Lagna; Mars in Cancer (7th) is exempt from the Lagna, but it
+    // is the 4th from the Moon in Aries, where Cancer is not exempt. Venus in
+    // Taurus (Mars 3rd from it), Jupiter in Taurus (no aspect on Cancer).
+    const c = mk12(9, [["Su", 2, 10], ["Mo", 4, 10], ["Ma", 7, 10], ["Me", 2, 20], ["Ju", 5, 5], ["Ve", 5, 9], ["Sa", 6, 5], ["Ra", 3, 4], ["Ke", 9, 4]]);
+    const m = checkMangalDosha(c);
+    check("Mangal: a Lagna exemption no longer cancels a dosha that also forms from the Moon",
+      m.present && m.fromLagna && m.fromMoon && m.effective, JSON.stringify({ e: m.effective, c: m.cancellations }));
+    // Aries Lagna; Mars in Gemini (3rd), Moon in Leo (Mars 11th from it),
+    // Venus in Sagittarius (Mars 7th from it), Jupiter in Aries (aspects
+    // Leo/Libra/Sagittarius, not Gemini).
+    const c2 = mk12(0, [["Su", 4, 10], ["Mo", 5, 10], ["Ma", 3, 10], ["Me", 4, 20], ["Ju", 1, 5], ["Ve", 9, 9], ["Sa", 6, 5], ["Ra", 2, 4], ["Ke", 8, 4]]);
+    const m2 = checkMangalDosha(c2);
+    check("Mangal: Mars in the 7th from Venus forms the dosha from Venus",
+      m2.present && m2.fromVenus && !m2.fromLagna && !m2.fromMoon);
+    check("Mangal: the text names the reference it forms from", m2.text.includes("from Venus"));
+  }
+
+  // -- A2 Budhaditya needs Mercury out of combustion
+  {
+    const base: [PlanetId, number, number][] = [["Su", 1, 5], ["Mo", 4, 10], ["Ma", 6, 10], ["Ju", 9, 5], ["Ve", 2, 9], ["Sa", 10, 5], ["Ra", 3, 4], ["Ke", 9, 4]];
+    const combustMe = mk12(0, [...base, ["Me", 1, 8]]);    // 3° from the Sun → combust
+    const clearMe = mk12(0, [...base, ["Me", 1, 25]]);     // 20° from the Sun → clear
+    check("Budhaditya: not credited when Mercury is combust", !detectYogas(combustMe).some((y) => y.key === "budhaditya"));
+    check("Budhaditya: credited when Mercury is clear of the Sun", detectYogas(clearMe).some((y) => y.key === "budhaditya"));
+  }
+
+  // -- A3 Gajakesari needs a sound Jupiter
+  {
+    // Moon in Aries (1st), Jupiter debilitated in Capricorn (10th = kendra from the Moon).
+    const c = mk12(0, [["Su", 5, 10], ["Mo", 1, 10], ["Ma", 6, 10], ["Me", 5, 20], ["Ju", 10, 5], ["Ve", 4, 9], ["Sa", 8, 5], ["Ra", 3, 4], ["Ke", 9, 4]]);
+    check("Gajakesari: not credited for a debilitated Jupiter", !detectYogas(c).some((y) => y.key === "gajakesari"));
+    // Jupiter exalted in Cancer (4th from the Moon in Aries).
+    const c2 = mk12(0, [["Su", 5, 10], ["Mo", 1, 10], ["Ma", 6, 10], ["Me", 5, 20], ["Ju", 4, 5], ["Ve", 2, 9], ["Sa", 8, 5], ["Ra", 3, 4], ["Ke", 9, 4]]);
+    check("Gajakesari: credited for an exalted Jupiter in a kendra from the Moon", detectYogas(c2).some((y) => y.key === "gajakesari"));
+  }
+
+  // -- A4 Amala uses chart-specific benefics
+  {
+    // Sun in Aries, Moon in Capricorn (270° ahead → waning) alone in the 10th from an Aries Lagna.
+    const c = mk12(0, [["Su", 1, 10], ["Mo", 10, 10], ["Ma", 6, 10], ["Me", 2, 20], ["Ju", 5, 5], ["Ve", 2, 9], ["Sa", 8, 5], ["Ra", 3, 4], ["Ke", 9, 4]]);
+    check("Amala: a waning Moon alone in the 10th does not form it", !detectYogas(c).some((y) => y.key === "amala-lagna"));
+  }
+
+  // -- A5 Cancer Lagna: Saturn malefic
+  check("Lordship: Saturn is malefic for Cancer Lagna", FUNCTIONAL_ROLES_12[3].malefics.includes("Sa") && !FUNCTIONAL_ROLES_12[3].neutrals.includes("Sa"));
+  check("Lordship: every Lagna classifies each of the seven planets exactly once", FUNCTIONAL_ROLES_12.every((r) =>
+    (["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa"] as PlanetId[]).every((id) =>
+      [r.benefics.includes(id), r.malefics.includes(id), r.neutrals.includes(id)].filter(Boolean).length === 1)));
+
+  // -- A6 Graha yuddha by latitude
+  {
+    const stub12 = (id: PlanetId, longitude: number, latitude?: number): PlanetPosition => ({
+      id, longitude, sign: Math.floor(longitude / 30), degInSign: longitude % 30,
+      house: 1, bhava: 1, nakshatra: 0, pada: 1, nakshatraLord: "Ke", nakshatraRelation: "neutral",
+      retrograde: false, combust: false, speed: 1, dignity: "neutral", latitude,
+    });
+    const ma = stub12("Ma", 100, -1.2);
+    const ve = stub12("Ve", 100.5, 2.1);
+    applyGrahaYuddha([ma, ve]);
+    check("Graha yuddha: the more northerly latitude wins even from ahead in longitude", ve.warWinner === true && ma.warWinner === false);
+    const ma2 = stub12("Ma", 100);
+    const ve2 = stub12("Ve", 100.5, 2.1);
+    applyGrahaYuddha([ma2, ve2]);
+    check("Graha yuddha: falls back to lower longitude when a latitude is missing", ma2.warWinner === true && ve2.warWinner === false);
+    const tara = chart.planets.filter((p) => ["Ma", "Me", "Ju", "Ve", "Sa"].includes(p.id));
+    check("Ephemeris charts carry latitudes for the five tara grahas",
+      tara.every((p) => typeof p.latitude === "number" && Math.abs(p.latitude) < 10) &&
+      chart.planets.filter((p) => ["Su", "Mo", "Ra", "Ke"].includes(p.id)).every((p) => p.latitude === undefined));
+  }
+
+  // -- A7 Bhava Bala components and Kendradi by bhava
+  {
+    const sb = computeShadbala(chart)!;
+    const bb = computeBhavaBala(chart, sb);
+    const sumOf = (label: string) => bb.reduce((a, b) => a + (b.factors.find((f) => f.label.startsWith(label))?.virupas ?? 0), 0);
+    // Canonical: Jupiter and Mercury +60 each, Saturn, Mars and the Sun −60 each → −60 overall.
+    check("Bhava Bala occupation totals +120 − 180 = −60 on the canonical chart", sumOf("Bhava Occupation") === -60, String(sumOf("Bhava Occupation")));
+    // Day birth (12:30): the six sirshodaya signs get 15 each → 90.
+    check("Bhava Bala rising-type totals 6 × 15 = 90 for the canonical day birth", sumOf("Bhava Day/Night") === 90, String(sumOf("Bhava Day/Night")));
+    const kendradiOk = SHADBALA_PLANETS.every((id) => {
+      const p = chart.planets.find((q) => q.id === id)!;
+      const want = (p.bhava - 1) % 3 === 0 ? 60 : (p.bhava - 1) % 3 === 1 ? 30 : 15;
+      return sb.planets[id].sthana.find((f) => f.label === "Kendradi")!.virupas === want;
+    });
+    check("Kendradi bala is counted by bhava", kendradiOk);
+  }
+
+  // -- A8 label
+  check("Exaltation label no longer claims Parama Ucha", DIGNITY_LABELS_12.exalted === "Exalted (Uchcha)");
+
+  // -- A9 marakas
+  {
+    // Canonical Aries Lagna: primary marakas Venus (2nd) and Venus (7th) → [Venus];
+    // the 12th lord Jupiter is secondary.
+    const mk = marakaPlanets(chart);
+    check("Marakas: Aries Lagna primary is Venus alone", JSON.stringify(mk.primary) === JSON.stringify(["Ve"]));
+    check("Marakas: the 12th lord (Jupiter) is a secondary maraka", mk.secondary.some((s) => s.id === "Ju" && s.reasons.includes("lord of the 12th")));
+    check("Marakas: a primary maraka is never repeated as secondary", mk.secondary.every((s) => !mk.primary.includes(s.id)));
+  }
+
+  // -- Avasthas
+  {
+    check("Baladi: Aries 3° is Bala", baladi(0, 3).state.startsWith("Bala"));
+    check("Baladi: Aries 15° is Yuva", baladi(0, 15).state.startsWith("Yuva"));
+    check("Baladi: Taurus 3° is Mrita (even signs reverse)", baladi(1, 3).state.startsWith("Mrita"));
+    check("Jagradadi: exalted is awake, debilitated asleep",
+      jagradadi("exalted").state.startsWith("Jagrat") && jagradadi("debilitated").state.startsWith("Sushupti"));
+    check("Deeptadi: combustion overrides dignity (Kopa)", deeptadi("exalted", true, false).state.startsWith("Kopa"));
+    check("Deeptadi: exalted and clear is Deepta", deeptadi("exalted", false, false).state.startsWith("Deepta"));
+    const av = computeAvasthas(chart);
+    check("Avasthas computed for all nine grahas with a Shayanadi state", av.length === 9 && av.every((a) => a.shayanadi !== null));
+    // Sun: Shravana = 22, serial 1, Capricorn 10.31° → 4th navamsa; Janma Mula = 19;
+    // 13 completed ghatis (birth 12:30, sunrise ≈ 07:14); Aries = 1.
+    // 22×1×4 + 19 + 13 + 1 = 121 → 121 mod 12 = 1 → Shayana.
+    const su = av.find((a) => a.id === "Su")!;
+    check("Shayanadi (canonical Sun) = 1, Shayana", su.shayanadi?.index === 1, String(su.shayanadi?.index));
+    // Canonical Jupiter in Gemini (great enemy) with Mercury aspecting from Sagittarius:
+    // Kshudhita by sign.
+    const ju = av.find((a) => a.id === "Ju")!;
+    check("Lajjitadi: Jupiter in a great enemy's sign is Kshudhita", ju.lajjitadi.some((s) => s.startsWith("Kshudhita")));
+    const md = buildMarkdownReport({
+      chart, ayanamsha: "lahiri", nodeMode: "mean", dashaTree: null, activeDasha: null, transits: null,
+      sadeSati: null, ashtakavarga: null, yogas: detectYogas(chart), vargas: null, jaimini: null,
+      shadbala: null, bhavaBala: null, speculation: null, intimacy: null,
+      expert: { dashaBalance: null, sookshma: [], currentSookshma: null, yogini: null, chara: null, special: null, transit: null, extendedYogas: [], avasthas: av },
+      generatedAt: new Date("2026-06-15T00:00:00Z"),
+    });
+    check("Export: Avasthas and Secondary marakas appear, no leaks",
+      md.includes("Avasthas (planetary states") && md.includes("Secondary marakas") && !/undefined|NaN/.test(md));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 13: precise-view layer and the MD-only conditions now feeding the
+// website (2026-10): Yogini/Chara cross-check, avasthas in strength, extended
+// yogas/doshas and Indu Lagna in the section builders, house verdict data,
+// year-forecast transit quality, and the brief selector.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 13: precise view + MD conditions on the website ===");
+  const signs13: Partial<Record<PlanetId, number>> = {};
+  for (const p of chart.planets) signs13[p.id] = p.sign;
+  const av13 = computeAshtakavarga(signs13, chart.ascendant.sign);
+  const tree13 = vimshottariTree(chart.planets.find((p) => p.id === "Mo")!.longitude, chart.birthUtc!);
+  const NOW13 = new Date("2026-06-15T00:00:00Z");
+
+  // -- Yogini/Chara cross-check
+  {
+    const ctx = buildConfirmContext13(chart)!;
+    let none = 0, some = 0;
+    for (const md of tree13) for (const ad of md.children ?? []) {
+      const c = confirmWindow13(ctx, ad.start, ad.end, [7], ["Ve"]);
+      if (c.yogini || c.chara) some++; else none++;
+      const expected = (c.yogini ? 1 : 0) + (c.chara ? 1 : 0);
+      if (expected === 0 && c.weight !== -10) throw new Error("unsupported window must weigh −10");
+    }
+    check("Cross-check discriminates: some periods confirmed, some not (canonical, 7th house)", none > 0 && some > 0, `${none} none / ${some} confirmed`);
+    const w = findActivationWindows(chart, tree13, "lahiri", av13, { houses: [7, 2], karakas: ["Ve"], relativeTo: NOW13 }, new Date("2010-01-01"), new Date("2040-01-01"));
+    check("Activation windows carry confirmedBy and a matching reason line",
+      w.length > 0 && w.every((x) => Array.isArray(x.confirmedBy) &&
+        (x.confirmedBy.length > 0) === x.reasons.some((r) => /Yogini dasha agrees|Chara dasha agrees/.test(r.text))));
+    const la = buildLifeAreaReports(chart, tree13, av13, detectYogas(chart), NOW13);
+    check("Life Areas: a window graded strong is always confirmed by Yogini or Chara",
+      la.every((a) => a.windows.every((x) => x.grade !== "strong" || x.confirmedBy.length > 0)));
+  }
+
+  // -- Avasthas inside the composite strength
+  {
+    const st = allStrengths(chart, av13);
+    // Canonical Venus at 1.70° Capricorn (even sign) is Mrita → −5.
+    check("Composite strength carries the Baladi avastha (Venus Mrita −5)",
+      st.Ve!.factors.some((f) => f.label.startsWith("Baladi avastha: Mrita") && f.delta === -5));
+    check("Nodes take no Baladi factor", !st.Ra!.factors.some((f) => f.label.startsWith("Baladi")));
+    check("Vikala, Kshudhita and Mudita are display-only (never scored)",
+      Object.values(st).every((s) => !s!.factors.some((f) => /Vikala|Kshudhita|Mudita/.test(f.label))));
+  }
+
+  // -- Extended yogas, doshas and Indu Lagna in the section builders
+  {
+    const vg = computeVargaSet(chart);
+    const jm = computeJaimini(chart);
+    const sb = computeShadbala(chart);
+    const st = allStrengths(chart, av13);
+    const ext = detectExtendedYogas(chart, jm);
+    const sp = computeSpecialPoints(chart, "lahiri");
+    const extras = { extended: ext, special: sp };
+    const career = buildCareerReport(chart, vg, jm, sb, st, detectYogas(chart), extras);
+    check("Career counts the Jaimini Raja Yoga (AK Saturn + AmK Mercury)",
+      career.blocks.some((b) => (b.items ?? []).some((it) => it.reasons.some((r) => r.text.startsWith("Jaimini Raja Yoga")))));
+    const wealth = buildWealthReport(chart, vg, st, detectYogas(chart), extras);
+    check("Wealth counts the Indu Lagna (canonical: Pisces)",
+      JSON.stringify(wealth).includes("Indu Lagna") && JSON.stringify(wealth).includes("Pisces"));
+    const cautions = buildCautionsReport(chart, st, sb, detectYogas(chart), tree13, NOW13, extras);
+    const names = cautions.cautions.map((c) => c.caution.text);
+    check("Cautions include the canonical Surya Grahan, Vish and Gandanta doshas, each with a counter-measure",
+      ["Surya Grahan", "Vish Dosha", "Gandanta"].every((n) => names.some((t) => t.includes(n))) &&
+      cautions.cautions.every((c) => c.counterMeasure.length > 20));
+    const without = buildCautionsReport(chart, st, sb, detectYogas(chart), tree13, NOW13);
+    check("Builders called without extras behave as before (no dosha cautions added)",
+      !without.cautions.some((c) => c.caution.text.includes("Vish Dosha")));
+  }
+
+  // -- House verdict data agrees with the convergence sentence
+  {
+    const houses = interpretFullChart(chart, allStrengths(chart, av13), {
+      vargas: computeVargaSet(chart), jaimini: computeJaimini(chart), shadbala: computeShadbala(chart),
+      bhavaBala: computeBhavaBala(chart, computeShadbala(chart)!), ashtakavarga: av13,
+    } as never);
+    const consistent = houses.every((h) => {
+      const line = h.depth.find((d) => d.startsWith("Convergence")) ?? "";
+      if (h.verdict.tone === "favourable") return line.includes("favourable way");
+      if (h.verdict.tone === "unfavourable") return line.includes("unfavourable way");
+      if (h.verdict.tone === "split") return line.includes("the measures split");
+      return line === "";
+    });
+    check("House verdict tone matches the convergence sentence for all 12 houses", consistent);
+  }
+
+  // -- Year forecast transit quality and Yogini/Chara labels
+  {
+    const yf = buildYearForecast13(chart, tree13, "lahiri", new Date(Date.UTC(2026, 0, 1)), new Date(Date.UTC(2027, 0, 1)));
+    check("Year forecast segments carry the Yogini/Chara label",
+      yf.timeline.length > 0 && yf.timeline.every((s) => /Yogini .*Chara /.test(s.conditional ?? "")));
+    check("Slow transits carry favourable/vedha flags and own bindus (nodes: null)",
+      yf.timeline.every((s) => s.transits.every((t) =>
+        typeof t.favourable === "boolean" && (["Ra", "Ke"].includes(t.id) ? t.bindus === null : typeof t.bindus === "number") &&
+        !(t.favourable && t.vedhaBy))));
+    check("Months carry the Yogini/Chara label", yf.months.every((m) => Boolean(m.conditional)));
+  }
+
+  // -- The brief selector
+  {
+    check("oneSentence keeps the first sentence", oneSentence13("First point here. Second point.") === "First point here.");
+    const long = "A".repeat(150) + " — " + "B".repeat(150) + ".";
+    check("oneSentence cuts a long sentence at its em-dash clause", oneSentence13(long) === "A".repeat(150) + ".");
+    const pts = decisive13([
+      { text: "Up big.", weight: 20 }, { text: "Up mid.", weight: 10 }, { text: "Up small.", weight: 5 },
+      { text: "Up tiny.", weight: 3 }, { text: "Up least.", weight: 2 }, { text: "Up last.", weight: 1 },
+      { text: "Down small.", weight: -1 },
+    ], 4);
+    check("decisive keeps both directions even when the opposing factor is the weakest",
+      pts.length === 4 && pts.some((p) => p.lean === "down") && pts[0].text === "Up big.");
+    const vg = computeVargaSet(chart);
+    const rep = buildCareerReport(chart, vg, computeJaimini(chart), computeShadbala(chart), allStrengths(chart, av13), detectYogas(chart));
+    const b = briefOfSection13(rep);
+    check("Career brief: ≤6 points, ≤3 top options, every point one short sentence",
+      b.points.length > 0 && b.points.length <= 6 && b.top.length > 0 && b.top.length <= 3 &&
+      b.points.every((p) => p.text.length <= 221));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 13b: brief text rules. The digest is now the default-visible reading,
+// so the rules that keep it faithful to the full text are pinned here.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 13b: brief text rules ===");
+  check("A paired aside is removed, not cut at",
+    compactPoint13("With the Moon in Sagittarius the mind needs room; feeling attaches itself to meaning, and confinement — physical or moral — is the real distress.") ===
+      "With the Moon in Sagittarius the mind needs room; feeling attaches itself to meaning, and confinement is the real distress.");
+  const list = "Working for you: Jupiter — in your 3rd house, strength 15; Sun — in your 10th house, strength 51.";
+  check("Dashes used as list separators are never spliced", compactPoint13(list) === list, compactPoint13(list));
+  check("A single tail gloss after a complete clause is dropped",
+    compactPoint13("Mercury rules your 3rd house and scores 53/100 for strength — this channel is as strong as the planet running it.") ===
+      "Mercury rules your 3rd house and scores 53/100 for strength.");
+  check("Inline glossary parentheticals are stripped",
+    stripGlosses13("Your rising sign (the 'Lagna' — the sign rising at birth) is Aries.") === "Your rising sign is Aries.");
+  check("Plain parentheticals without a gloss are kept",
+    stripGlosses13("Sun at 9.57 rupas (147% of its required minimum).") === "Sun at 9.57 rupas (147% of its required minimum).");
+}
+
+// ---------------------------------------------------------------------------
+// Phase 14: the chart reading (Parts 1–7). The reference is the user-supplied
+// sample reading of a Sagittarius-Lagna chart (reconstructed as 1986-04-11
+// 23:50 IST, Bengaluru — Sun and Moon match the sample to 0.009°). Each check
+// pins a conclusion that sample states, so the reading cannot drift away
+// from the expert reference without a failing check.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 14: chart reading (Parts 1–7) ===");
+  const mkReading = (input: AutoInputState, now: Date) => {
+    const c = computeAutoChart(input, "lahiri")!;
+    const sg: Partial<Record<PlanetId, number>> = {};
+    for (const p of c.planets) sg[p.id] = p.sign;
+    const av = computeAshtakavarga(sg, c.ascendant.sign);
+    const sb = computeShadbala(c);
+    const jm = computeJaimini(c);
+    const rc = buildReadingContext14({
+      chart: c, ayanamsha: "lahiri", now, vargas: computeVargaSet(c), jaimini: jm, shadbala: sb,
+      bhavaBala: sb ? computeBhavaBala(c, sb) : null, av, strengths: allStrengths(c, av), yogas: detectYogas(c),
+      extended: detectExtendedYogas(c, jm), special: computeSpecialPoints(c, "lahiri"),
+      dashaTree: c.birthUtc ? vimshottariTree(c.planets.find((p) => p.id === "Mo")!.longitude, c.birthUtc) : null,
+      confirm: buildConfirmContext13(c),
+    });
+    return buildReading14(rc, { withTiming: true });
+  };
+  const text = (parts: ReturnType<typeof mkReading>) =>
+    parts.map((p) => [p.title, ...p.subsections.flatMap((s) => [s.heading, ...s.lead, ...s.bullets]), ...p.summary].join("\n")).join("\n");
+
+  const sample = mkReading(
+    { name: "Sample", dateISO: "1986-04-11", time: "23:50", gender: "female",
+      place: { name: "Bengaluru", lat: 12.9716, lon: 77.5946, timezone: "Asia/Kolkata" } } as AutoInputState,
+    new Date("2026-10-10T00:00:00Z")
+  );
+  const t = text(sample);
+  const has = (label: string, needle: string | RegExp) =>
+    check(`Sample reading: ${label}`, typeof needle === "string" ? t.includes(needle) : needle.test(t));
+  has("Mars on the Ascendant degree", "Sagittarius Lagna with Mars on the Ascendant degree");
+  has("Mars strongest by Shadbala ratio", /Mars is also the strongest planet by Shadbala ratio \(1\.6\d× required\)/);
+  has("Lagna lord Jupiter in the 3rd (Aquarius, Shatabhisha)", "Jupiter, the Lagna lord, in the 3rd house (Aquarius, Shatabhisha)");
+  has("Jupiter self-made", "You are self-made.");
+  has("Jupiter's varga dignity outweighs D1", "Jupiter is own sign in the Navamsa, exalted in D2 and exalted in D10.");
+  has("Moon in Aries with Venus and Rahu in the 5th", "The mind: Moon in Aries with Venus and Rahu in the 5th house");
+  has("Ketu aspects the Moon group", "Ketu aspects them.");
+  has("5th house lowest SAV (17)", "The 5th house has only 17 SAV bindus, the lowest in the chart.");
+  has("Moon debilitated in the Navamsa (Scorpio)", "The Moon is debilitated in the Navamsa (Scorpio).");
+  has("Arudha Lagna Aries in the 5th with Moon, Venus, Rahu", "Your Arudha Lagna (public image) is Aries in the 5th, with Moon, Venus and Rahu.");
+  has("Sun Atmakaraka, vargottama, in the 4th", "The soul: Sun (Atmakaraka) in Pisces in the 4th house, vargottama");
+  has("Sun strongest in absolute Shadbala", "Sun is the strongest planet in absolute Shadbala");
+  has("Atmakaraka at the gandanta junction", "the Atmakaraka sits at a gandanta junction");
+  has("Karakamsa Pisces with Jupiter", "Your Karakamsa is Pisces, and Jupiter is also there in the Navamsa.");
+  has("Budhaditya with a debilitated Mercury", /Intellect: Budhaditya Yoga.* with a debilitated Mercury/);
+  has("Neecha Bhanga through Venus in a kendra from the Moon", /Neecha Bhanga applies: Venus, exalted in that very sign's field, occupies a kendra from the Moon/);
+  has("Saturn retrograde, vargottama, 12th, Anuradha", "Saturn retrograde in the 12th (Scorpio, Anuradha, vargottama)");
+  has("Ketu in the 11th", "Ketu in the 11th (Libra, Swati)");
+  has("Chart stronger from 2028 (Jupiter Mahadasha)", "The chart gets clearly stronger from 2028, when the Jupiter Mahadasha begins");
+
+  check("All seven parts build, each with content", sample.length === 7 && sample.every((p) => p.subsections.length > 0));
+  check("Every subsection has a heading and at least one lead line or bullet",
+    sample.every((p) => p.subsections.every((s) => s.heading.length > 0 && s.lead.length + s.bullets.length > 0)));
+  check("Sample reading: no undefined / NaN / empty bullets", !/undefined|NaN/.test(t) && !sample.some((p) => p.subsections.some((s) => s.bullets.some((b) => b.trim().length < 3))));
+
+  // Robustness on very different charts: night birth south of the equator,
+  // a high-latitude chart, and a manual chart with no birth anchor.
+  const sydney = mkReading({ name: "S", dateISO: "1975-11-03", time: "02:10", gender: "other",
+    place: { name: "Sydney", lat: -33.8688, lon: 151.2093, timezone: "Australia/Sydney" } } as AutoInputState, new Date("2026-10-10T00:00:00Z"));
+  const north = mkReading({ name: "N", dateISO: "1999-12-31", time: "23:59", gender: "male",
+    place: { name: "Stockholm", lat: 59.3293, lon: 18.0686, timezone: "Europe/Stockholm" } } as AutoInputState, new Date("2026-10-10T00:00:00Z"));
+  check("Reading builds without leaks for a southern night birth and a high-latitude chart",
+    [sydney, north].every((r) => r.length === 7 && !/undefined|NaN/.test(text(r))));
+  {
+    const manual = computeManualChart({
+      lagnaSign: 3, ascDeg: 12,
+      planets: (["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"] as PlanetId[]).map((id, i) => ({ id, house: (i % 12) + 1, deg: 4 + i * 3, retro: id === "Ra" || id === "Ke" })),
+      anchor: { dateISO: "", time: "", place: null },
+    }, "lahiri");
+    const sg: Partial<Record<PlanetId, number>> = {};
+    for (const p of manual.planets) sg[p.id] = p.sign;
+    const av = computeAshtakavarga(sg, manual.ascendant.sign);
+    const jm = computeJaimini(manual);
+    const rc = buildReadingContext14({ chart: manual, ayanamsha: "lahiri", now: new Date("2026-10-10T00:00:00Z"), vargas: computeVargaSet(manual), jaimini: jm,
+      shadbala: null, bhavaBala: null, av, strengths: allStrengths(manual, av), yogas: detectYogas(manual), extended: detectExtendedYogas(manual, jm),
+      special: null, dashaTree: null, confirm: null });
+    const r = buildReading14(rc, { withTiming: true });
+    check("Manual chart without birth time: reading degrades without leaks (timing part says why)",
+      r.length === 7 && !/undefined|NaN/.test(text(r)) && r[6].subsections[0].heading.includes("needs a birth time"));
   }
 }
 

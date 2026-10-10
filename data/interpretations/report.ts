@@ -1,3 +1,5 @@
+import type { ExtendedFinding } from "@/utils/astrology/extendedYogas";
+import type { SpecialPoints } from "@/utils/astrology/specialPoints";
 import { ageYearsAt } from "@/utils/astrology/ageBands";
 import { aspectedSigns } from "@/utils/astrology/aspects";
 import { ownedHouses } from "@/utils/astrology/yogas";
@@ -62,6 +64,8 @@ export interface TimingWindow {
   group?: string;
   /** Month-level refinements inside the window (e.g. Jupiter contacts). */
   subWindows?: TimingWindow[];
+  /** Independent dasha systems that agree with this window ("Yogini", "Chara"). */
+  confirmedBy?: string[];
 }
 
 /** One block of a section: heading + prose, optionally with items/windows. */
@@ -82,6 +86,16 @@ export function verdictOf(score: number): Verdict {
   if (score >= 45) return "Mixed";
   if (score >= 34) return "Needs effort";
   return "Challenged";
+}
+
+/**
+ * Optional extra inputs a section builder can use: the extended yoga/dosha
+ * set and the special points (Indu Lagna etc.). Optional so every older call
+ * site keeps compiling; absent extras simply contribute no evidence.
+ */
+export interface SectionExtras {
+  extended?: ExtendedFinding[];
+  special?: SpecialPoints | null;
 }
 
 export interface SectionReport {
@@ -147,6 +161,7 @@ export function toTimingWindow(
     reasons: w.reasons.map((r) => r.text),
     ageRange: { from: ageYearsAt(birthUtc, w.start), to: ageYearsAt(birthUtc, w.end) },
     phase: w.phase,
+    confirmedBy: w.confirmedBy.map((c) => (c === "yogini" ? "Yogini" : "Chara")),
     ...(group ? { group } : {}),
   };
 }

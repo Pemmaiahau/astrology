@@ -41,18 +41,35 @@ export function temporalRelation(signOfPlanet: number, signOfOther: number): -1 
  * that have a sign but no meaningful degree. `degInSign` is only needed to
  * resolve the moolatrikona degree band; when omitted the whole sign counts
  * as moolatrikona for its MT lord (the standard sign-level convention).
+ *
+ * The Moon and Mercury share their exaltation sign with their moolatrikona
+ * (BPHS): the Moon is exalted in Taurus 0°–3° and moolatrikona from 3°;
+ * Mercury is exalted in Virgo 0°–15°, moolatrikona 15°–20° and in its own sign
+ * after 20°. With a degree supplied, a placement past the exaltation band falls
+ * through to the moolatrikona/own tests below; without one (vargas) the sign
+ * still reads as exalted.
+ *
+ * `temporalFromSign` is the sign the tatkalika (temporal) friendship is
+ * counted from. It defaults to `sign`; varga callers pass the planet's rashi
+ * sign, because temporal friendship is a fact of the rashi chart (the same
+ * convention Saptavargaja bala uses).
  */
 export function dignityInSign(
   id: PlanetId,
   sign: number,
   degInSign: number | undefined,
-  allSigns: Partial<Record<PlanetId, number>>
+  allSigns: Partial<Record<PlanetId, number>>,
+  temporalFromSign: number = sign
 ): Dignity {
   const ex = EXALTATION[id];
-  if (ex && sign === ex.sign) return "exalted";
+  const mt = MOOLATRIKONA[id];
+  if (ex && sign === ex.sign) {
+    const pastExaltationBand =
+      degInSign !== undefined && mt !== undefined && mt.sign === sign && degInSign >= mt.from;
+    if (!pastExaltationBand) return "exalted";
+  }
   if (ex && sign === (ex.sign + 6) % 12) return "debilitated";
 
-  const mt = MOOLATRIKONA[id];
   if (mt && sign === mt.sign && (degInSign === undefined || (degInSign >= mt.from && degInSign < mt.to)))
     return "moolatrikona";
   if (OWN_SIGNS[id].includes(sign)) return "own";
@@ -62,7 +79,7 @@ export function dignityInSign(
 
   const natural = naturalRelation(id, lord);
   const lordSign = allSigns[lord];
-  const temporal = lordSign !== undefined ? temporalRelation(sign, lordSign) : 0;
+  const temporal = lordSign !== undefined ? temporalRelation(temporalFromSign, lordSign) : 0;
 
   const score = natural + temporal;
   if (score >= 2) return "greatFriend";
@@ -117,10 +134,16 @@ export function isCombust(id: PlanetId, longitude: number, sunLongitude: number,
 
 /**
  * Graha Yuddha: two of the five tara grahas (Mars, Mercury, Jupiter,
- * Venus, Saturn) within 1° of each other. By the common convention the
- * graha with the lower longitude — the one behind in zodiacal order — wins.
+ * Venus, Saturn) within 1° of each other.
  *
- * The comparison must be made on the **longitude**, not the degree-in-sign.
+ * Winner, per Surya Siddhanta 7 and Brihat Samhita 17: the graha with the
+ * more **northerly ecliptic latitude**. That needs real latitudes, which only
+ * ephemeris charts carry (`PlanetPosition.latitude`). When either combatant
+ * lacks one (manual charts), or the two latitudes are equal, the fallback is
+ * the older convention: the graha with the lower longitude — the one behind
+ * in zodiacal order — wins.
+ *
+ * For the fallback the comparison must be made on the **longitude**, not the degree-in-sign.
  * A war straddling a sign boundary (Mars 29°42' Aries vs Venus 0°12' Taurus,
  * 30' apart) puts the *higher* degInSign on the graha that is actually
  * behind, so a degInSign comparison hands the war to the wrong planet — and
@@ -151,17 +174,22 @@ export function applyGrahaYuddha(planets: PlanetPosition[]): void {
       }
     }
     if (!nearest) continue;
-    // angleDiff < 0 ⇒ `a` lies behind its opponent in zodiacal order ⇒ `a` wins.
-    // Exactly-coincident longitudes are broken by natural planet order so the
-    // pair never comes back with two losers.
-    const d = angleDiff(a.longitude, nearest.longitude);
     a.warWith = nearest.id;
+    if (a.latitude !== undefined && nearest.latitude !== undefined && a.latitude !== nearest.latitude) {
+      // Classical rule: the more northerly graha wins.
+      a.warWinner = a.latitude > nearest.latitude;
+      continue;
+    }
+    // Fallback: angleDiff < 0 ⇒ `a` lies behind its opponent in zodiacal
+    // order ⇒ `a` wins. Exactly-coincident longitudes are broken by natural
+    // planet order so the pair never comes back with two losers.
+    const d = angleDiff(a.longitude, nearest.longitude);
     a.warWinner = d < 0 || (d === 0 && PLANETS.indexOf(a.id) < PLANETS.indexOf(nearest.id));
   }
 }
 
 export const DIGNITY_LABELS: Record<Dignity, string> = {
-  exalted: "Exalted (Parama Ucha)",
+  exalted: "Exalted (Uchcha)",
   moolatrikona: "Moolatrikona",
   own: "Own Sign (Swarashi)",
   greatFriend: "Great Friend's Sign (Adhi Mitra)",

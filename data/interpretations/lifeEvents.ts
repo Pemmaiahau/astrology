@@ -241,6 +241,7 @@ function toWindow(def: LifeEventDef, w: EventWindow, birthUtc: Date): TimingWind
     phase: w.phase,
     group: def.label,
     subWindows: subWindows.sort((a, b) => a.start.getTime() - b.start.getTime()),
+    confirmedBy: w.confirmedBy,
   };
 }
 
