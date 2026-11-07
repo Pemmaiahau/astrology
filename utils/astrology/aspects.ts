@@ -1,5 +1,5 @@
 import { norm360 } from "./math";
-import type { ChartData, PlanetId } from "./types";
+import type { ChartData, PlanetId, PlanetPosition } from "./types";
 
 /**
  * Parashari graha drishti (planetary aspects), whole-sign based.
@@ -86,21 +86,32 @@ export function planetsAspecting(chart: ChartData, target: PlanetId): PlanetId[]
 }
 
 /**
+ * Whether Mercury counts as a benefic in this chart — the one rule every layer
+ * reads, Shadbala included. Mercury takes on the nature of the malefics it
+ * joins (BPHS): Mars, Saturn, Rahu or Ketu in its sign turn it malefic. The Sun
+ * is left out: Mercury never strays more than ~28° from it, so counting it would
+ * make Mercury malefic in two charts out of three, and Budhaditya treats that
+ * company as a strength. Combustion stays what it is everywhere else, a
+ * weakness rather than a change of nature. Recorded in SOURCES.md.
+ */
+export function isMercuryBenefic(planets: PlanetPosition[]): boolean {
+  const me = planets.find((p) => p.id === "Me");
+  if (!me) return true;
+  const malefics: PlanetId[] = ["Ma", "Sa", "Ra", "Ke"];
+  return !planets.some((p) => malefics.includes(p.id) && p.sign === me.sign);
+}
+
+/**
  * Natural (naisargika) benefics for this chart. Jupiter and Venus always;
  * the Moon when waxing (Shukla paksha — elongation from the Sun < 180°);
- * Mercury when not sharing a sign with a natural malefic (Su/Ma/Sa/Ra/Ke).
+ * Mercury per `isMercuryBenefic`.
  */
 export function naturalBenefics(chart: ChartData): PlanetId[] {
   const out: PlanetId[] = ["Ju", "Ve"];
   const su = chart.planets.find((p) => p.id === "Su");
   const mo = chart.planets.find((p) => p.id === "Mo");
   if (su && mo && norm360(mo.longitude - su.longitude) < 180) out.push("Mo");
-  const me = chart.planets.find((p) => p.id === "Me");
-  if (me) {
-    const hardMalefics: PlanetId[] = ["Su", "Ma", "Sa", "Ra", "Ke"];
-    const afflicted = chart.planets.some((p) => hardMalefics.includes(p.id) && p.sign === me.sign);
-    if (!afflicted) out.push("Me");
-  }
+  if (chart.planets.some((p) => p.id === "Me") && isMercuryBenefic(chart.planets)) out.push("Me");
   return out;
 }
 

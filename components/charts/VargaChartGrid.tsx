@@ -1,5 +1,7 @@
 "use client";
 
+import { NorthVargaChart } from "@/components/charts/NorthIndianChart";
+import { useChart } from "@/components/context/ChartContext";
 import { PLANET_NAMES, SIGNS, SIGNS_SANSKRIT } from "@/utils/astrology/constants";
 import { DIGNITY_SHORT } from "@/utils/astrology/states";
 import type { VargaChart } from "@/utils/astrology/varga";
@@ -35,6 +37,9 @@ export default function VargaChartGrid({
   chart: VargaChart;
   subtitle?: string;
 }) {
+  const { chartLayout } = useChart();
+  if (chartLayout === "north") return <NorthVargaChart chart={chart} subtitle={subtitle} />;
+
   const cells: (React.ReactNode | null)[][] = Array.from({ length: 4 }, () => Array(4).fill(null));
 
   for (let sign = 0; sign < 12; sign++) {

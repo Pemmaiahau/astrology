@@ -11,6 +11,17 @@ import * as Astronomy from "astronomy-engine";
 import { AGE_BANDS, ageAt, agePrior, dateAtAge, EDGE_PRIOR } from "../ageBands";
 import { computeAshtakavarga } from "../ashtakavarga";
 import { computeAutoChart, computeManualChart } from "../chart";
+import { isMercuryBenefic, naturalBenefics } from "../aspects";
+import {
+  NORTH_HOUSES,
+  houseOfSign,
+  northSlots,
+  rashiModel,
+  signOfHouse,
+  vargaModel,
+  type Point,
+} from "../chartLayout";
+import { parseMarkdown } from "../../export/pdfReport";
 import { CHALDEAN_MAP, NAISARGIKA_BALA, PLANET_NAMES, PLANETS, signMobility } from "../constants";
 import { computeNumerology } from "../numerology";
 import { buildLuckyReport } from "../../../data/interpretations/lucky";
@@ -3901,6 +3912,73 @@ console.log("\n=== Phase 6: birth time rectification ===");
     check("Manual chart without birth time: reading degrades without leaks (timing part says why)",
       r.length === 7 && !/undefined|NaN/.test(text(r)) && r[6].subsections[0].heading.includes("needs a birth time"));
   }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 15: one rule for Mercury's nature, the North Indian layout and the PDF.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n--- Phase 15: Mercury's nature, North Indian layout, PDF export ---");
+  const body = (id: string, sign: number, combust = false) => ({ id, sign, combust }) as never;
+  check("Mercury: the Sun's company alone does not turn it malefic", isMercuryBenefic([body("Me", 0), body("Su", 0)]));
+  check("Mercury: neither does combustion, which is a weakness and not a change of nature", isMercuryBenefic([body("Me", 0, true), body("Su", 0)]));
+  check("Mercury: Mars, Saturn, Rahu or Ketu in its sign do",
+    (["Ma", "Sa", "Ra", "Ke"] as const).every((id) => !isMercuryBenefic([body("Me", 3), body(id, 3)])));
+  check("Mercury: a benefic in its sign does not", isMercuryBenefic([body("Me", 3), body("Ju", 3)]));
+
+  const place15 = { name: "Delhi", lat: 28.61, lon: 77.21, timezone: "Asia/Kolkata" };
+  const charts15 = Array.from({ length: 60 }, (_, i) =>
+    computeAutoChart({ name: "x", dateISO: `${1950 + i}-0${(i % 9) + 1}-1${i % 9}`, time: "06:30", place: place15 }, "lahiri", "mean")!
+  );
+  check("Mercury: naturalBenefics and isMercuryBenefic always agree",
+    charts15.every((c) => naturalBenefics(c).includes("Me") === isMercuryBenefic(c.planets)));
+  const paksha = (c: (typeof charts15)[number], id: "Me" | "Ju" | "Su") =>
+    computeShadbala(c)!.planets[id].kala.find((f) => f.label === "Paksha")!.virupas;
+  check("Mercury: Paksha bala follows the same rule as the interpretive layers",
+    charts15.every((c) => approx(paksha(c, "Me"), paksha(c, isMercuryBenefic(c.planets) ? "Ju" : "Su"), 1e-6)));
+  const afflicted = charts15.filter((c) => !isMercuryBenefic(c.planets)).length;
+  check("Mercury: both states occur in the sample", afflicted > 0 && afflicted < charts15.length, `${afflicted}/60 malefic`);
+
+  const area = (pts: Point[]) =>
+    Math.abs(pts.reduce((s, [x, y], i) => {
+      const [nx, ny] = pts[(i + 1) % pts.length];
+      return s + x * ny - nx * y;
+    }, 0)) / 2;
+  check("North Indian: twelve houses tile the square exactly",
+    NORTH_HOUSES.length === 12 && approx(NORTH_HOUSES.reduce((s, h) => s + area(h), 0), 10000, 1e-9));
+  const inside = (p: [number, number], poly: Point[]) => {
+    let hit = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i];
+      const [xj, yj] = poly[j];
+      if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) hit = !hit;
+    }
+    return hit;
+  };
+  check("North Indian: label anchors for one to four bodies fall inside their own house",
+    NORTH_HOUSES.every((poly, i) =>
+      [1, 2, 3, 4].every((n) => northSlots(i + 1, n).slots.every((s) => inside([s.x, s.y], poly)))));
+  check("North Indian: houses run anticlockwise from the top diamond",
+    NORTH_HOUSES[0].every(([, y]) => y <= 50) && NORTH_HOUSES[1].every(([x]) => x <= 50) && NORTH_HOUSES[11].every(([x]) => x >= 50));
+  check("North Indian: sign and house round-trip for every Lagna",
+    Array.from({ length: 12 }).every((_, l) =>
+      Array.from({ length: 12 }).every((__, h) => houseOfSign(signOfHouse(h + 1, l), l) === h + 1)));
+  const c15 = charts15[0];
+  const model15 = rashiModel(c15);
+  check("Chart model: the Lagna and all nine grahas are placed, each in its own sign",
+    model15.bySign.flat().length === 10 &&
+    c15.planets.every((p) => model15.bySign[p.sign].some((e) => e.id === p.id)) &&
+    model15.bySign[c15.ascendant.sign].some((e) => e.id === "Asc"));
+  const v15 = computeVargaSet(c15);
+  check("Chart model: a varga places all nine grahas on its own Lagna",
+    vargaModel(v15.charts.D9).bySign.flat().length === 9 && vargaModel(v15.charts.D9).lagnaSign === v15.charts.D9.ascendant);
+
+  const md15 = "# Title\n\nIntro **bold** text.\n\n## 1. Section\n\n| A | B |\n|---|---|\n| one | **two** |\n\n- item\n\n---\n";
+  const blocks15 = parseMarkdown(md15);
+  check("PDF: Markdown parses to heading, paragraph, table and bullet blocks",
+    blocks15.map((b) => b.kind).join(",") === "heading,paragraph,heading,table,bullet");
+  const table15 = blocks15.find((b) => b.kind === "table");
+  check("PDF: table cells lose their inline markup", table15?.kind === "table" && table15.body[0][1] === "two");
 }
 
 // ---------------------------------------------------------------------------

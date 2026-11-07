@@ -60,12 +60,12 @@ CHART canonical-delhi
   Su  total=  574.494 rupas=  9.575 req=390.000 ratio=1.473 ishta=18.876 kashta=37.946
   Mo  total=  305.072 rupas=  5.085 req=360.000 ratio=0.847 ishta=15.775 kashta=43.603
   Ma  total=  368.712 rupas=  6.145 req=300.000 ratio=1.229 ishta=22.669 kashta=29.686
-  Me  total=  404.694 rupas=  6.745 req=420.000 ratio=0.964 ishta=34.309 kashta=24.681
-  Ju  total=  492.058 rupas=  8.201 req=390.000 ratio=1.262 ishta=50.456 kashta=9.507
+  Me  total=  444.648 rupas=  7.411 req=420.000 ratio=1.059 ishta=34.309 kashta=24.681
+  Ju  total=  470.385 rupas=  7.840 req=390.000 ratio=1.206 ishta=50.456 kashta=9.507
   Ve  total=  452.031 rupas=  7.534 req=330.000 ratio=1.370 ishta=42.033 kashta=10.708
   Sa  total=  310.027 rupas=  5.167 req=300.000 ratio=1.033 ishta=13.869 kashta=34.421
   strongest=Su weakest=Mo
-  bhavaBala: H1=389.622 H2=456.778 H3=499.796 H4=338.178 H5=589.627 H6=433.310 H7=465.805 H8=438.941 H9=466.353 H10=260.290 H11=369.853 H12=489.587
+  bhavaBala: H1=378.092 H2=454.648 H3=512.429 H4=313.806 H5=573.957 H6=466.296 H7=465.805 H8=438.941 H9=444.679 H10=260.290 H11=363.023 H12=445.946
 
 --- vargas ---
   D1  asc= 0  Su: 9 Mo: 8 Ma: 8 Me: 8 Ju: 2 Ve: 9 Sa: 8 Ra: 9 Ke: 3
@@ -582,7 +582,7 @@ CHART canonical-delhi
        - Sun rules your 5th, so authority, confidence and the sense of self runs through children & creativity.
        - Sun is the strongest planet by Shadbala ratio (1.47× required).
      # Jupiter retrograde in the 3rd (Gemini, Ardra)
-       Jupiter is at 8°42' in Ardra pada 1, in a great enemy's sign, at 1.26× its Shadbala requirement.
+       Jupiter is at 8°42' in Ardra pada 1, in a great enemy's sign, at 1.21× its Shadbala requirement.
        - Jupiter in the 3rd gives wise initiative — courage tempered by ethics.
        - Siblings prosper or are themselves guru-figures.
        - Writing and teaching flow naturally, though ambition here is softer than talent; effort must be deliberate.
@@ -626,7 +626,7 @@ CHART canonical-delhi
      # Amatyakaraka: Mercury in Sagittarius in the 9th house
        Mercury is at 17°01' Sagittarius (Purva Ashadha).
        - Mercury is your Amatyakaraka, the planet of career counsel: it favours business and trade, writing and journalism, accounting, IT and analytics, teaching, consulting.
-       - Mercury is in an enemy's sign at 0.96× — advancement comes through your own effort more than through patrons.
+       - Mercury is in an enemy's sign at 1.06× — advancement comes through your own effort more than through patrons.
        - The Atmakaraka Saturn sits with it — a Jaimini Raja Yoga: status through your own work.
      # Yogas for status
        - Raja Yoga (Kendra–Trikona link) (Mars and Jupiter): Mars (an angle lord) and Jupiter (a trine lord) stand in mutual aspect.
@@ -656,7 +656,7 @@ CHART canonical-delhi
        - Rahu's aspect: Rahu's aspect on the 2nd creates hunger around wealth, family and speech — accumulation is driven, sometimes through unorthodox or foreign channels, and the voice can persuade past the facts.
      # The 11th house (income and gains): Aquarius
        The 11th house is Aquarius, with no occupants. Its lord Saturn is in the 9th at 24°37' Sagittarius (Purva Ashadha), in an enemy's sign, at 1.03× its Shadbala requirement.
-       Jupiter and Saturn aspect it; it holds 32 SAV bindus (well above the 28 average); Bhava Bala 6.2 rupas.
+       Jupiter and Saturn aspect it; it holds 32 SAV bindus (well above the 28 average); Bhava Bala 6.1 rupas.
        - Your 11th lord Saturn sits in your 9th, carrying income & gains into fortune, belief, teachers, your father and long journeys — a supportive house, so results flow with less resistance.
        - Saturn works through Purva Ashadha: invincible early victories; proud, philosophical, water-blessed.
        - Jupiter's aspect: Jupiter's glance on the 11th expands gains and fills the network with people of standing; income grows steadily and desires are largely fulfilled.
@@ -718,15 +718,15 @@ CHART canonical-delhi
      summary: Marriage score 55/100 — read it together with the windows: timing matters more than the average for this house.
   == Part 5: Foreign travel and settlement
      # The 12th house (foreign lands): Pisces
-       The 12th house is Pisces, with no occupants. Its lord Jupiter is in the 3rd at 8°42' Gemini (Ardra), in a great enemy's sign, retrograde, at 1.26× its Shadbala requirement.
-       Mars and Ketu aspect it; it holds 23 SAV bindus (well below the 28 average); Bhava Bala 8.2 rupas.
+       The 12th house is Pisces, with no occupants. Its lord Jupiter is in the 3rd at 8°42' Gemini (Ardra), in a great enemy's sign, retrograde, at 1.21× its Shadbala requirement.
+       Mars and Ketu aspect it; it holds 23 SAV bindus (well below the 28 average); Bhava Bala 7.4 rupas.
        - Your 12th lord Jupiter sits in your 3rd, carrying loss & retreat into courage, effort, siblings and short journeys — a growth house, so results build with effort over time.
        - Jupiter works through Ardra: stormy, penetrating intellect; breakthroughs after inner turbulence.
        - Mars's aspect: Mars's gaze on the 12th burns resources in hidden places: expenditure on disputes, secret enemies, or exertion abroad.
        - Ketu's aspect: Ketu's glance on the 12th is its most natural station: expenditure that quietly serves liberation, ease in solitude and in foreign lands, a vivid inner life in sleep.
      # The 9th house (long journeys): Sagittarius
-       The 9th house is Sagittarius, occupied by Moon, Mars, Mercury and Saturn. Its lord Jupiter is in the 3rd at 8°42' Gemini (Ardra), in a great enemy's sign, retrograde, at 1.26× its Shadbala requirement.
-       Jupiter aspects it; it holds 21 SAV bindus (well below the 28 average); Bhava Bala 7.8 rupas.
+       The 9th house is Sagittarius, occupied by Moon, Mars, Mercury and Saturn. Its lord Jupiter is in the 3rd at 8°42' Gemini (Ardra), in a great enemy's sign, retrograde, at 1.21× its Shadbala requirement.
+       Jupiter aspects it; it holds 21 SAV bindus (well below the 28 average); Bhava Bala 7.4 rupas.
        - Your 9th lord Jupiter sits in your 3rd, carrying fortune & belief into courage, effort, siblings and short journeys — a growth house, so results build with effort over time.
        - Jupiter works through Ardra: stormy, penetrating intellect; breakthroughs after inner turbulence.
        - Moon here: Moon in the 9th gives an instinctively faithful heart — dharma is felt before it is reasoned. Fortune through mother-figures, the public and travel.
@@ -753,13 +753,13 @@ CHART canonical-delhi
      summary: The 12th lord is in a great enemy's sign in your 3rd; with Rahu in the 10th, that sets how far the pull abroad goes.
   == Part 6: Health and things to watch
      # Vitality: Aries Lagna and its lord Mars
-       - The 1st house holds 33 SAV bindus and 6.5 rupas of Bhava Bala — a sound base constitution.
+       - The 1st house holds 33 SAV bindus and 6.3 rupas of Bhava Bala — a sound base constitution.
        - Mars, the Lagna lord (body and resilience), is in a neutral sign in the 9th at 1.23× — well supported.
        - Sun, vitality, is in a neutral sign in the 10th at 1.47× — well supported.
        - Moon, the mind and sleep, is in an enemy's sign in the 9th at 0.85× — watch the mind, sleep, chest and body fluids.
      # The 6th house (illness and recovery): Virgo
-       The 6th house is Virgo, with no occupants. Its lord Mercury is in the 9th at 17°01' Sagittarius (Purva Ashadha), in an enemy's sign, at 0.96× its Shadbala requirement.
-       Saturn and Rahu aspect it; it holds 33 SAV bindus (well above the 28 average); Bhava Bala 7.2 rupas.
+       The 6th house is Virgo, with no occupants. Its lord Mercury is in the 9th at 17°01' Sagittarius (Purva Ashadha), in an enemy's sign, at 1.06× its Shadbala requirement.
+       Saturn and Rahu aspect it; it holds 33 SAV bindus (well above the 28 average); Bhava Bala 7.8 rupas.
        - Your 6th lord Mercury sits in your 9th, carrying health & rivals into fortune, belief, teachers, your father and long journeys — a supportive house, so results flow with less resistance.
        - Mercury works through Purva Ashadha: invincible early victories; proud, philosophical, water-blessed.
        - Saturn's aspect: Saturn's aspect on the 6th lands on a house Saturn naturally handles well: chronic enemies wear down, litigation is won by persistence, debts are serviced methodically, and daily discipline is genuinely available.
@@ -771,7 +771,6 @@ CHART canonical-delhi
        - Mars works through Mula: root-cutting inquiry; destroys to find foundational truth.
        - Ketu's aspect: Ketu's glance on the 8th is the planet of letting go in the house of endings and transformation: genuine occult aptitude, ease with mortality and transformation, and sudden events that feel fated rather than accidental.
      # Planets and conditions to watch
-       - Mercury is below its Shadbala requirement (0.96×): give extra care to the nerves, skin, speech and lungs.
        - Moon is below its Shadbala requirement (0.85×): give extra care to the mind, sleep, chest and body fluids.
        - Mars is in gandanta: health matters linked to blood, muscles, inflammation, injuries and surgery can come suddenly and need prompt attention.
        - Venus is in Mrita avastha (a "dead" degree): it gives little on its own, so its body areas (the kidneys, reproductive system and hormones) depend on routine care.
@@ -800,7 +799,7 @@ CHART canonical-delhi
        - Moon Mahadasha, Sept 2017 – Sept 2027 (age 27–37): Moon rules your 4th, sits in your 9th in an enemy's sign at 0.85×, and is a functional neutral for your Lagna — a mixed period: good in some areas, effortful in others, because Moon is a functional neutral.
        - Mars Mahadasha, Sept 2027 – Sept 2034 (age 37–44): Mars rules your 1st and 8th, sits in your 9th in a neutral sign at 1.23×, and is a functional benefic for your Lagna — a strong period that delivers, because Mars is a working planet for your Lagna that meets its Shadbala requirement (1.23×).
        - Rahu Mahadasha, Sept 2034 – Sept 2052 (age 44–62): Rahu rules no house (a node), sits in your 10th in a great friend's sign, and is a functional neutral for your Lagna — a mixed period: good in some areas, effortful in others, because Rahu is a functional neutral.
-       - Jupiter Mahadasha, Sept 2052 – Sept 2068 (age 62–78): Jupiter rules your 9th and 12th, sits in your 3rd in a great enemy's sign at 1.26×, and is a functional benefic for your Lagna — a strong period that delivers, because Jupiter is a working planet for your Lagna that meets its Shadbala requirement (1.26×).
+       - Jupiter Mahadasha, Sept 2052 – Sept 2068 (age 62–78): Jupiter rules your 9th and 12th, sits in your 3rd in a great enemy's sign at 1.21×, and is a functional benefic for your Lagna — a strong period that delivers, because Jupiter is a working planet for your Lagna that meets its Shadbala requirement (1.21×).
      # The strongest and the most demanding stretches (next 15 years)
        - Strongest: Mars–Mars, Sept 2027 – Feb 2028; Mars–Jupiter, Feb 2029 – Jan 2030; Mars–Sun, Oct 2033 – Feb 2034 — both lords are working planets for your Lagna with the strength (Shadbala or varga dignity) to deliver.
        - No sub-period in the next 15 years has both lords adverse and weak.
@@ -935,12 +934,12 @@ CHART pune-yoga-dense
   Su  total=  549.890 rupas=  9.165 req=390.000 ratio=1.410 ishta=47.830 kashta=11.867
   Mo  total=  335.054 rupas=  5.584 req=360.000 ratio=0.931 ishta=17.710 kashta=36.882
   Ma  total=  461.367 rupas=  7.689 req=300.000 ratio=1.538 ishta=17.141 kashta=14.197
-  Me  total=  349.656 rupas=  5.828 req=420.000 ratio=0.833 ishta=24.146 kashta=30.587
-  Ju  total=  329.642 rupas=  5.494 req=390.000 ratio=0.845 ishta=31.989 kashta=25.652
-  Ve  total=  370.324 rupas=  6.172 req=330.000 ratio=1.122 ishta=18.255 kashta=17.847
+  Me  total=  400.173 rupas=  6.670 req=420.000 ratio=0.953 ishta=24.146 kashta=30.587
+  Ju  total=  319.701 rupas=  5.328 req=390.000 ratio=0.820 ishta=31.989 kashta=25.652
+  Ve  total=  368.130 rupas=  6.136 req=330.000 ratio=1.116 ishta=18.255 kashta=17.847
   Sa  total=  380.352 rupas=  6.339 req=300.000 ratio=1.268 ishta=10.172 kashta=45.344
   strongest=Su weakest=Ju
-  bhavaBala: H1=268.506 H2=377.639 H3=480.659 H4=368.354 H5=365.567 H6=403.551 H7=544.018 H8=335.351 H9=437.736 H10=475.543 H11=389.806 H12=485.760
+  bhavaBala: H1=268.506 H2=363.481 H3=463.789 H4=348.812 H5=410.454 H6=386.679 H7=517.768 H8=367.586 H9=425.227 H10=473.196 H11=379.865 H12=485.760
 
 --- vargas ---
   D1  asc=10  Su:10 Mo:10 Ma:10 Me:10 Ju: 6 Ve:11 Sa:10 Ra: 7 Ke: 1
@@ -1066,7 +1065,7 @@ CHART pune-yoga-dense
   == Navamsa — the inner person
      [1] The Navamsa (D-9) is a second chart derived from your birth chart by dividing each sign into nine parts. Tradition reads it for the inner person and for marriage, and treats it as the test of whether what the birth chart promises actually holds. Its rising sign is Aquarius. If the birth chart is how life presents itself, the Navamsa is how you are on the inside once the noise settles — and an Aquarius inner nature is detached, systemic and unconventionally principled, thinking in groups and futures rather than individuals and moments. Independent to a fault, and warm in a way that surprises people. When the outer sign (Aquarius) and inner sign (Aquarius) differ in element, people who only know you casually often misread you; those close to you meet the Navamsa.
   == By the classical six-fold measure (Shadbala)
-     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Sun is your strongest planet at 9.16 rupas (141% of its required minimum) and Jupiter the weakest at 5.49 rupas (85%). Note this differs from the quicker overall score above — the six-fold measure weighs birth-time and motion factors the quick score does not; where they disagree, the Shadbala verdict is the classical one.
+     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Sun is your strongest planet at 9.16 rupas (141% of its required minimum) and Jupiter the weakest at 5.33 rupas (82%). Note this differs from the quicker overall score above — the six-fold measure weighs birth-time and motion factors the quick score does not; where they disagree, the Shadbala verdict is the classical one.
      [2] Practically: lean on Sun's themes when the stakes are high, and give Jupiter's themes more preparation time than feels necessary.
   == Aspects on your rising sign — who edits the personality
      [1] Planets influence houses they do not sit in by 'aspecting' them — casting their influence across the chart to particular houses. Every planet aspects the 7th house from itself, and Mars, Jupiter, Saturn, Rahu and Ketu each have extra special aspects. The following planets aspect your rising sign, and each one edits the personality others meet:
@@ -1360,7 +1359,7 @@ CHART pune-yoga-dense
 
 --- section: cautions ---
   headline: 10 areas in your chart deserve conscious handling rather than luck. Each one below comes with something practical to do about it, and none of them is a verdict.
-  score=29 verdict=none confidence=75
+  score=30 verdict=none confidence=75
   == How to read this
      [1] These are tendencies, not sentences, and none of them is a verdict on your life. Classical astrology lists them for one reason: so you can steer. That is why every caution below arrives with the thing that actually helps — a caution without a counter-measure is just anxiety with a citation.
      [2] Nothing here is medical, legal or financial advice, and none of it should stand in for a professional who can look at your actual situation.
@@ -1380,7 +1379,7 @@ CHART pune-yoga-dense
   personality [Your strongest and weakest planets] Saturn is your strongest planet at 69 (strong), sitting in your 1st house in Aquarius.
   personality [Atmakaraka — what this life is for] Sun is your Atmakaraka — literally the 'soul significator', the planet that has travelled furthest through its sign, which the Jaimini school of astrology treats as the planet carrying the deepest purpose of the life.
   personality [Navamsa — the inner person] Its rising sign is Aquarius.
-  personality [By the classical six-fold measure (Shadbala)] By that measure Sun is your strongest planet at 9.16 rupas (141% of its required minimum) and Jupiter the weakest at 5.49 rupas (85%).
+  personality [By the classical six-fold measure (Shadbala)] By that measure Sun is your strongest planet at 9.16 rupas (141% of its required minimum) and Jupiter the weakest at 5.33 rupas (82%).
   personality [Aspects on your rising sign — who edits the personality] Jupiter aspects your rising sign from your 9th house.
   personality [How you are seen vs how you are (Arudha Lagna)] Yours falls in Taurus, while your actual rising sign is Aquarius.
   personality [Yoga signatures in the personality] 4 combinations in your chart stamp themselves directly on the character: Budhaditya Yoga, Chandra-Mangala Yoga, Sasa Yoga (Pancha Mahapurusha), Sunapha Yoga.
@@ -1421,7 +1420,7 @@ CHART pune-yoga-dense
   cautions Moon rules your 6th — one of the harder houses — and sits in your 1st, carrying that friction into an area that matters to you. || Keep 1st-house matters clean on paper: written agreements, no informal loans, explicit boundaries with the people involved.
   cautions Jupiter, Moon, Mars — each rules houses that pull against your interests for an Aquarius rising chart, so its instincts tend to be the ones that get you into trouble. || Give big commitments in these planets' areas one extra day and one outside opinion — that single habit removes most of what this placement costs people.
   cautions Jupiter and Sun rule your 2nd and 7th houses, which classically makes them the planets whose main periods are worth a little extra care about health and energy. || During these planets' main periods, keep routine check-ups current, insurance in force, and the basics — sleep, food, movement — non-negotiable.
-  cautions Mercury reaches only 83% of the strength the classical tables ask of it. || Build a check into anything depending on Mercury's themes — a review, a backup, a second quote.
+  cautions Jupiter reaches only 82% of the strength the classical tables ask of it. || Build a check into anything depending on Jupiter's themes — a review, a backup, a second quote.
 
 --- chart reading (parts 1-7) ---
   == Part 1: Personality
@@ -1430,7 +1429,7 @@ CHART pune-yoga-dense
        Sun sits at 26°26'. It is in a great enemy's sign.
        Moon sits at 12°13', close to the rising degree. It is in an enemy's sign.
        Mars sits at 9°02', close to the rising degree. Mars is also the strongest planet by Shadbala ratio (1.54× required) and is in an enemy's sign.
-       Mercury sits at 0°28'. Mercury is also the weakest planet in Shadbala (0.83×) and is in an enemy's sign.
+       Mercury sits at 0°28'. It is in an enemy's sign.
        Saturn sits at 11°09', close to the rising degree. It is in its moolatrikona.
        - Your outward nature is detached, systemic and unconventionally principled, thinking in groups and futures rather than individuals and moments. Independent to a fault, and warm in a way that surprises people.
        - Shatabhisha nakshatra on the rising degree adds veiled healing; solitary depths, mysticism and medicine.
@@ -1481,12 +1480,13 @@ CHART pune-yoga-dense
        - A very early degree (an "infant" state). Your thinking is intuitive and emotional rather than coldly logical. You can be indecisive at times and are sometimes misunderstood in communication; you learn by absorbing rather than memorising.
        - Mercury rules your 5th and 8th, so thinking, speech, trade and everything written down run through children & creativity and upheaval & depth.
      # Jupiter retrograde in the 9th (Libra, Vishakha)
-       Jupiter is at 20°42' in Vishakha pada 1, in a great enemy's sign, in its own nakshatra, at 0.85× its Shadbala requirement.
+       Jupiter is at 20°42' in Vishakha pada 1, in a great enemy's sign, in its own nakshatra, at 0.82× its Shadbala requirement.
        - Jupiter in the 9th is the guru on the guru's throne: faith, fortune, a benevolent father, and luck that looks unearned to onlookers.
        - Higher learning, pilgrimage and publishing prosper.
        - Your beliefs shape your entire material outcome.
        - Jupiter rules your 2nd and 11th, so growth, judgement, teaching and good faith run through wealth & family and income & gains.
        - Being in its own nakshatra, Jupiter is reliable: what it shows on the surface is what it delivers.
+       - Jupiter is the weakest planet in Shadbala (0.82×).
      # Venus in the 2nd (Pisces, Uttara Bhadrapada)
        Venus is at 9°15' in Uttara Bhadrapada pada 2, exalted, at 1.12× its Shadbala requirement.
        - Venus in the 2nd sweetens wealth and speech alike: money through arts, luxury goods, finance and beauty industries.
@@ -1505,7 +1505,7 @@ CHART pune-yoga-dense
        - The true homeland you seek has no postal code.
        - Neecha Bhanga: Ketu's debilitation is cancelled because Moon, exalted in that very sign's field, occupies a kendra; and its dispositor Venus is itself exalted; and the lord of its exaltation sign, Mars, occupies a kendra from Lagna.
      summary: At the surface you are humanitarian, progressive and slightly unconventional, energised by Sun, Moon, Mars, Mercury and Saturn on the Lagna. Underneath, the mind and the soul (Sun) are both humanitarian, progressive and slightly unconventional.
-     summary: Your strongest planet is Mars (1.54× by Shadbala) and your weakest is Mercury (0.83×). The main lessons run through thinking, speech, trade and everything written down, and through managing detachment.
+     summary: Your strongest planet is Mars (1.54× by Shadbala) and your weakest is Jupiter (0.82×). The main lessons run through growth, judgement, teaching and good faith, and through managing detachment.
      summary: You are already in a supportive main period — the Saturn Mahadasha runs to 2039, and the Venus Mahadasha from 2063 is the next strong stretch.
   == Part 2: Career
      # The 10th house: Scorpio
@@ -1527,7 +1527,7 @@ CHART pune-yoga-dense
      # Amatyakaraka: Jupiter in Libra in the 9th house
        Jupiter is at 20°42' Libra (Vishakha).
        - Jupiter is your Amatyakaraka, the planet of career counsel: it favours law, finance and banking, teaching and academia, counselling, religious or charitable institutions.
-       - Jupiter is in a great enemy's sign at 0.85× — advancement comes through your own effort more than through patrons.
+       - Jupiter is in a great enemy's sign at 0.82× — advancement comes through your own effort more than through patrons.
      # Yogas for status
        - Neechabhanga Raja Yoga (Rahu): Rahu's debilitation is cancelled because its dispositor Mars occupies a kendra from Lagna; and its dispositor stands in a kendra from the Moon; and Ketu, exalted in that very sign's field, occupies a kendra.
        - Neechabhanga Raja Yoga (Ketu): Ketu's debilitation is cancelled because Moon, exalted in that very sign's field, occupies a kendra; and its dispositor Venus is itself exalted; and the lord of its exaltation sign, Mars, occupies a kendra from Lagna.
@@ -1551,15 +1551,15 @@ CHART pune-yoga-dense
      summary: The 10th lord Mars and the Amatyakaraka Jupiter decide how far this goes; their main periods are when it moves.
   == Part 3: Wealth
      # The 2nd house (wealth you keep): Pisces
-       The 2nd house is Pisces, occupied by Venus. Its lord Jupiter is in the 9th at 20°42' Libra (Vishakha), in a great enemy's sign, retrograde, at 0.85× its Shadbala requirement.
-       Rahu aspects it; it holds 23 SAV bindus (well below the 28 average); Bhava Bala 6.3 rupas.
+       The 2nd house is Pisces, occupied by Venus. Its lord Jupiter is in the 9th at 20°42' Libra (Vishakha), in a great enemy's sign, retrograde, at 0.82× its Shadbala requirement.
+       Rahu aspects it; it holds 23 SAV bindus (well below the 28 average); Bhava Bala 6.1 rupas.
        - Your 2nd lord Jupiter sits in your 9th, carrying wealth & family into fortune, belief, teachers, your father and long journeys — a supportive house, so results flow with less resistance.
        - Jupiter works through Vishakha: goal-fixated determination; twin ambitions pursued with fervour.
        - Venus here: Venus in the 2nd sweetens wealth and speech alike: money through arts, luxury goods, finance and beauty industries. The voice may literally be musical.
        - Rahu's aspect: Rahu's aspect on the 2nd creates hunger around wealth, family and speech — accumulation is driven, sometimes through unorthodox or foreign channels, and the voice can persuade past the facts.
      # The 11th house (income and gains): Sagittarius
-       The 11th house is Sagittarius, with no occupants. Its lord Jupiter is in the 9th at 20°42' Libra (Vishakha), in a great enemy's sign, retrograde, at 0.85× its Shadbala requirement.
-       It holds 45 SAV bindus (well above the 28 average); Bhava Bala 6.5 rupas.
+       The 11th house is Sagittarius, with no occupants. Its lord Jupiter is in the 9th at 20°42' Libra (Vishakha), in a great enemy's sign, retrograde, at 0.82× its Shadbala requirement.
+       It holds 45 SAV bindus (well above the 28 average); Bhava Bala 6.3 rupas.
        - Your 11th lord Jupiter sits in your 9th, carrying income & gains into fortune, belief, teachers, your father and long journeys — a supportive house, so results flow with less resistance.
        - Jupiter works through Vishakha: goal-fixated determination; twin ambitions pursued with fervour.
      # Wealth yogas and the Indu Lagna
@@ -1583,11 +1583,11 @@ CHART pune-yoga-dense
        - Mar 2049 – Sept 2051 (age 55–58): Mercury–Rahu period, strong (73% confidence), confirmed by Yogini and Chara dasha.
        - Sept 2056 – Feb 2057 (age 63–63): Ketu–Ketu period, strong (79% confidence), confirmed by Yogini and Chara dasha.
      summary: Your money is most likely to come through investments & assets — about 40% of the wealth signal in your chart sits there.
-     summary: The 2nd lord Jupiter (0.85×) decides what you keep and the 11th lord Jupiter (0.85×) what comes in; the yogas above decide how much of it stays.
+     summary: The 2nd lord Jupiter (0.82×) decides what you keep and the 11th lord Jupiter (0.82×) what comes in; the yogas above decide how much of it stays.
   == Part 4: Marriage and relationships
      # The 7th house: Leo
        The 7th house is Leo, with no occupants. Its lord Sun is in the 1st at 26°26' Aquarius (Purva Bhadrapada), in a great enemy's sign, at 1.41× its Shadbala requirement.
-       Sun, Moon, Mars, Mercury and Saturn aspect it; it holds 26 SAV bindus (just below the 28 average); Bhava Bala 9.1 rupas.
+       Sun, Moon, Mars, Mercury and Saturn aspect it; it holds 26 SAV bindus (just below the 28 average); Bhava Bala 8.6 rupas.
        - Your 7th lord Sun sits in your 1st, carrying partnership into your body, your temperament and how you come across — a supportive house, so results flow with less resistance.
        - Sun works through Purva Bhadrapada: fiery twin-front transformation; intensity behind an austere face.
        - Sun's aspect: The Sun's gaze on the 7th brings a distinguished, capable partner and public dealings conducted with visible authority.
@@ -1598,7 +1598,7 @@ CHART pune-yoga-dense
        - Saturn touches the 7th — the classical "later is better" marker: marriage tends to come after the mid-twenties or after a period of waiting, and lasts once made.
      # Venus and Jupiter — the marriage significators
        - Venus (the karaka of marriage) is exalted in the 2nd at 1.12×, and debilitated in the Navamsa (Virgo) — a warm, supportive significator.
-       - Jupiter (the husband-karaka for a woman's chart) is in a great enemy's sign in the 9th at 0.85×, and in a neutral sign in the Navamsa (Aries) — the significator needs care, which classically shows as delay or adjustment.
+       - Jupiter (the husband-karaka for a woman's chart) is in a great enemy's sign in the 9th at 0.82×, and in a neutral sign in the Navamsa (Aries) — the significator needs care, which classically shows as delay or adjustment.
      # Darakaraka: Mercury in Aquarius in the 1st house
        Mercury is at 0°28' Aquarius (Dhanishta), in an enemy's sign.
        - The spouse carries Mercury's themes — thinking, speech, trade and everything written down — and a humanitarian, progressive and slightly unconventional temperament.
@@ -1633,7 +1633,7 @@ CHART pune-yoga-dense
        - Ketu's aspect: Ketu's glance on the 12th is its most natural station: expenditure that quietly serves liberation, ease in solitude and in foreign lands, a vivid inner life in sleep.
      # The 9th house (long journeys): Libra
        The 9th house is Libra, occupied by Jupiter. Its lord Venus is in the 2nd at 9°15' Pisces (Uttara Bhadrapada), exalted, at 1.12× its Shadbala requirement.
-       It holds 25 SAV bindus (just below the 28 average); Bhava Bala 7.3 rupas.
+       It holds 25 SAV bindus (just below the 28 average); Bhava Bala 7.1 rupas.
        - Your 9th lord Venus sits in your 2nd, carrying fortune & belief into money you keep, family, food and what you say — a growth house, so results build with effort over time.
        - Venus works through Uttara Bhadrapada: deep-sea serenity; wisdom raised from the depths, slow and profound.
        - Jupiter here: Jupiter in the 9th is the guru on the guru's throne: faith, fortune, a benevolent father, and luck that looks unearned to onlookers. Higher learning, pilgrimage and publishing prosper.
@@ -1662,22 +1662,22 @@ CHART pune-yoga-dense
        - Moon, the mind and sleep, is in an enemy's sign in the 1st at 0.93× — watch the mind, sleep, chest and body fluids.
      # The 6th house (illness and recovery): Cancer
        The 6th house is Cancer, with no occupants. Its lord Moon is in the 1st at 12°13' Aquarius (Shatabhisha), in an enemy's sign, at 0.93× its Shadbala requirement.
-       Rahu aspects it; it holds 34 SAV bindus (well above the 28 average); Bhava Bala 6.7 rupas.
+       Rahu aspects it; it holds 34 SAV bindus (well above the 28 average); Bhava Bala 6.4 rupas.
        - Your 6th lord Moon sits in your 1st, carrying health & rivals into your body, your temperament and how you come across — a supportive house, so results flow with less resistance.
        - Moon works through Shatabhisha: veiled healing; solitary depths, mysticism and medicine.
        - Rahu's aspect: Rahu on the 6th is one of its genuinely strong glances: enemies are overwhelmed, competition is relished, and you prosper in litigation, service and the messier arenas others avoid.
      # The 8th house (chronic matters and longevity): Virgo
-       The 8th house is Virgo, with no occupants. Its lord Mercury is in the 1st at 0°28' Aquarius (Dhanishta), in an enemy's sign, at 0.83× its Shadbala requirement.
-       Mars, Venus and Ketu aspect it; it holds 25 SAV bindus (just below the 28 average); Bhava Bala 5.6 rupas.
+       The 8th house is Virgo, with no occupants. Its lord Mercury is in the 1st at 0°28' Aquarius (Dhanishta), in an enemy's sign, at 0.95× its Shadbala requirement.
+       Mars, Venus and Ketu aspect it; it holds 25 SAV bindus (just below the 28 average); Bhava Bala 6.1 rupas.
        - Your 8th lord Mercury sits in your 1st, carrying upheaval & depth into your body, your temperament and how you come across — a supportive house, so results flow with less resistance.
        - Mercury works through Dhanishta: abundant rhythm; music, wealth and adaptive movement.
        - Mars's aspect: Mars's glance on the 8th gives surgical capacity, courage in crisis and interest in what lies beneath — but it also makes transformations abrupt.
        - Venus's aspect: Venus's aspect on the 8th brings gain through the partner's or others' resources, an interest in the esoteric side of love, and longevity supported by an appetite for living.
        - Ketu's aspect: Ketu's glance on the 8th is the planet of letting go in the house of endings and transformation: genuine occult aptitude, ease with mortality and transformation, and sudden events that feel fated rather than accidental.
      # Planets and conditions to watch
+       - Mercury is below its Shadbala requirement (0.95×): give extra care to the nerves, skin, speech and lungs.
        - Moon is below its Shadbala requirement (0.93×): give extra care to the mind, sleep, chest and body fluids.
-       - Jupiter is below its Shadbala requirement (0.85×): give extra care to the liver, fat metabolism and blood sugar.
-       - Mercury is below its Shadbala requirement (0.83×): give extra care to the nerves, skin, speech and lungs.
+       - Jupiter is below its Shadbala requirement (0.82×): give extra care to the liver, fat metabolism and blood sugar.
        - Sun is in Mrita avastha (a "dead" degree): it gives little on its own, so its body areas (the heart, eyes, bones and overall vitality) depend on routine care.
        - Rahu is debilitated: unusual or hard-to-diagnose conditions, toxins and anxiety are the sensitive area in its periods.
        - Ketu is debilitated: sudden or viral episodes, surgeries and scars are the sensitive area in its periods.
@@ -1693,7 +1693,7 @@ CHART pune-yoga-dense
        - Moon rules your 6th — one of the harder houses — and sits in your 1st, carrying that friction into an area that matters to you. What helps: Keep 1st-house matters clean on paper: written agreements, no informal loans, explicit boundaries with the people involved.
        - Jupiter, Moon, Mars — each rules houses that pull against your interests for an Aquarius rising chart, so its instincts tend to be the ones that get you into trouble. What helps: Give big commitments in these planets' areas one extra day and one outside opinion — that single habit removes most of what this placement costs people.
        - Jupiter and Sun rule your 2nd and 7th houses, which classically makes them the planets whose main periods are worth a little extra care about health and energy. What helps: During these planets' main periods, keep routine check-ups current, insurance in force, and the basics — sleep, food, movement — non-negotiable.
-       - Mercury reaches only 83% of the strength the classical tables ask of it. What helps: Build a check into anything depending on Mercury's themes — a review, a backup, a second quote.
+       - Jupiter reaches only 82% of the strength the classical tables ask of it. What helps: Build a check into anything depending on Jupiter's themes — a review, a backup, a second quote.
      summary: 10 areas in your chart deserve conscious handling rather than luck. Each one below comes with something practical to do about it, and none of them is a verdict.
   == Part 7: Timing outlook
      # Now: Saturn – Ketu – Ketu
@@ -1702,7 +1702,7 @@ CHART pune-yoga-dense
        - Sub-period — Ketu rules no house (a node), sits in your 4th debilitated, and is a functional neutral for your Lagna. Its themes now run through its placement.
      # The main periods ahead
        - Saturn Mahadasha, Sept 2020 – Sept 2039 (age 26–45): Saturn rules your 1st and 12th, sits in your 1st in its moolatrikona at 1.27×, and is a functional benefic for your Lagna — a strong period that delivers, because Saturn is a working planet for your Lagna that meets its Shadbala requirement (1.27×).
-       - Mercury Mahadasha, Sept 2039 – Sept 2056 (age 45–62): Mercury rules your 5th and 8th, sits in your 1st in an enemy's sign at 0.83×, and is a functional neutral for your Lagna — a mixed period: good in some areas, effortful in others, because Mercury is a functional neutral.
+       - Mercury Mahadasha, Sept 2039 – Sept 2056 (age 45–62): Mercury rules your 5th and 8th, sits in your 1st in an enemy's sign at 0.95×, and is a functional neutral for your Lagna — a mixed period: good in some areas, effortful in others, because Mercury is a functional neutral.
        - Ketu Mahadasha, Sept 2056 – Sept 2063 (age 62–69): Ketu rules no house (a node), sits in your 4th debilitated, and is a functional neutral for your Lagna — a mixed period: good in some areas, effortful in others, because Ketu is a functional neutral.
        - Venus Mahadasha, Sept 2063 – Sept 2083 (age 69–89): Venus rules your 4th and 9th, sits in your 2nd exalted at 1.12×, and is a functional yogakaraka for your Lagna — a strong period that delivers, because Venus is a working planet for your Lagna that meets its Shadbala requirement (1.12×).
      # The strongest and the most demanding stretches (next 15 years)
@@ -1847,12 +1847,12 @@ CHART southern-hemisphere
   Su  total=  343.934 rupas=  5.732 req=390.000 ratio=0.882 ishta=6.868 kashta=46.186
   Mo  total=  423.534 rupas=  7.059 req=360.000 ratio=1.176 ishta=4.182 kashta=52.090
   Ma  total=  350.442 rupas=  5.841 req=300.000 ratio=1.168 ishta=14.407 kashta=38.140
-  Me  total=  389.663 rupas=  6.494 req=420.000 ratio=0.928 ishta=29.291 kashta=25.931
-  Ju  total=  554.832 rupas=  9.247 req=390.000 ratio=1.423 ishta=41.999 kashta=9.634
+  Me  total=  435.862 rupas=  7.264 req=420.000 ratio=1.038 ishta=29.291 kashta=25.931
+  Ju  total=  542.182 rupas=  9.036 req=390.000 ratio=1.390 ishta=41.999 kashta=9.634
   Ve  total=  335.551 rupas=  5.593 req=330.000 ratio=1.017 ishta=22.839 kashta=13.576
-  Sa  total=  389.478 rupas=  6.491 req=300.000 ratio=1.298 ishta=28.002 kashta=28.777
+  Sa  total=  385.170 rupas=  6.419 req=300.000 ratio=1.284 ishta=28.002 kashta=28.777
   strongest=Ju weakest=Ve
-  bhavaBala: H1=392.123 H2=435.410 H3=555.647 H4=286.917 H5=414.022 H6=293.211 H7=403.767 H8=579.493 H9=433.826 H10=422.540 H11=574.167 H12=408.060
+  bhavaBala: H1=362.823 H2=460.939 H3=543.607 H4=283.506 H5=460.221 H6=293.211 H7=403.767 H8=565.014 H9=416.098 H10=399.821 H11=552.436 H12=400.740
 
 --- vargas ---
   D1  asc= 1  Su: 6 Mo: 7 Ma: 7 Me: 7 Ju: 3 Ve: 6 Sa: 4 Ra: 5 Ke:11
@@ -1970,7 +1970,7 @@ CHART southern-hemisphere
   == Navamsa — the inner person
      [1] The Navamsa (D-9) is a second chart derived from your birth chart by dividing each sign into nine parts. Tradition reads it for the inner person and for marriage, and treats it as the test of whether what the birth chart promises actually holds. Its rising sign is Pisces. If the birth chart is how life presents itself, the Navamsa is how you are on the inside once the noise settles — and a Pisces inner nature is impressionable, compassionate and porous to atmosphere, absorbing whatever surrounds you and needing boundaries you are reluctant to build. Imagination and faith are the standing strengths. When the outer sign (Taurus) and inner sign (Pisces) differ in element, people who only know you casually often misread you; those close to you meet the Navamsa.
   == By the classical six-fold measure (Shadbala)
-     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Jupiter is your strongest planet at 9.25 rupas (142% of its required minimum) and Venus the weakest at 5.59 rupas (102%). This agrees with the quicker overall score above, which makes the reading more solid.
+     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Jupiter is your strongest planet at 9.04 rupas (139% of its required minimum) and Venus the weakest at 5.59 rupas (102%). This agrees with the quicker overall score above, which makes the reading more solid.
      [2] Practically: lean on Jupiter's themes when the stakes are high, and give Venus's themes more preparation time than feels necessary.
   == Aspects on your rising sign — who edits the personality
      [1] Planets influence houses they do not sit in by 'aspecting' them — casting their influence across the chart to particular houses. Every planet aspects the 7th house from itself, and Mars, Jupiter, Saturn, Rahu and Ketu each have extra special aspects. The following planets aspect your rising sign, and each one edits the personality others meet:
@@ -2277,7 +2277,7 @@ CHART southern-hemisphere
   personality [Your strongest and weakest planets] Jupiter is your strongest planet at 67 (strong), sitting in your 3rd house in Cancer.
   personality [Atmakaraka — what this life is for] Venus is your Atmakaraka — literally the 'soul significator', the planet that has travelled furthest through its sign, which the Jaimini school of astrology treats as the planet carrying the deepest purpose of the life.
   personality [Navamsa — the inner person] Its rising sign is Pisces.
-  personality [By the classical six-fold measure (Shadbala)] By that measure Jupiter is your strongest planet at 9.25 rupas (142% of its required minimum) and Venus the weakest at 5.59 rupas (102%).
+  personality [By the classical six-fold measure (Shadbala)] By that measure Jupiter is your strongest planet at 9.04 rupas (139% of its required minimum) and Venus the weakest at 5.59 rupas (102%).
   personality [Aspects on your rising sign — who edits the personality] Moon aspects your rising sign from your 7th house — the full 7th-house aspect every planet casts.
   personality [How you are seen vs how you are (Arudha Lagna)] Yours falls in Pisces, while your actual rising sign is Taurus.
   personality [Yoga signatures in the personality] 4 combinations in your chart stamp themselves directly on the character: Chandra-Mangala Yoga, Ruchaka Yoga (Pancha Mahapurusha), Yogakaraka in Strength, Anapha Yoga.
@@ -2369,14 +2369,14 @@ CHART southern-hemisphere
        - Neecha Bhanga: Sun's debilitation is cancelled because Saturn, exalted in that very sign's field, occupies a kendra; and the lord of its exaltation sign, Mars, occupies a kendra from Lagna.
        - Sun is the weakest planet in Shadbala (0.88×).
      # Jupiter in the 3rd (Cancer, Pushya)
-       Jupiter is at 14°37' in Pushya pada 4, exalted, at 1.42× its Shadbala requirement.
+       Jupiter is at 14°37' in Pushya pada 4, exalted, at 1.39× its Shadbala requirement.
        - Jupiter in the 3rd gives wise initiative — courage tempered by ethics.
        - Siblings prosper or are themselves guru-figures.
        - Writing and teaching flow naturally, though ambition here is softer than talent; effort must be deliberate.
        - Jupiter rules your 8th and 11th, so growth, judgement, teaching and good faith run through upheaval & depth and income & gains.
-       - Jupiter is the strongest planet by Shadbala ratio (1.42× required).
+       - Jupiter is the strongest planet by Shadbala ratio (1.39× required).
      # Saturn in the 4th (Leo, Purva Phalguni)
-       Saturn is at 17°59' in Purva Phalguni pada 2, in a neutral sign, at 1.30× its Shadbala requirement.
+       Saturn is at 17°59' in Purva Phalguni pada 2, in a neutral sign, at 1.28× its Shadbala requirement.
        - Saturn in the 4th chills the hearth: emotional reserve at home, a mother marked by duty or hardship, property acquired late or through labour.
        - Inner peace is a discipline, not a default — and once practised, unshakeable.
        - Saturn rules your 9th and 10th, so time, limits, patience and earned authority run through fortune & belief and career & status.
@@ -2391,18 +2391,18 @@ CHART southern-hemisphere
        - Income arrives through niche or technical channels.
        - The social ladder holds no rungs you care to grip — freedom is the actual profit.
      summary: At the surface you are steady, sensual and practical. Underneath, the mind is intense, private and probing, and the soul (Venus) is balanced, diplomatic and aesthetic.
-     summary: Your strongest planet is Jupiter (1.42× by Shadbala) and your weakest is Sun (0.88×). The main lessons run through authority, confidence and the sense of self, and through managing stubbornness.
+     summary: Your strongest planet is Jupiter (1.39× by Shadbala) and your weakest is Sun (0.88×). The main lessons run through authority, confidence and the sense of self, and through managing stubbornness.
      summary: You are already in a supportive main period — the Venus Mahadasha runs to 2036.
   == Part 2: Career
      # The 10th house: Aquarius
-       The 10th house is Aquarius, with no occupants. Its lord Saturn is in the 4th at 17°59' Leo (Purva Phalguni), in a neutral sign, at 1.30× its Shadbala requirement.
-       Mars and Saturn aspect it; it holds 27 SAV bindus (just below the 28 average); Bhava Bala 7.0 rupas.
+       The 10th house is Aquarius, with no occupants. Its lord Saturn is in the 4th at 17°59' Leo (Purva Phalguni), in a neutral sign, at 1.28× its Shadbala requirement.
+       Mars and Saturn aspect it; it holds 27 SAV bindus (just below the 28 average); Bhava Bala 6.7 rupas.
        - Your 10th lord Saturn sits in your 4th, carrying career & status into home, your mother, land and peace of mind — a supportive house, so results flow with less resistance.
        - Saturn works through Purva Phalguni: pleasure-loving warmth; charm, patronage and creative enjoyment.
        - Mars's aspect: Mars's aspect on the 10th lands on the house where Mars is naturally strongest: driving ambition, executive force, and a career built on decisive action — defence, surgery, engineering, sport, enterprise.
        - Saturn's aspect: Saturn's aspect on the 10th lands on the house Saturn naturally stands for, and is one of the strongest career glances in the chart: authority through service, seniority through endurance, and a reputation for reliability that compounds.
        - Sun, the natural karaka of authority and status, is debilitated in the 6th at 0.88× — recognition comes later and through persistence.
-       - Saturn, the natural karaka of work and endurance, is in a neutral sign in the 4th at 1.30× — a solid support for a working life with standing.
+       - Saturn, the natural karaka of work and endurance, is in a neutral sign in the 4th at 1.28× — a solid support for a working life with standing.
        - Counted from the Moon, the 10th is Leo; its lord Sun sits in your 6th debilitated, so the work that also satisfies you emotionally runs through authority & administration.
      # The Dasamsa (D10): Pisces rising
        - A Pisces D10 Lagna gives a compassionate, intuitive and spiritual style at work.
@@ -2412,7 +2412,7 @@ CHART southern-hemisphere
      # Amatyakaraka: Saturn in Leo in the 4th house
        Saturn is at 17°59' Leo (Purva Phalguni).
        - Saturn is your Amatyakaraka, the planet of career counsel: it favours heavy industry, mining and minerals, construction, logistics, labour management, long-cycle research.
-       - Saturn is in a neutral sign at 1.30× — help and advancement come readily.
+       - Saturn is in a neutral sign at 1.28× — help and advancement come readily.
      # Yogas for status
        - Neechabhanga Raja Yoga (Sun): Sun's debilitation is cancelled because Saturn, exalted in that very sign's field, occupies a kendra; and the lord of its exaltation sign, Mars, occupies a kendra from Lagna.
        - Neechabhanga Raja Yoga (Moon): Moon's debilitation is cancelled because its dispositor Mars occupies a kendra from Lagna; and its dispositor stands in a kendra from the Moon.
@@ -2435,14 +2435,14 @@ CHART southern-hemisphere
      summary: The 10th lord Saturn and the Amatyakaraka Saturn decide how far this goes; their main periods are when it moves.
   == Part 3: Wealth
      # The 2nd house (wealth you keep): Gemini
-       The 2nd house is Gemini, with no occupants. Its lord Mercury is in the 7th at 5°13' Scorpio (Anuradha), in an enemy's sign, at 0.93× its Shadbala requirement.
-       Mars aspects it; it holds 28 SAV bindus (above the 28 average); Bhava Bala 7.3 rupas.
+       The 2nd house is Gemini, with no occupants. Its lord Mercury is in the 7th at 5°13' Scorpio (Anuradha), in an enemy's sign, at 1.04× its Shadbala requirement.
+       Mars aspects it; it holds 28 SAV bindus (above the 28 average); Bhava Bala 7.7 rupas.
        - Your 2nd lord Mercury sits in your 7th, carrying wealth & family into marriage, partnership and everyone you deal with directly — a supportive house, so results flow with less resistance.
        - Mercury works through Anuradha: loyal, disciplined devotion; friendship as a spiritual force.
        - Mars's aspect: Mars's aspect on the 2nd sharpens speech into a weapon and makes wealth something to be fought for and defended rather than inherited.
      # The 11th house (income and gains): Pisces
-       The 11th house is Pisces, occupied by Ketu. Its lord Jupiter is in the 3rd at 14°37' Cancer (Pushya), exalted, at 1.42× its Shadbala requirement.
-       Jupiter and Rahu aspect it; it holds 31 SAV bindus (well above the 28 average); Bhava Bala 9.6 rupas.
+       The 11th house is Pisces, occupied by Ketu. Its lord Jupiter is in the 3rd at 14°37' Cancer (Pushya), exalted, at 1.39× its Shadbala requirement.
+       Jupiter and Rahu aspect it; it holds 31 SAV bindus (well above the 28 average); Bhava Bala 9.2 rupas.
        - Your 11th lord Jupiter sits in your 3rd, carrying income & gains into courage, effort, siblings and short journeys — a growth house, so results build with effort over time.
        - Jupiter works through Pushya: nourishing, dutiful, deeply auspicious; grows what it protects.
        - Ketu here: Ketu in the 11th prunes the network: few friends, strange gains, desires that extinguish upon examination. Income arrives through niche or technical channels.
@@ -2466,7 +2466,7 @@ CHART southern-hemisphere
        - Jan 2027 – Sept 2029 (age 48–51): Venus–Jupiter period, strong (75% confidence), confirmed by Yogini dasha.
        - Nov 2032 – Sept 2035 (age 54–57): Venus–Mercury period, moderate (69% confidence), confirmed by Yogini dasha.
      summary: Your money is most likely to come through business & self-employment — about 31% of the wealth signal in your chart sits there.
-     summary: The 2nd lord Mercury (0.93×) decides what you keep and the 11th lord Jupiter (1.42×) what comes in; the yogas above decide how much of it stays.
+     summary: The 2nd lord Mercury (1.04×) decides what you keep and the 11th lord Jupiter (1.39×) what comes in; the yogas above decide how much of it stays.
   == Part 4: Marriage and relationships
      # The 7th house: Scorpio
        The 7th house is Scorpio, occupied by Moon, Mars and Mercury. Its lord Mars is in the 7th at 6°43' Scorpio (Anuradha), in its own sign, at 1.17× its Shadbala requirement.
@@ -2480,7 +2480,7 @@ CHART southern-hemisphere
        - Ketu's aspect: Ketu's aspect on the 7th introduces detachment into partnership — a spiritually inclined or distant partner, or a marriage you are present for without being attached to.
      # Venus and Jupiter — the marriage significators
        - Venus (the karaka of marriage) is in its own sign in the 6th at 1.02×, and in its own sign in the Navamsa (Taurus) — a warm, supportive significator.
-       - Jupiter (the husband-karaka for a woman's chart) is exalted in the 3rd at 1.42×, and in a neutral sign in the Navamsa (Scorpio) — a warm, supportive significator.
+       - Jupiter (the husband-karaka for a woman's chart) is exalted in the 3rd at 1.39×, and in a neutral sign in the Navamsa (Scorpio) — a warm, supportive significator.
      # Darakaraka: Mercury in Scorpio in the 7th house
        Mercury is at 5°13' Scorpio (Anuradha), in an enemy's sign.
        - The spouse carries Mercury's themes — thinking, speech, trade and everything written down — and an intense, private and probing temperament.
@@ -2508,14 +2508,14 @@ CHART southern-hemisphere
   == Part 5: Foreign travel and settlement
      # The 12th house (foreign lands): Aries
        The 12th house is Aries, with no occupants. Its lord Mars is in the 7th at 6°43' Scorpio (Anuradha), in its own sign, at 1.17× its Shadbala requirement.
-       Sun and Venus aspect it; it holds 29 SAV bindus (above the 28 average); Bhava Bala 6.8 rupas.
+       Sun and Venus aspect it; it holds 29 SAV bindus (above the 28 average); Bhava Bala 6.7 rupas.
        - Your 12th lord Mars sits in your 7th, carrying loss & retreat into marriage, partnership and everyone you deal with directly — a supportive house, so results flow with less resistance.
        - Mars works through Anuradha: loyal, disciplined devotion; friendship as a spiritual force.
        - Sun's aspect: The Sun's gaze on the 12th spends the ego's fuel on distant, private or institutional ends — foreign work, seclusion, hospitals, or genuine spiritual withdrawal.
        - Venus's aspect: Venus's aspect on the 12th spends on comfort, beauty and private pleasures, and gives the classical blessing on everything the 12th stands for — bed comforts, foreign residence, and the surrender that mature devotion requires.
      # The 9th house (long journeys): Capricorn
-       The 9th house is Capricorn, with no occupants. Its lord Saturn is in the 4th at 17°59' Leo (Purva Phalguni), in a neutral sign, at 1.30× its Shadbala requirement.
-       Jupiter and Rahu aspect it; it holds 26 SAV bindus (just below the 28 average); Bhava Bala 7.2 rupas.
+       The 9th house is Capricorn, with no occupants. Its lord Saturn is in the 4th at 17°59' Leo (Purva Phalguni), in a neutral sign, at 1.28× its Shadbala requirement.
+       Jupiter and Rahu aspect it; it holds 26 SAV bindus (just below the 28 average); Bhava Bala 6.9 rupas.
        - Your 9th lord Saturn sits in your 4th, carrying fortune & belief into home, your mother, land and peace of mind — a supportive house, so results flow with less resistance.
        - Saturn works through Purva Phalguni: pleasure-loving warmth; charm, patronage and creative enjoyment.
        - Jupiter's aspect: Jupiter on the 9th is the guru in the house of the guru: fortune, dharma, higher learning, a benevolent father, and long journeys that enlarge you.
@@ -2539,7 +2539,7 @@ CHART southern-hemisphere
      summary: The 12th lord is in its own sign in your 7th; with Rahu in the 5th, that sets how far the pull abroad goes.
   == Part 6: Health and things to watch
      # Vitality: Taurus Lagna and its lord Venus
-       - The 1st house holds 31 SAV bindus and 6.5 rupas of Bhava Bala — a sound base constitution.
+       - The 1st house holds 31 SAV bindus and 6.0 rupas of Bhava Bala — a sound base constitution.
        - Venus, the Lagna lord (body and resilience), is in its own sign in the 6th at 1.02× — well supported.
        - Sun, vitality, is debilitated in the 6th at 0.88× — watch the heart, eyes, bones and overall vitality.
        - Moon, the mind and sleep, is debilitated in the 7th at 1.18× — watch the mind, sleep, chest and body fluids.
@@ -2552,12 +2552,11 @@ CHART southern-hemisphere
        - Venus here: Venus in the 6th serves beauty in practical harness — fashion trades, wellness industries, service with polish. Relationships tangle with colleagues or through daily routines.
        - Saturn's aspect: Saturn's aspect on the 6th lands on a house Saturn naturally handles well: chronic enemies wear down, litigation is won by persistence, debts are serviced methodically, and daily discipline is genuinely available.
      # The 8th house (chronic matters and longevity): Sagittarius
-       The 8th house is Sagittarius, with no occupants. Its lord Jupiter is in the 3rd at 14°37' Cancer (Pushya), exalted, at 1.42× its Shadbala requirement.
-       It holds 25 SAV bindus (just below the 28 average); Bhava Bala 9.7 rupas.
+       The 8th house is Sagittarius, with no occupants. Its lord Jupiter is in the 3rd at 14°37' Cancer (Pushya), exalted, at 1.39× its Shadbala requirement.
+       It holds 25 SAV bindus (just below the 28 average); Bhava Bala 9.4 rupas.
        - Your 8th lord Jupiter sits in your 3rd, carrying upheaval & depth into courage, effort, siblings and short journeys — a growth house, so results build with effort over time.
        - Jupiter works through Pushya: nourishing, dutiful, deeply auspicious; grows what it protects.
      # Planets and conditions to watch
-       - Mercury is below its Shadbala requirement (0.93×): give extra care to the nerves, skin, speech and lungs.
        - Sun is below its Shadbala requirement (0.88×): give extra care to the heart, eyes, bones and overall vitality.
        - Moon is debilitated: the mind, sleep, chest and body fluids are the sensitive area in its periods.
        - Mercury is in Mrita avastha (a "dead" degree): it gives little on its own, so its body areas (the nerves, skin, speech and lungs) depend on routine care.
@@ -2585,7 +2584,7 @@ CHART southern-hemisphere
        - Moon Mahadasha, Nov 2042 – Nov 2052 (age 64–74): Moon rules your 3rd, sits in your 7th debilitated at 1.18×, and is a functional malefic for your Lagna — a mixed period: good in some areas, effortful in others, because Moon is a functional malefic that meets its Shadbala requirement (1.18×).
        - Mars Mahadasha, Nov 2052 – Nov 2059 (age 74–81): Mars rules your 7th and 12th, sits in your 7th in its own sign at 1.17×, and is a functional malefic for your Lagna — a mixed period: good in some areas, effortful in others, because Mars is a functional malefic that meets its Shadbala requirement (1.17×).
      # The strongest and the most demanding stretches (next 15 years)
-       - Strongest: Venus–Saturn, Sept 2029 – Nov 2032 — both lords are working planets for your Lagna with the strength (Shadbala or varga dignity) to deliver.
+       - Strongest: Venus–Saturn, Sept 2029 – Nov 2032; Venus–Mercury, Nov 2032 – Sept 2035 — both lords are working planets for your Lagna with the strength (Shadbala or varga dignity) to deliver.
        - No sub-period in the next 15 years has both lords adverse and weak.
      summary: You are already in a supportive main period — the Venus Mahadasha runs to 2036.
 

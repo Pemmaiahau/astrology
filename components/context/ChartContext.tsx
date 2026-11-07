@@ -26,6 +26,7 @@ import {
 } from "@/data/interpretations/personality";
 import { PLANETS } from "@/utils/astrology/constants";
 import { isAdvancedUnlocked } from "./advancedAccess";
+import type { ChartLayout } from "@/utils/astrology/chartLayout";
 import type {
   AutoInputState,
   AyanamshaId,
@@ -53,6 +54,8 @@ interface ChartContextValue {
   setNodeMode: (n: NodeMode) => void;
   chartStyle: "rashi" | "chalit";
   setChartStyle: (s: "rashi" | "chalit") => void;
+  chartLayout: ChartLayout;
+  setChartLayout: (l: ChartLayout) => void;
   predictionYear: number;
   setPredictionYear: (y: number) => void;
   predictionWindow: "calendar" | "solar";
@@ -129,6 +132,7 @@ interface StoredSession {
   ayanamsha: AyanamshaId;
   nodeMode: NodeMode;
   chartStyle: "rashi" | "chalit";
+  chartLayout: ChartLayout;
   mode: "auto" | "manual";
 }
 
@@ -145,6 +149,7 @@ function loadSession(): Partial<StoredSession> {
     if (v.ayanamsha && ["lahiri", "pushya", "raman"].includes(v.ayanamsha)) out.ayanamsha = v.ayanamsha;
     if (v.nodeMode === "mean" || v.nodeMode === "true") out.nodeMode = v.nodeMode;
     if (v.chartStyle === "rashi" || v.chartStyle === "chalit") out.chartStyle = v.chartStyle;
+    if (v.chartLayout === "south" || v.chartLayout === "north") out.chartLayout = v.chartLayout;
     if (v.mode === "auto" || v.mode === "manual") out.mode = v.mode;
     if (v.committed && (v.committed.kind === "auto" || v.committed.kind === "manual") && v.committed.data) {
       out.committed = v.committed;
@@ -175,6 +180,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
   const [ayanamsha, setAyanamsha] = useState<AyanamshaId>(restored.ayanamsha ?? "lahiri");
   const [nodeMode, setNodeMode] = useState<NodeMode>(restored.nodeMode ?? "mean");
   const [chartStyle, setChartStyle] = useState<"rashi" | "chalit">(restored.chartStyle ?? "rashi");
+  const [chartLayout, setChartLayout] = useState<ChartLayout>(restored.chartLayout ?? "south");
   const [committed, setCommitted] = useState<CommittedInput>(restored.committed ?? null);
   const [now] = useState(() => new Date());
   const [predictionYear, setPredictionYear] = useState(() => new Date().getFullYear());
@@ -323,8 +329,8 @@ export function ChartProvider({ children }: { children: ReactNode }) {
   // every change rather than on unload, because a tab closed abruptly (or a
   // crash) is exactly when losing the chart is most annoying.
   useEffect(() => {
-    saveSession({ committed, ayanamsha, nodeMode, chartStyle, mode });
-  }, [committed, ayanamsha, nodeMode, chartStyle, mode]);
+    saveSession({ committed, ayanamsha, nodeMode, chartStyle, chartLayout, mode });
+  }, [committed, ayanamsha, nodeMode, chartStyle, chartLayout, mode]);
 
   const advancedUnlocked = useMemo(() => isAdvancedUnlocked(chart), [chart]);
 
@@ -343,6 +349,8 @@ export function ChartProvider({ children }: { children: ReactNode }) {
       setNodeMode,
       chartStyle,
       setChartStyle,
+      chartLayout,
+      setChartLayout,
       predictionYear,
       setPredictionYear,
       predictionWindow,
@@ -385,7 +393,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
       now,
     }),
     [
-      mode, ayanamsha, nodeMode, chartStyle, predictionYear, predictionWindow,
+      mode, ayanamsha, nodeMode, chartStyle, chartLayout, predictionYear, predictionWindow,
       speculationYear, speculationWindow,
       chart, chartError, committed, dashaTree, activeDasha, transits, sadeSati, panchang, ashtakavarga,
       yogas, strengths, houseReadings, personality, vargas, jaimini, shadbala,

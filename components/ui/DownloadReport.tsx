@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { Download, FileText, Loader2 } from "lucide-react";
 import { useChart } from "@/components/context/ChartContext";
 import { logChartExport } from "@/utils/log/chartLog";
 
 /**
- * Downloads the whole cast chart as one Markdown document.
+ * Downloads the whole cast chart as one Markdown document, or as a PDF of that
+ * same document with the charts drawn in.
  *
  * The builder and the two gated report modules are imported at click time
  * rather than at module scope. Between them they pull in the divisional,
@@ -18,15 +19,15 @@ import { logChartExport } from "@/utils/log/chartLog";
  */
 export default function DownloadReport() {
   const ctx = useChart();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"md" | "pdf" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { chart } = ctx;
   if (!chart) return null;
 
-  async function download() {
+  async function download(format: "md" | "pdf") {
     if (!chart) return;
-    setBusy(true);
+    setBusy(format);
     setError(null);
     try {
       const { buildMarkdownReport, markdownReportFilename } = await import(
@@ -70,12 +71,20 @@ export default function DownloadReport() {
         speculation, intimacy, expert, generatedAt: now,
       });
 
-      const url = URL.createObjectURL(
-        new Blob([markdown], { type: "text/markdown;charset=utf-8" })
-      );
+      let file: Blob;
+      let filename = markdownReportFilename(chart);
+      if (format === "pdf") {
+        const { buildPdfReport } = await import("@/utils/export/pdfReport");
+        file = await buildPdfReport({ markdown, chart, vargas, layout: ctx.chartLayout });
+        filename = filename.replace(/\.md$/, ".pdf");
+      } else {
+        file = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+      }
+
+      const url = URL.createObjectURL(file);
       const link = document.createElement("a");
       link.href = url;
-      link.download = markdownReportFilename(chart);
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -89,24 +98,36 @@ export default function DownloadReport() {
         `The report could not be built: ${err instanceof Error ? err.message : String(err)}`
       );
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   return (
     <div className="mt-3 space-y-1.5">
-      <button
-        type="button"
-        onClick={download}
-        disabled={busy}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary-border-soft bg-primary-wash px-4 py-2.5 text-sm font-semibold text-heading transition hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-        {busy ? "Building report…" : "Download Chart as Markdown (.md)"}
-      </button>
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => download("pdf")}
+          disabled={busy !== null}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary-border-soft bg-primary-wash px-3 py-2.5 text-sm font-semibold text-heading transition hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {busy === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+          {busy === "pdf" ? "Building PDF…" : "Download PDF"}
+        </button>
+        <button
+          type="button"
+          onClick={() => download("md")}
+          disabled={busy !== null}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary-border-soft bg-primary-wash px-3 py-2.5 text-sm font-semibold text-heading transition hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {busy === "md" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {busy === "md" ? "Building report…" : "Download Markdown"}
+        </button>
+      </div>
       <p className="text-[11px] leading-relaxed text-fg-faint">
         Every computed layer — positions, panchang, vargas, yogas, doshas, Shadbala, Ashtakavarga,
-        Jaimini and the full Vimshottari tree — as one Markdown file you can hand to an AI assistant.
+        Jaimini and the full Vimshottari tree. The PDF adds the charts, in the chart style selected
+        above; the Markdown file is the one to hand to an AI assistant.
       </p>
       {error && <p className="text-[11px] leading-relaxed text-bad-strong">{error}</p>}
     </div>

@@ -36,6 +36,8 @@ For how the calculation and prediction engine actually works (file-by-file, form
 - **Input validation** — birth dates bounded to the ayanamsha's validity window (1850–2150) with a soft warning band outside ±100 years of J2000; daylight-saving gaps and clock changes near the birth time flagged; polar latitudes warned; hand-entered charts checked for impossible Mercury/Venus elongations and a broken Rahu–Ketu axis, with one-click Ketu derivation.
 - **Works without the network** — the city geocoder is the only external call; failures are reported rather than swallowed, recent lookups are cached, and latitude/longitude/timezone can be entered by hand.
 - **Survives a refresh** — the birth input and the ayanamsha/node/chart-style settings persist locally; the chart is re-derived rather than stored.
+- **North & South Indian charts** — a header toggle redraws the birth chart and every divisional chart as the South Indian grid (signs fixed) or the North Indian diamond (houses fixed, Lagna at the top). The choice persists and carries into the PDF.
+- **PDF report** — one click downloads a real `.pdf`: the D-1 and D-9 on the first page, all sixteen vargas drawn, and the full report as searchable tables. Built in the browser from the same Markdown as the `.md` download, so the two cannot disagree. Fonts load from `public/fonts` (DejaVu Sans) only when a PDF is requested.
 - **Light & dark themes** — AstroSage-inspired light theme (default) with the original indigo/amber look preserved behind a toggle; fully tokenized palette, WCAG-AA checked.
 - **Classical sourcing** — every interpretive rule cited (work-level or verified chapter) in [data/interpretations/SOURCES.md](data/interpretations/SOURCES.md), with a disagreement log of chosen defaults; numeric verification harness at `utils/astrology/__checks__/verify.ts`, run with `node utils/astrology/__checks__/run.mjs verify` (496 checks) and `node utils/astrology/__checks__/run.mjs golden` for the output-regression snapshot.
 
@@ -99,7 +101,7 @@ npx wrangler d1 execute astrology-chart-log --remote   --command="SELECT created
 
 ```
 app/                      # App Router shell (single-page client workspace)
-components/charts/        # South Indian chart, planet table, Ashtakavarga grid
+components/charts/        # South & North Indian charts, planet table, Ashtakavarga grid
 components/inputs/        # Manual + automatic workflows, city search
 components/panels/        # Interpretation, Life Areas, Dasha, Life Events, Panchang, Vargas, Jaimini,
                           #   Predictions, Ashtakavarga, Rectify Time, roles

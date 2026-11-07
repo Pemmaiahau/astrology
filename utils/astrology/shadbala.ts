@@ -1,3 +1,4 @@
+import { isMercuryBenefic } from "./aspects";
 import {
   DIURNAL_PLANETS,
   EXALTATION,
@@ -227,9 +228,9 @@ function nathonnathaBala(id: PlanetId7, frame: DayFrame): number {
 }
 
 /** Paksha bala: benefics grow with the waxing Moon; the Moon's own value is doubled. */
-function pakshaBala(id: PlanetId7, moonLon: number, sunLon: number): number {
+function pakshaBala(id: PlanetId7, moonLon: number, sunLon: number, mercuryBenefic: boolean): number {
   const elong = separation(moonLon, sunLon); // 0–180, 180 = full moon
-  const benefic = id === "Mo" || id === "Me" || id === "Ju" || id === "Ve";
+  const benefic = id === "Mo" || id === "Ju" || id === "Ve" || (id === "Me" && mercuryBenefic);
   const value = benefic ? elong / 3 : (180 - elong) / 3;
   return id === "Mo" ? value * 2 : value;
 }
@@ -384,9 +385,11 @@ export function sputaDrishti(aspecter: PlanetId, D: number): number {
 
 /**
  * Drik bala: (benefic drishti received − malefic drishti received) / 4.
- * Benefics here: Ju, Ve, Me, waxing Mo; malefics: Su, Ma, Sa, waning Mo.
+ * Benefics here: Ju, Ve, waxing Mo and an unafflicted Me (`isMercuryBenefic`);
+ * malefics: Su, Ma, Sa, waning Mo and an afflicted Me.
  */
 function drikBala(target: PlanetPosition, planets: PlanetPosition[], moonWaxing: boolean): number {
+  const mercuryBenefic = isMercuryBenefic(planets);
   let benefic = 0;
   let malefic = 0;
   for (const p of planets) {
@@ -394,7 +397,7 @@ function drikBala(target: PlanetPosition, planets: PlanetPosition[], moonWaxing:
     const D = norm360(target.longitude - p.longitude);
     const value = sputaDrishti(p.id, D);
     const isBenefic =
-      p.id === "Ju" || p.id === "Ve" || p.id === "Me" || (p.id === "Mo" && moonWaxing);
+      p.id === "Ju" || p.id === "Ve" || (p.id === "Me" && mercuryBenefic) || (p.id === "Mo" && moonWaxing);
     if (isBenefic) benefic += value;
     else malefic += value;
   }
@@ -416,6 +419,7 @@ export function computeShadbala(chart: ChartData): ShadbalaSet | null {
   const sun = byId.get("Su");
   if (!moon || !sun) return null;
   const moonWaxing = norm360(moon.longitude - sun.longitude) < 180;
+  const mercuryBenefic = isMercuryBenefic(chart.planets);
 
   const rashiSigns: Partial<Record<PlanetId, number>> = {};
   for (const p of chart.planets) rashiSigns[p.id] = p.sign;
@@ -435,7 +439,7 @@ export function computeShadbala(chart: ChartData): ShadbalaSet | null {
     ];
     const dig: BalaFactor[] = [{ label: "Dig", virupas: digBala(id, p.longitude, chart) }];
 
-    const paksha = pakshaBala(id, moon.longitude, sun.longitude);
+    const paksha = pakshaBala(id, moon.longitude, sun.longitude, mercuryBenefic);
     const ayana = ayanaBala(id, birthUtc);
     const kala: BalaFactor[] = [
       { label: "Nathonnatha", virupas: nathonnathaBala(id, frame) },
@@ -581,6 +585,7 @@ export function computeBhavaBala(chart: ChartData, shadbala: ShadbalaSet): Bhava
   const moonWaxing =
     moon && sun ? norm360(moon.longitude - sun.longitude) < 180 : true;
   const birthPhase = birthPhaseOf(chart);
+  const mercuryBenefic = isMercuryBenefic(chart.planets);
 
   const result: BhavaBala[] = [];
   for (let house = 1; house <= 12; house++) {
@@ -598,7 +603,7 @@ export function computeBhavaBala(chart: ChartData, shadbala: ShadbalaSet): Bhava
       if (p.id === "Ra" || p.id === "Ke") continue;
       const value = sputaDrishti(p.id, norm360(madhya - p.longitude));
       const isBenefic =
-        p.id === "Ju" || p.id === "Ve" || p.id === "Me" || (p.id === "Mo" && moonWaxing);
+        p.id === "Ju" || p.id === "Ve" || (p.id === "Me" && mercuryBenefic) || (p.id === "Mo" && moonWaxing);
       if (isBenefic) benefic += value;
       else malefic += value;
     }

@@ -24,6 +24,7 @@ import { ChartProvider, useChart } from "@/components/context/ChartContext";
 import AshtakavargaTable from "@/components/charts/AshtakavargaTable";
 import ShadbalaTable from "@/components/charts/ShadbalaTable";
 import PlanetTable from "@/components/charts/PlanetTable";
+import NorthIndianChart from "@/components/charts/NorthIndianChart";
 import SouthIndianChart from "@/components/charts/SouthIndianChart";
 import AutoInput from "@/components/inputs/AutoInput";
 import ManualInput from "@/components/inputs/ManualInput";
@@ -101,7 +102,7 @@ const GATED_TABS = [
 type TabKey = (typeof BASE_TABS)[number]["key"] | (typeof GATED_TABS)[number]["key"];
 
 function Header() {
-  const { ayanamsha, setAyanamsha, chartStyle, setChartStyle, chart, nodeMode, setNodeMode } =
+  const { ayanamsha, setAyanamsha, chartStyle, setChartStyle, chartLayout, setChartLayout, chart, nodeMode, setNodeMode } =
     useChart();
   return (
     <header className="border-b border-line-soft bg-surface-2 backdrop-blur">
@@ -164,6 +165,24 @@ function Header() {
                   }`}
                 >
                   {s === "rashi" ? "Rashi" : "Bhava Chalit"}
+                </button>
+              ))}
+            </div>
+          )}
+          {chart && (
+            <div className="flex items-center gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
+              {(["south", "north"] as const).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setChartLayout(l)}
+                  title={l === "south" ? "South Indian chart: signs fixed" : "North Indian chart: houses fixed, Lagna at the top"}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                    chartLayout === l
+                      ? "bg-accent-soft text-accent ring-1 ring-inset ring-accent-ring"
+                      : "text-fg-muted hover:text-fg-2"
+                  }`}
+                >
+                  {l === "south" ? "South Indian" : "North Indian"}
                 </button>
               ))}
             </div>
@@ -256,7 +275,7 @@ function StrengthTab() {
 }
 
 function Workspace() {
-  const { chart, chartError, advancedUnlocked } = useChart();
+  const { chart, chartError, chartLayout, advancedUnlocked } = useChart();
   const [tab, setTab] = useState<TabKey>("interpret");
 
   const tabs = useMemo(
@@ -276,7 +295,7 @@ function Workspace() {
         <InputCard />
         {chart && (
           <>
-            <SouthIndianChart chart={chart} />
+            {chartLayout === "north" ? <NorthIndianChart chart={chart} /> : <SouthIndianChart chart={chart} />}
             <ChalitShiftSummary />
             <PlanetTable chart={chart} />
             <FunctionalLords />
