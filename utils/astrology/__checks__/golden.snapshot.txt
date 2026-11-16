@@ -11,27 +11,27 @@ CHART canonical-delhi
 ==============================================================================
 
 --- meta ---
-  ayanamsha=lahiri value=23.7143 node=mean
+  ayanamsha=lahiri value=23.7218 node=mean
   bhavaMethod=sripati tz=Asia/Kolkata local=1990-01-24 12:30
   birthUtc=1990-01-24T07:00:00Z
 
 --- ascendant ---
-  Aries 23°58' lon=23.9677 nak=1 pada=4
-  mc=279.5392
+  Aries 23°57' lon=23.9615 nak=1 pada=4
+  mc=279.5313
 
 --- planets ---
-  Su  Capricorn    10°18' lon=280.3129 h=10 b=10 nak=21 pada=1 nakLord=Mo nakRel=friend  neutral      spd=  1.0174 
-  Mo  Sagittarius  10°14' lon=250.2429 h= 9 b= 9 nak=18 pada=4 nakLord=Ke nakRel=neutral enemy        spd= 12.6302 
-  Ma  Sagittarius   2°28' lon=242.4779 h= 9 b= 9 nak=18 pada=1 nakLord=Ke nakRel=neutral neutral      spd=  0.7173 
-  Me  Sagittarius  17°01' lon=257.0277 h= 9 b= 9 nak=19 pada=2 nakLord=Ve nakRel=friend  enemy        spd=  0.4809 
-  Ju  Gemini        8°42' lon= 68.7015 h= 3 b= 3 nak= 5 pada=1 nakLord=Ra nakRel=neutral greatEnemy   spd= -0.0979 R
-  Ve  Capricorn     1°42' lon=271.7029 h=10 b=10 nak=20 pada=2 nakLord=Su nakRel=enemy   greatFriend  spd= -0.5512 R
-  Sa  Sagittarius  24°37' lon=264.6278 h= 9 b= 9 nak=19 pada=4 nakLord=Ve nakRel=friend  enemy        spd=  0.1157 
-  Ra  Capricorn    23°30' lon=293.5106 h=10 b=10 nak=22 pada=1 nakLord=Ma nakRel=enemy   greatFriend  spd= -0.0530 R
-  Ke  Cancer       23°30' lon=113.5106 h= 4 b= 4 nak= 8 pada=3 nakLord=Me nakRel=neutral greatEnemy   spd= -0.0530 R
+  Su  Capricorn    10°18' lon=280.3053 h=10 b=10 nak=21 pada=1 nakLord=Mo nakRel=friend  neutral      spd=  1.0174 
+  Mo  Sagittarius  10°14' lon=250.2353 h= 9 b= 9 nak=18 pada=4 nakLord=Ke nakRel=neutral enemy        spd= 12.6302 
+  Ma  Sagittarius   2°28' lon=242.4703 h= 9 b= 9 nak=18 pada=1 nakLord=Ke nakRel=neutral neutral      spd=  0.7173 
+  Me  Sagittarius  17°01' lon=257.0201 h= 9 b= 9 nak=19 pada=2 nakLord=Ve nakRel=friend  enemy        spd=  0.4809 
+  Ju  Gemini        8°41' lon= 68.6939 h= 3 b= 3 nak= 5 pada=1 nakLord=Ra nakRel=neutral greatEnemy   spd= -0.0979 R
+  Ve  Capricorn     1°41' lon=271.6953 h=10 b=10 nak=20 pada=2 nakLord=Su nakRel=enemy   greatFriend  spd= -0.5512 R
+  Sa  Sagittarius  24°37' lon=264.6203 h= 9 b= 9 nak=19 pada=4 nakLord=Ve nakRel=friend  enemy        spd=  0.1157 
+  Ra  Capricorn    23°30' lon=293.5065 h=10 b=10 nak=22 pada=1 nakLord=Ma nakRel=enemy   greatFriend  spd= -0.0529 R
+  Ke  Cancer       23°30' lon=113.5065 h= 4 b= 4 nak= 8 pada=3 nakLord=Me nakRel=neutral greatEnemy   spd= -0.0529 R
 
 --- cusps (bhava madhya / sandhi) ---
-  madhya: 23.97 49.16 74.35 99.54 134.35 169.16 203.97 229.16 254.35 279.54 314.35 349.16
+  madhya: 23.96 49.15 74.34 99.53 134.34 169.15 203.96 229.15 254.34 279.53 314.34 349.15
   sandhi: 36.56 61.75 86.94 116.94 151.75 186.56 216.56 241.75 266.94 296.94 331.75 6.56
 
 --- ashtakavarga ---
@@ -57,15 +57,15 @@ CHART canonical-delhi
   Ke   25/100 Afflicted  factors=Dignity: Great Enemy's Sign (Adhi Shatru):-12 | House placement (4):6 | Aspect from Sun:-5 | Aspect from Mars:-5 | Aspect from Venus:6 | Aspect from Rahu:-5
 
 --- shadbala ---
-  Su  total=  574.494 rupas=  9.575 req=390.000 ratio=1.473 ishta=18.876 kashta=37.946
-  Mo  total=  305.072 rupas=  5.085 req=360.000 ratio=0.847 ishta=15.775 kashta=43.603
-  Ma  total=  368.712 rupas=  6.145 req=300.000 ratio=1.229 ishta=22.669 kashta=29.686
-  Me  total=  444.648 rupas=  7.411 req=420.000 ratio=1.059 ishta=34.309 kashta=24.681
-  Ju  total=  470.385 rupas=  7.840 req=390.000 ratio=1.206 ishta=50.456 kashta=9.507
-  Ve  total=  452.031 rupas=  7.534 req=330.000 ratio=1.370 ishta=42.033 kashta=10.708
-  Sa  total=  310.027 rupas=  5.167 req=300.000 ratio=1.033 ishta=13.869 kashta=34.421
+  Su  total=  568.568 rupas=  9.476 req=390.000 ratio=1.458 ishta=13.345 kashta=40.212
+  Mo  total=  295.046 rupas=  4.917 req=360.000 ratio=0.820 ishta=11.154 kashta=48.768
+  Ma  total=  368.708 rupas=  6.145 req=300.000 ratio=1.229 ishta=22.668 kashta=29.688
+  Me  total=  444.652 rupas=  7.411 req=420.000 ratio=1.059 ishta=34.311 kashta=24.680
+  Ju  total=  470.385 rupas=  7.840 req=390.000 ratio=1.206 ishta=50.455 kashta=9.508
+  Ve  total=  452.026 rupas=  7.534 req=330.000 ratio=1.370 ishta=42.031 kashta=10.708
+  Sa  total=  310.032 rupas=  5.167 req=300.000 ratio=1.033 ishta=13.869 kashta=34.419
   strongest=Su weakest=Mo
-  bhavaBala: H1=378.092 H2=454.648 H3=512.429 H4=313.806 H5=573.957 H6=466.296 H7=465.805 H8=438.941 H9=444.679 H10=260.290 H11=363.023 H12=445.946
+  bhavaBala: H1=378.089 H2=454.642 H3=512.433 H4=303.780 H5=568.031 H6=466.301 H7=465.800 H8=438.936 H9=444.679 H10=260.295 H11=363.028 H12=445.946
 
 --- vargas ---
   D1  asc= 0  Su: 9 Mo: 8 Ma: 8 Me: 8 Ju: 2 Ve: 9 Sa: 8 Ra: 9 Ke: 3
@@ -115,15 +115,15 @@ CHART canonical-delhi
   sunrise=1990-01-24T01:43:06Z
 
 --- dasha ---
-  MD Ke  1984-09-08 -> 1991-09-08
-  MD Ve  1991-09-08 -> 2011-09-08
-  MD Su  2011-09-08 -> 2017-09-08
-  MD Mo  2017-09-08 -> 2027-09-08
-  MD Ma  2027-09-08 -> 2034-09-08
-  MD Ra  2034-09-08 -> 2052-09-08
-  MD Ju  2052-09-08 -> 2068-09-08
-  MD Sa  2068-09-08 -> 2087-09-08
-  MD Me  2087-09-08 -> 2104-09-09
+  MD Ke  1984-09-09 -> 1991-09-10
+  MD Ve  1991-09-10 -> 2011-09-10
+  MD Su  2011-09-10 -> 2017-09-09
+  MD Mo  2017-09-09 -> 2027-09-10
+  MD Ma  2027-09-10 -> 2034-09-10
+  MD Ra  2034-09-10 -> 2052-09-09
+  MD Ju  2052-09-09 -> 2068-09-09
+  MD Sa  2068-09-09 -> 2087-09-10
+  MD Me  2087-09-10 -> 2104-09-10
   active@2026-06-15: Mo-Ve-Ju
 
 --- transits + sade sati (pinned now) ---
@@ -132,7 +132,7 @@ CHART canonical-delhi
   Ra  Aquarius      9°12' fromMoon= 3 fromLagna=11 R
   Ke  Leo           9°12' fromMoon= 9 fromLagna= 5 R
   Su  Taurus       29°42' fromMoon= 6 fromLagna= 2 
-  Ma  Aries        25°49' fromMoon= 5 fromLagna= 1 
+  Ma  Aries        25°48' fromMoon= 5 fromLagna= 1 
   sadeSatiPhase=none
 
 --- numerology ---
@@ -162,7 +162,7 @@ CHART canonical-delhi
   headline: Aries rising, Sagittarius Moon in Mula, Capricorn Sun — a personality led by Mercury and tested through Jupiter.
   strongest=Me weakest=Ju
   == Your rising sign — how you come across
-     [1] Your rising sign (the 'Lagna' — the sign that was coming up over the eastern horizon at the moment you were born) is Aries, at 23°58'. The rising sign describes how you come across, the body you live in, and the way you start things. With Aries rising, the outward temperament is direct, competitive and quick to start — a pioneer's bearing that would rather act and correct than wait and be certain. Physical courage is real; patience is the lesson of the life.
+     [1] Your rising sign (the 'Lagna' — the sign that was coming up over the eastern horizon at the moment you were born) is Aries, at 23°57'. The rising sign describes how you come across, the body you live in, and the way you start things. With Aries rising, the outward temperament is direct, competitive and quick to start — a pioneer's bearing that would rather act and correct than wait and be certain. Physical courage is real; patience is the lesson of the life.
      [2] The rising degree also falls in a nakshatra — one of the 27 star-groups the zodiac is divided into, each with its own character — called Bharani, in its 4th quarter. That nakshatra colours the body and the first impression you make: intense, transformative bearing; carries burdens and creative extremes.
      [3] Every sign has a ruling planet, and the ruler of your rising sign — Mars — is the planet that stands for you personally in the chart. It sits in your 9th house in Sagittarius, which is a sign that is neutral to it — neither helped nor hindered. Its overall strength (a combined score from its sign, house, aspects and other factors) comes to 50 out of 100 (moderate). Because it sits in the 9th, the centre of gravity of your life leans toward fortune: that is the agenda that colours everything you attempt, and your sense of who you are is bound up in it.
      [4] Mars itself falls in the nakshatra Mula, in its 1st quarter, whose ruling planet is Ketu. The flavour of that nakshatra is: root-cutting inquiry; destroys to find foundational truth. Ketu, the nakshatra's ruler, is neutral toward Mars, so this quality comes through plainly — neither boosted nor blocked.
@@ -186,7 +186,7 @@ CHART canonical-delhi
      [1] The Navamsa (D-9) is a second chart derived from your birth chart by dividing each sign into nine parts. Tradition reads it for the inner person and for marriage, and treats it as the test of whether what the birth chart promises actually holds. Its rising sign is Scorpio. If the birth chart is how life presents itself, the Navamsa is how you are on the inside once the noise settles — and a Scorpio inner nature is intense, private and penetrating, with feeling that runs deep and is rarely displayed. Loyalty is absolute and so is its withdrawal — this temperament does not do half-measures. When the outer sign (Aries) and inner sign (Scorpio) differ in element, people who only know you casually often misread you; those close to you meet the Navamsa.
      [2] Venus is 'Vargottama' — in the same sign in both the birth chart and the Navamsa. A Vargottama planet keeps its promises: what it shows on the surface is what it actually is underneath, and it holds steady under pressure.
   == By the classical six-fold measure (Shadbala)
-     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Sun is your strongest planet at 9.57 rupas (147% of its required minimum) and Moon the weakest at 5.08 rupas (85%). Note this differs from the quicker overall score above — the six-fold measure weighs birth-time and motion factors the quick score does not; where they disagree, the Shadbala verdict is the classical one.
+     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Sun is your strongest planet at 9.48 rupas (146% of its required minimum) and Moon the weakest at 4.92 rupas (82%). Note this differs from the quicker overall score above — the six-fold measure weighs birth-time and motion factors the quick score does not; where they disagree, the Shadbala verdict is the classical one.
      [2] Practically: lean on Sun's themes when the stakes are high, and give Moon's themes more preparation time than feels necessary.
   == How you are seen vs how you are (Arudha Lagna)
      [1] The Arudha Lagna is the point in the chart that stands for your public image — how the world perceives you, as distinct from how you actually are. Yours falls in Leo, while your actual rising sign is Aries. So the public image runs on Leo's wavelength — warm, proud and naturally centre-stage, where dignity is not vanity but a working requirement — while the person underneath operates as Aries. The gap is not dishonesty; it is simply that your reputation forms around the themes of your 5th house. Knowing which conversations are about the image and which are about you is a lifelong advantage.
@@ -209,7 +209,7 @@ CHART canonical-delhi
      [5] In short: with no planet in it to speak for it, how your 1st house goes rests on Mars's condition in the 9th and on the aspects described above. Anything that strengthens Mars — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.
   == 2nd House — Taurus  occupied=false lord=Ve planets=[] aspects=[Ra:5]
      [1] Your 2nd house falls in Taurus. This is the part of the chart that covers wealth, family, speech, food and accumulated resources. No planet sits in it. That is not a weakness in itself — most houses in most charts are empty. An empty house is read the way the classical texts prescribe: by the condition of the planet that rules it, and by the planets that aspect it from elsewhere.
-     [2] Taurus is ruled by Venus, so Venus is the ruler of your 2nd house — the planet whose condition decides how this area of life goes. Venus sits in your 10th house at 1°42' Capricorn, which is the sign of a great friend, where it is warmly hosted. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 2nd house itself, Venus stands 9 places along — the 9th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 10th, the affairs of your 2nd house get worked out mostly through career — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 38 out of 100 (weak), which is low. The 2nd house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
+     [2] Taurus is ruled by Venus, so Venus is the ruler of your 2nd house — the planet whose condition decides how this area of life goes. Venus sits in your 10th house at 1°41' Capricorn, which is the sign of a great friend, where it is warmly hosted. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 2nd house itself, Venus stands 9 places along — the 9th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 10th, the affairs of your 2nd house get worked out mostly through career — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 38 out of 100 (weak), which is low. The 2nd house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
      [3] The ruler, Venus, also falls in the star-group (nakshatra) called Uttara Ashadha, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Sun, and the flavour is: later, lasting victory; patient universal ambition. Sun, the ruler of that nakshatra, is a natural enemy of Venus, so even a well-placed Venus has its results filtered through an unsympathetic hand — expect what it promises to arrive altered, later, or at a price.
      [4] Rahu aspects this house — that is, it reaches into it from where it sits, the 10th house in Capricorn, in a great friend's sign, retrograde. By nature Rahu is a hard planet (a 'malefic'), and for your rising sign it is neither for you nor against you by rulership (functionally neutral). The aspect landing here is Rahu's special 5th-house aspect — an amplifier of intelligence and of desire. Rahu's aspect on the 2nd creates hunger around wealth, family and speech — accumulation is driven, sometimes through unorthodox or foreign channels, and the voice can persuade past the facts. Family history carries something unresolved. A hard planet in a strong position does not merely trouble a house — it also forces you to become competent in its affairs, charging the discipline as its price.
      [5] Every aspect reaching this house comes from a hard planet. With no gentle planet to balance them, what this house stands for needs conscious defending, and the house tends to mature through difficulty rather than ease — which also means it usually matures well.
@@ -218,7 +218,7 @@ CHART canonical-delhi
      [1] Your 3rd house falls in Gemini. This is the part of the chart that covers courage, siblings, communication, skills and self-effort. Jupiter sits in it, so the affairs of this house are things you live directly rather than watch from a distance.
      [2] Gemini is ruled by Mercury, so Mercury is the ruler of your 3rd house — the planet whose condition decides how this area of life goes. Mercury sits in your 9th house at 17°01' Sagittarius, which is an enemy's sign, where it meets resistance. Counting from the 3rd house itself, Mercury stands 7 places along — the 7th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 9th, the affairs of your 3rd house get worked out mostly through fortune — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 53 out of 100 (moderate). Mercury can carry the 3rd house, but results here follow your own effort closely rather than being handed to you.
      [3] The ruler, Mercury, also falls in the star-group (nakshatra) called Purva Ashadha, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Venus, and the flavour is: invincible early victories; proud, philosophical, water-blessed. Venus, the ruler of that nakshatra, is a natural friend of Mercury, so this flavour is passed on willingly and arrives in a form you recognise.
-     [4] Jupiter sits here at 8°42' Gemini. For your Aries rising sign, Jupiter rules your 9th and 12th houses — fortune and expenditure — which makes it a planet that works in your favour by the houses it rules (a 'functional benefic'). Jupiter in the 3rd gives wise initiative — courage tempered by ethics. Siblings prosper or are themselves guru-figures. Writing and teaching flow naturally, though ambition here is softer than talent; effort must be deliberate. Gemini belongs to a great enemy of Jupiter, so it struggles to be itself here. Expect what Jupiter stands for to be taxed — and expect deliberate attention to this planet to pay back more than usual, precisely because it starts from behind. Jupiter is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first.
+     [4] Jupiter sits here at 8°41' Gemini. For your Aries rising sign, Jupiter rules your 9th and 12th houses — fortune and expenditure — which makes it a planet that works in your favour by the houses it rules (a 'functional benefic'). Jupiter in the 3rd gives wise initiative — courage tempered by ethics. Siblings prosper or are themselves guru-figures. Writing and teaching flow naturally, though ambition here is softer than talent; effort must be deliberate. Gemini belongs to a great enemy of Jupiter, so it struggles to be itself here. Expect what Jupiter stands for to be taxed — and expect deliberate attention to this planet to pay back more than usual, precisely because it starts from behind. Jupiter is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first.
      [5] Jupiter falls in the nakshatra Ardra (1st quarter), ruled by Rahu, whose flavour is: stormy, penetrating intellect; breakthroughs after inner turbulence. Rahu, the ruler of that nakshatra, is neutral toward Jupiter, so this flavour comes through as it is — neither boosted nor blocked.
      [6] Moon aspects this house — that is, it reaches into it from where it sits, the 9th house in Sagittarius, in an enemy's sign. By nature Moon is a hard planet (a 'malefic'), and for your rising sign it is neither for you nor against you by rulership (functionally neutral). The aspect landing here is the full 7th-house aspect every planet casts. Moonlight on the 3rd makes communication warm and instinctive and courage emotional rather than calculated; you act when moved. Siblings are close, and short journeys are undertaken on impulse. A hard planet in a weak position troubles the house without building much capability in return: the friction comes with little compensating discipline.
      [7] Mars also aspects this house, from the 9th house in Sagittarius, in a sign neutral to it — a hard planet by nature, and one that works in your favour by the houses it rules. The aspect landing here is the full 7th-house aspect every planet casts — in Mars's case direct and unavoidable. Mars on the 3rd is one of its best glances: raw courage, technical skill, physical stamina, and self-effort that actually converts into results. Rivalry with siblings is likely and, handled well, formative. Coming from a hard planet in an ordinary condition, the aspect keeps this house honest — pressure you learn to work with rather than damage. Its rulerships soften this considerably — a hard planet that works for your rising sign behaves far better than its reputation.
@@ -252,7 +252,7 @@ CHART canonical-delhi
      [7] In short: with no planet in it to speak for it, how your 6th house goes rests on Mercury's condition in the 9th and on the aspects described above. Anything that strengthens Mercury — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.
   == 7th House — Libra  occupied=false lord=Ve planets=[] aspects=[Ju:5]
      [1] Your 7th house falls in Libra. This is the part of the chart that covers marriage, partnerships, business alliances and public dealings. No planet sits in it. That is not a weakness in itself — most houses in most charts are empty. An empty house is read the way the classical texts prescribe: by the condition of the planet that rules it, and by the planets that aspect it from elsewhere.
-     [2] Libra is ruled by Venus, so Venus is the ruler of your 7th house — the planet whose condition decides how this area of life goes. Venus sits in your 10th house at 1°42' Capricorn, which is the sign of a great friend, where it is warmly hosted. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 7th house itself, Venus stands 4 places along — the 4th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 10th, the affairs of your 7th house get worked out mostly through career — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 38 out of 100 (weak), which is low. The 7th house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
+     [2] Libra is ruled by Venus, so Venus is the ruler of your 7th house — the planet whose condition decides how this area of life goes. Venus sits in your 10th house at 1°41' Capricorn, which is the sign of a great friend, where it is warmly hosted. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 7th house itself, Venus stands 4 places along — the 4th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 10th, the affairs of your 7th house get worked out mostly through career — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 38 out of 100 (weak), which is low. The 7th house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
      [3] The ruler, Venus, also falls in the star-group (nakshatra) called Uttara Ashadha, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Sun, and the flavour is: later, lasting victory; patient universal ambition. Sun, the ruler of that nakshatra, is a natural enemy of Venus, so even a well-placed Venus has its results filtered through an unsympathetic hand — expect what it promises to arrive altered, later, or at a price.
      [4] Jupiter aspects this house — that is, it reaches into it from where it sits, the 3rd house in Gemini, in a great enemy's sign, retrograde. By nature Jupiter is a gentle planet (a 'benefic'), and for your rising sign it is a planet that works in your favour by the houses it rules (a 'functional benefic'). The aspect landing here is Jupiter's special 5th-house aspect — its blessing on intelligence, good counsel and children. Jupiter's glance on the 7th is the classical protection of marriage: a principled, often wiser or older partner, ethical business alliances, and public dealings conducted in good faith. It steadies partnerships that other influences would strain. The good intent is there, but the planet itself is poorly placed, so the protection is real yet thin, and tends to arrive later than you expect.
      [5] Every aspect reaching this house comes from a gentle planet — an unusually protected area, and one of the safer parts of your life.
@@ -266,7 +266,7 @@ CHART canonical-delhi
      [6] In short: with no planet in it to speak for it, how your 8th house goes rests on Mars's condition in the 9th and on the aspects described above. Anything that strengthens Mars — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.
   == 9th House — Sagittarius  occupied=true lord=Ju planets=[Mo,Ma,Me,Sa] aspects=[Ju:7]
      [1] Your 9th house falls in Sagittarius. This is the part of the chart that covers fortune, dharma, higher learning, the guru, father and long journeys. Moon, Mars, Mercury, Saturn all sit in it, which makes this one of the main arenas of your life — a lot happens here, and it happens to you directly.
-     [2] Sagittarius is ruled by Jupiter, so Jupiter is the ruler of your 9th house — the planet whose condition decides how this area of life goes. Jupiter sits in your 3rd house at 8°42' Gemini, which is the sign of a great enemy, where it struggles to be itself. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 9th house itself, Jupiter stands 7 places along — the 7th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 3rd, the affairs of your 9th house get worked out mostly through courage — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 15 out of 100 (afflicted), which is low. The 9th house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
+     [2] Sagittarius is ruled by Jupiter, so Jupiter is the ruler of your 9th house — the planet whose condition decides how this area of life goes. Jupiter sits in your 3rd house at 8°41' Gemini, which is the sign of a great enemy, where it struggles to be itself. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 9th house itself, Jupiter stands 7 places along — the 7th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 3rd, the affairs of your 9th house get worked out mostly through courage — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 15 out of 100 (afflicted), which is low. The 9th house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
      [3] The ruler, Jupiter, also falls in the star-group (nakshatra) called Ardra, in its 1st quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Rahu, and the flavour is: stormy, penetrating intellect; breakthroughs after inner turbulence. Rahu, the ruler of that nakshatra, is neutral toward Jupiter, so this flavour comes through as it is — neither boosted nor blocked.
      [4] Moon sits here at 10°14' Sagittarius. For your Aries rising sign, Moon rules your 4th house — home — which makes it neither for you nor against you by rulership (functionally neutral). Moon in the 9th gives an instinctively faithful heart — dharma is felt before it is reasoned. Fortune through mother-figures, the public and travel. Beliefs shift over the life like the Moon itself, each phase sincerely held. Sagittarius belongs to an enemy of Moon, so it meets resistance here — a guest whose host does not much like it. Results in this house take roughly twice the usual persistence to arrive.
      [5] Moon falls in the nakshatra Mula (4th quarter), ruled by Ketu, whose flavour is: root-cutting inquiry; destroys to find foundational truth. Ketu, the ruler of that nakshatra, is neutral toward Moon, so this flavour comes through as it is — neither boosted nor blocked.
@@ -293,7 +293,7 @@ CHART canonical-delhi
      [3] The ruler, Saturn, also falls in the star-group (nakshatra) called Purva Ashadha, in its 4th quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Venus, and the flavour is: invincible early victories; proud, philosophical, water-blessed. Venus, the ruler of that nakshatra, is a natural friend of Saturn, so this flavour is passed on willingly and arrives in a form you recognise.
      [4] Sun sits here at 10°18' Capricorn. For your Aries rising sign, Sun rules your 5th house — intelligence — which makes it a planet that works in your favour by the houses it rules (a 'functional benefic'). Sun in the 10th is the Sun at full directional strength ('dig bala' — each planet has one house where it is naturally strongest, and the 10th is the Sun's). Career is destiny here: visibility, command and recognition from authority. You rise in hierarchies almost by gravity, though the cost is often paid at home. Capricorn is neutral ground for Sun — the sign neither helps nor hinders it. What you get out of this house tracks what you put in almost exactly, with no subsidy and no surcharge.
      [5] Sun falls in the nakshatra Shravana (1st quarter), ruled by Moon, whose flavour is: attentive listening; learning, fame and connective intelligence. Moon, the ruler of that nakshatra, is a natural friend of Sun, so this flavour is passed on willingly and arrives in a form you recognise.
-     [6] Venus sits here at 1°42' Capricorn. For your Aries rising sign, Venus rules your 2nd and 7th houses — wealth and marriage — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). It also rules one of the two houses (the 2nd and 7th) that the tradition watches for health in its main periods, so its periods deserve a little extra care. Venus in the 10th makes career of charm and craft: design, entertainment, diplomacy, luxury commerce, public relations. Reputation is likeable — a real asset and a subtle trap, since being liked can be preferred over being right. Capricorn belongs to a great friend of Venus, so it is warmly hosted here. Its promises are delivered with goodwill, and usually with a little extra. Venus is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first.
+     [6] Venus sits here at 1°41' Capricorn. For your Aries rising sign, Venus rules your 2nd and 7th houses — wealth and marriage — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). It also rules one of the two houses (the 2nd and 7th) that the tradition watches for health in its main periods, so its periods deserve a little extra care. Venus in the 10th makes career of charm and craft: design, entertainment, diplomacy, luxury commerce, public relations. Reputation is likeable — a real asset and a subtle trap, since being liked can be preferred over being right. Capricorn belongs to a great friend of Venus, so it is warmly hosted here. Its promises are delivered with goodwill, and usually with a little extra. Venus is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first.
      [7] Venus falls in the nakshatra Uttara Ashadha (2nd quarter), ruled by Sun, whose flavour is: later, lasting victory; patient universal ambition. Sun, the ruler of that nakshatra, is a natural enemy of Venus, so even a well-placed Venus has its results filtered through an unsympathetic hand — expect what it promises to arrive altered, later, or at a price.
      [8] Rahu sits here at 23°30' Capricorn. Rahu rules no sign of its own. It works through the planet that owns the sign it sits in, through the ruler of its star-group (nakshatra), and through whatever it sits beside — a shadow that takes on the colour of its surroundings rather than a house ruler with an agenda of its own. Rahu in the 10th is the fame algorithm: obsessive career ambition, mass-market instincts, success through technology, media or foreign systems. Reputation inflates fast — and needs ethical ballast to avoid equally fast correction. Capricorn belongs to a great friend of Rahu, so it is warmly hosted here. Its promises are delivered with goodwill, and usually with a little extra. Rahu is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first.
      [9] Rahu falls in the nakshatra Dhanishta (1st quarter), ruled by Mars, whose flavour is: abundant rhythm; music, wealth and adaptive movement. Mars, the ruler of that nakshatra, is a natural enemy of Rahu, so even a well-placed Rahu has its results filtered through an unsympathetic hand — expect what it promises to arrive altered, later, or at a price.
@@ -313,7 +313,7 @@ CHART canonical-delhi
      [7] In short: with no planet in it to speak for it, how your 11th house goes rests on Saturn's condition in the 9th and on the aspects described above. Anything that strengthens Saturn — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.
   == 12th House — Pisces  occupied=false lord=Ju planets=[] aspects=[Ma:4,Ke:9]
      [1] Your 12th house falls in Pisces. This is the part of the chart that covers expenditure, losses, foreign lands, isolation, sleep and moksha. No planet sits in it. That is not a weakness in itself — most houses in most charts are empty. An empty house is read the way the classical texts prescribe: by the condition of the planet that rules it, and by the planets that aspect it from elsewhere.
-     [2] Pisces is ruled by Jupiter, so Jupiter is the ruler of your 12th house — the planet whose condition decides how this area of life goes. Jupiter sits in your 3rd house at 8°42' Gemini, which is the sign of a great enemy, where it struggles to be itself. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 12th house itself, Jupiter stands 4 places along — the 4th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 3rd, the affairs of your 12th house get worked out mostly through courage — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 15 out of 100 (afflicted), which is low. The 12th house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
+     [2] Pisces is ruled by Jupiter, so Jupiter is the ruler of your 12th house — the planet whose condition decides how this area of life goes. Jupiter sits in your 3rd house at 8°41' Gemini, which is the sign of a great enemy, where it struggles to be itself. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 12th house itself, Jupiter stands 4 places along — the 4th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 3rd, the affairs of your 12th house get worked out mostly through courage — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 15 out of 100 (afflicted), which is low. The 12th house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
      [3] The ruler, Jupiter, also falls in the star-group (nakshatra) called Ardra, in its 1st quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Rahu, and the flavour is: stormy, penetrating intellect; breakthroughs after inner turbulence. Rahu, the ruler of that nakshatra, is neutral toward Jupiter, so this flavour comes through as it is — neither boosted nor blocked.
      [4] Mars aspects this house — that is, it reaches into it from where it sits, the 9th house in Sagittarius, in a sign neutral to it. By nature Mars is a hard planet (a 'malefic'), and for your rising sign it is a planet that works in your favour by the houses it rules (a 'functional benefic'). The aspect landing here is Mars's special 4th-house aspect — Mars at close range, and the most disruptive of its three aspects. Mars's gaze on the 12th burns resources in hidden places: expenditure on disputes, secret enemies, or exertion abroad. Well directed, it is the energy of the person who works hard where no one is watching; poorly directed, it is sleep lost to unfinished fights. Coming from a hard planet in an ordinary condition, the aspect keeps this house honest — pressure you learn to work with rather than damage. Its rulerships soften this considerably — a hard planet that works for your rising sign behaves far better than its reputation.
      [5] Ketu also aspects this house, from the 4th house in Cancer, in a great enemy's sign, retrograde — a hard planet by nature, and neutral by rulership. The aspect landing here is Ketu's special 9th-house aspect — a refining influence on fortune and right living. Ketu's glance on the 12th is its most natural station: expenditure that quietly serves liberation, ease in solitude and in foreign lands, a vivid inner life in sleep. Among all the aspects, this is the strongest single indicator of moksha-orientation. A hard planet in a weak position troubles the house without building much capability in return: the friction comes with little compensating discipline.
@@ -486,13 +486,13 @@ CHART canonical-delhi
      [3] Treat all of this the way tradition actually intends it: as a set of preferences that tilt the odds slightly and cost nothing to follow, not as rules that decide outcomes. Wearing your colour to an interview is worth about as much as the confidence it gives you, which is not nothing.
 
 --- briefs (default-visible digest) ---
-  personality [Your rising sign — how you come across] Your rising sign is Aries, at 23°58'. With Aries rising, the outward temperament is direct, competitive and quick to start.
+  personality [Your rising sign — how you come across] Your rising sign is Aries, at 23°57'. With Aries rising, the outward temperament is direct, competitive and quick to start.
   personality [Your Moon — the mind and its moods] Your Moon is in Sagittarius in your 9th house, which is an enemy's sign, where it meets resistance; its overall strength comes to 44 out of 100 (weak). With the Moon in Sagittarius, the mind is optimistic and philosophical and needs room; feeling attaches itself to meaning and to freedom, and confinement is the real distress.
   personality [Your Sun — the will and the core self] Your Sun is in Capricorn in your 10th house, which is a sign that is neutral to it. With the Sun in Capricorn, the will is disciplined and structural: your identity rests on responsibility carried and authority earned.
   personality [Your strongest and weakest planets] Mercury is your strongest planet at 53 (moderate), sitting in your 9th house in Sagittarius.
   personality [Atmakaraka — what this life is for] Saturn is your Atmakaraka — literally the 'soul significator', the planet that has travelled furthest through its sign, which the Jaimini school of astrology treats as the planet carrying the deepest purpose of the life.
   personality [Navamsa — the inner person] Its rising sign is Scorpio.
-  personality [By the classical six-fold measure (Shadbala)] By that measure Sun is your strongest planet at 9.57 rupas (147% of its required minimum) and Moon the weakest at 5.08 rupas (85%).
+  personality [By the classical six-fold measure (Shadbala)] By that measure Sun is your strongest planet at 9.48 rupas (146% of its required minimum) and Moon the weakest at 4.92 rupas (82%).
   personality [How you are seen vs how you are (Arudha Lagna)] Yours falls in Leo, while your actual rising sign is Aries.
   personality [Yoga signatures in the personality] 2 combinations in your chart stamp themselves directly on the character: Chandra-Mangala Yoga, Sunapha Yoga.
   personality [Which planets work for you, and which against] Working for you: Jupiter — in your 3rd house, in a great enemy's sign, strength 15 out of 100 (afflicted); Sun — in your 10th house, in a sign neutral to it, strength 51 out of 100 (moderate); Mars — in your 9th house…
@@ -530,12 +530,12 @@ CHART canonical-delhi
   cautions Mercury rules your 6th — one of the harder houses — and sits in your 9th, carrying that friction into an area that matters to you. || Keep 9th-house matters clean on paper: written agreements, no informal loans, explicit boundaries with the people involved.
   cautions Saturn, Mercury, Venus — each rules houses that pull against your interests for an Aries rising chart, so its instincts tend to be the ones that get you into trouble. || Give big commitments in these planets' areas one extra day and one outside opinion — that single habit removes most of what this placement costs people.
   cautions Venus rules both your 2nd and 7th houses, which classically makes it the planet whose main period is worth a little extra care about health and energy. || During Venus's main period, keep routine check-ups current, insurance in force, and the basics — sleep, food, movement — non-negotiable.
-  cautions Moon reaches only 85% of the strength the classical tables ask of it. || Build a check into anything depending on Moon's themes — a review, a backup, a second quote.
+  cautions Moon reaches only 82% of the strength the classical tables ask of it. || Build a check into anything depending on Moon's themes — a review, a backup, a second quote.
 
 --- chart reading (parts 1-7) ---
   == Part 1: Personality
      # The foundation: Aries Lagna
-       Your Lagna is at 23°58' Aries in Bharani pada 4.
+       Your Lagna is at 23°57' Aries in Bharani pada 4.
        No planet occupies or aspects the 1st house — its lord carries the whole of it.
        - Your outward nature is direct, competitive and quick to start — a pioneer's bearing that would rather act and correct than wait and be certain. Physical courage is real; patience is the lesson of the life.
        - Bharani nakshatra on the rising degree adds intense, transformative bearing; carries burdens and creative extremes.
@@ -575,20 +575,20 @@ CHART canonical-delhi
        - Your thinking is intuitive and emotional rather than coldly logical. You can be indecisive at times and are sometimes misunderstood in communication; you learn by absorbing rather than memorising.
        - Mercury rules your 3rd and 6th, so thinking, speech, trade and everything written down run through courage & effort and health & rivals.
      # Sun in the 10th (Capricorn, Shravana)
-       Sun is at 10°18' in Shravana pada 1, in a neutral sign, at 1.47× its Shadbala requirement.
+       Sun is at 10°18' in Shravana pada 1, in a neutral sign, at 1.46× its Shadbala requirement.
        - Sun in the 10th is the Sun at full directional strength.
        - Career is destiny here: visibility, command and recognition from authority.
        - You rise in hierarchies almost by gravity, though the cost is often paid at home.
        - Sun rules your 5th, so authority, confidence and the sense of self runs through children & creativity.
-       - Sun is the strongest planet by Shadbala ratio (1.47× required).
+       - Sun is the strongest planet by Shadbala ratio (1.46× required).
      # Jupiter retrograde in the 3rd (Gemini, Ardra)
-       Jupiter is at 8°42' in Ardra pada 1, in a great enemy's sign, at 1.21× its Shadbala requirement.
+       Jupiter is at 8°41' in Ardra pada 1, in a great enemy's sign, at 1.21× its Shadbala requirement.
        - Jupiter in the 3rd gives wise initiative — courage tempered by ethics.
        - Siblings prosper or are themselves guru-figures.
        - Writing and teaching flow naturally, though ambition here is softer than talent; effort must be deliberate.
        - Jupiter rules your 9th and 12th, so growth, judgement, teaching and good faith run through fortune & belief and loss & retreat.
      # Venus retrograde in the 10th (Capricorn, Uttara Ashadha, vargottama)
-       Venus is at 1°42' in Uttara Ashadha pada 2, in a great friend's sign, at 1.37× its Shadbala requirement.
+       Venus is at 1°41' in Uttara Ashadha pada 2, in a great friend's sign, at 1.37× its Shadbala requirement.
        - Venus in the 10th makes career of charm and craft: design, entertainment, diplomacy, luxury commerce, public relations.
        - Reputation is likeable — a real asset and a subtle trap, since being liked can be preferred over being right.
        - Venus rules your 2nd and 7th, so affection, beauty, comfort and give-and-take run through wealth & family and partnership.
@@ -603,7 +603,7 @@ CHART canonical-delhi
        - Property matters stay unglamorous.
        - The true homeland you seek has no postal code.
      summary: At the surface you are bold, direct and pioneering. Underneath, the mind and the soul (Saturn) are both principled, expansive and philosophical.
-     summary: Your strongest planet is Sun (1.47× by Shadbala) and your weakest is Moon (0.85×). The main lessons run through the mind, mood and what makes you feel safe, and through managing impatience.
+     summary: Your strongest planet is Sun (1.46× by Shadbala) and your weakest is Moon (0.82×). The main lessons run through the mind, mood and what makes you feel safe, and through managing impatience.
      summary: The chart gets clearly stronger from 2027, when the Mars Mahadasha begins — Mars is a working planet for your Lagna that meets its Shadbala requirement (1.23×).
   == Part 2: Career
      # The 10th house: Capricorn
@@ -615,7 +615,7 @@ CHART canonical-delhi
        - Venus here: Venus in the 10th makes career of charm and craft: design, entertainment, diplomacy, luxury commerce, public relations. Reputation is likeable — a real asset and a subtle trap, since being liked can be preferred over being right.
        - Rahu here: Rahu in the 10th is the fame algorithm: obsessive career ambition, mass-market instincts, success through technology, media or foreign systems. Reputation inflates fast — and needs ethical ballast to avoid equally fast correction.
        - Ketu's aspect: Ketu on the 10th gives a career pursued without hunger for its rewards, often technical, healing or spiritual, and a public standing you are oddly indifferent to.
-       - Sun, the natural karaka of authority and status, is in a neutral sign in the 10th at 1.47× — a solid support for a working life with standing.
+       - Sun, the natural karaka of authority and status, is in a neutral sign in the 10th at 1.46× — a solid support for a working life with standing.
        - Saturn, the natural karaka of work and endurance, is in an enemy's sign in the 9th at 1.03× — recognition comes later and through persistence.
        - Counted from the Moon, the 10th is Virgo; its lord Mercury sits in your 9th in an enemy's sign, so the work that also satisfies you emotionally runs through commerce & communication.
      # The Dasamsa (D10): Scorpio rising
@@ -649,7 +649,7 @@ CHART canonical-delhi
      summary: The 10th lord Saturn and the Amatyakaraka Mercury decide how far this goes; their main periods are when it moves.
   == Part 3: Wealth
      # The 2nd house (wealth you keep): Taurus
-       The 2nd house is Taurus, with no occupants. Its lord Venus is in the 10th at 1°42' Capricorn (Uttara Ashadha), in a great friend's sign, retrograde, at 1.37× its Shadbala requirement.
+       The 2nd house is Taurus, with no occupants. Its lord Venus is in the 10th at 1°41' Capricorn (Uttara Ashadha), in a great friend's sign, retrograde, at 1.37× its Shadbala requirement.
        Rahu aspects it; it holds 30 SAV bindus (well above the 28 average); Bhava Bala 7.6 rupas.
        - Your 2nd lord Venus sits in your 10th, carrying wealth & family into career, status and how the public sees you — a supportive house, so results flow with less resistance.
        - Venus works through Uttara Ashadha: later, lasting victory; patient universal ambition.
@@ -684,7 +684,7 @@ CHART canonical-delhi
      summary: The 2nd lord Venus (1.37×) decides what you keep and the 11th lord Saturn (1.03×) what comes in; the yogas above decide how much of it stays.
   == Part 4: Marriage and relationships
      # The 7th house: Libra
-       The 7th house is Libra, with no occupants. Its lord Venus is in the 10th at 1°42' Capricorn (Uttara Ashadha), in a great friend's sign, retrograde, at 1.37× its Shadbala requirement.
+       The 7th house is Libra, with no occupants. Its lord Venus is in the 10th at 1°41' Capricorn (Uttara Ashadha), in a great friend's sign, retrograde, at 1.37× its Shadbala requirement.
        Jupiter aspects it; it holds 39 SAV bindus (well above the 28 average); Bhava Bala 7.8 rupas.
        - Your 7th lord Venus sits in your 10th, carrying partnership into career, status and how the public sees you — a supportive house, so results flow with less resistance.
        - Venus works through Uttara Ashadha: later, lasting victory; patient universal ambition.
@@ -692,7 +692,7 @@ CHART canonical-delhi
      # Venus — the marriage significator
        - Venus (the karaka of marriage) is in a great friend's sign in the 10th at 1.37×, and in a great friend's sign in the Navamsa (Capricorn) — an ordinary, workable significator.
      # Darakaraka: Venus in Capricorn in the 10th house
-       Venus is at 1°42' Capricorn (Uttara Ashadha), in a great friend's sign.
+       Venus is at 1°41' Capricorn (Uttara Ashadha), in a great friend's sign.
        - The spouse carries Venus's themes — affection, beauty, comfort and give-and-take — and a disciplined, ambitious and patient temperament.
        - Venus is in reasonable dignity, so the partner is capable in their own right.
      # Upapada Lagna: Gemini in the 3rd house
@@ -718,14 +718,14 @@ CHART canonical-delhi
      summary: Marriage score 55/100 — read it together with the windows: timing matters more than the average for this house.
   == Part 5: Foreign travel and settlement
      # The 12th house (foreign lands): Pisces
-       The 12th house is Pisces, with no occupants. Its lord Jupiter is in the 3rd at 8°42' Gemini (Ardra), in a great enemy's sign, retrograde, at 1.21× its Shadbala requirement.
+       The 12th house is Pisces, with no occupants. Its lord Jupiter is in the 3rd at 8°41' Gemini (Ardra), in a great enemy's sign, retrograde, at 1.21× its Shadbala requirement.
        Mars and Ketu aspect it; it holds 23 SAV bindus (well below the 28 average); Bhava Bala 7.4 rupas.
        - Your 12th lord Jupiter sits in your 3rd, carrying loss & retreat into courage, effort, siblings and short journeys — a growth house, so results build with effort over time.
        - Jupiter works through Ardra: stormy, penetrating intellect; breakthroughs after inner turbulence.
        - Mars's aspect: Mars's gaze on the 12th burns resources in hidden places: expenditure on disputes, secret enemies, or exertion abroad.
        - Ketu's aspect: Ketu's glance on the 12th is its most natural station: expenditure that quietly serves liberation, ease in solitude and in foreign lands, a vivid inner life in sleep.
      # The 9th house (long journeys): Sagittarius
-       The 9th house is Sagittarius, occupied by Moon, Mars, Mercury and Saturn. Its lord Jupiter is in the 3rd at 8°42' Gemini (Ardra), in a great enemy's sign, retrograde, at 1.21× its Shadbala requirement.
+       The 9th house is Sagittarius, occupied by Moon, Mars, Mercury and Saturn. Its lord Jupiter is in the 3rd at 8°41' Gemini (Ardra), in a great enemy's sign, retrograde, at 1.21× its Shadbala requirement.
        Jupiter aspects it; it holds 21 SAV bindus (well below the 28 average); Bhava Bala 7.4 rupas.
        - Your 9th lord Jupiter sits in your 3rd, carrying fortune & belief into courage, effort, siblings and short journeys — a growth house, so results build with effort over time.
        - Jupiter works through Ardra: stormy, penetrating intellect; breakthroughs after inner turbulence.
@@ -748,15 +748,15 @@ CHART canonical-delhi
      # When foreign doors open
        - Jul 2025 – Mar 2027 (age 35–37): Moon–Venus period, strong (95% confidence), confirmed by Yogini dasha — running now.
        - Sept 2027 – Feb 2028 (age 38–38): Mars–Mars period, strong (95% confidence), confirmed by Chara dasha.
-       - Feb 2029 – Jan 2030 (age 39–40): Mars–Jupiter period, strong (91% confidence), confirmed by Yogini dasha.
+       - Feb 2029 – Jan 2030 (age 39–40): Mars–Jupiter period, strong (90% confidence), confirmed by Yogini dasha.
      summary: Your chart leans clearly toward travelling often.
      summary: The 12th lord is in a great enemy's sign in your 3rd; with Rahu in the 10th, that sets how far the pull abroad goes.
   == Part 6: Health and things to watch
      # Vitality: Aries Lagna and its lord Mars
        - The 1st house holds 33 SAV bindus and 6.3 rupas of Bhava Bala — a sound base constitution.
        - Mars, the Lagna lord (body and resilience), is in a neutral sign in the 9th at 1.23× — well supported.
-       - Sun, vitality, is in a neutral sign in the 10th at 1.47× — well supported.
-       - Moon, the mind and sleep, is in an enemy's sign in the 9th at 0.85× — watch the mind, sleep, chest and body fluids.
+       - Sun, vitality, is in a neutral sign in the 10th at 1.46× — well supported.
+       - Moon, the mind and sleep, is in an enemy's sign in the 9th at 0.82× — watch the mind, sleep, chest and body fluids.
      # The 6th house (illness and recovery): Virgo
        The 6th house is Virgo, with no occupants. Its lord Mercury is in the 9th at 17°01' Sagittarius (Purva Ashadha), in an enemy's sign, at 1.06× its Shadbala requirement.
        Saturn and Rahu aspect it; it holds 33 SAV bindus (well above the 28 average); Bhava Bala 7.8 rupas.
@@ -771,7 +771,7 @@ CHART canonical-delhi
        - Mars works through Mula: root-cutting inquiry; destroys to find foundational truth.
        - Ketu's aspect: Ketu's glance on the 8th is the planet of letting go in the house of endings and transformation: genuine occult aptitude, ease with mortality and transformation, and sudden events that feel fated rather than accidental.
      # Planets and conditions to watch
-       - Moon is below its Shadbala requirement (0.85×): give extra care to the mind, sleep, chest and body fluids.
+       - Moon is below its Shadbala requirement (0.82×): give extra care to the mind, sleep, chest and body fluids.
        - Mars is in gandanta: health matters linked to blood, muscles, inflammation, injuries and surgery can come suddenly and need prompt attention.
        - Venus is in Mrita avastha (a "dead" degree): it gives little on its own, so its body areas (the kidneys, reproductive system and hormones) depend on routine care.
        - Saturn is in Mrita avastha (a "dead" degree): it gives little on its own, so its body areas (joints, teeth, chronic conditions and fatigue) depend on routine care.
@@ -788,15 +788,15 @@ CHART canonical-delhi
        - Mercury rules your 6th — one of the harder houses — and sits in your 9th, carrying that friction into an area that matters to you. What helps: Keep 9th-house matters clean on paper: written agreements, no informal loans, explicit boundaries with the people involved.
        - Saturn, Mercury, Venus — each rules houses that pull against your interests for an Aries rising chart, so its instincts tend to be the ones that get you into trouble. What helps: Give big commitments in these planets' areas one extra day and one outside opinion — that single habit removes most of what this placement costs people.
        - Venus rules both your 2nd and 7th houses, which classically makes it the planet whose main period is worth a little extra care about health and energy. What helps: During Venus's main period, keep routine check-ups current, insurance in force, and the basics — sleep, food, movement — non-negotiable.
-       - Moon reaches only 85% of the strength the classical tables ask of it. What helps: Build a check into anything depending on Moon's themes — a review, a backup, a second quote.
+       - Moon reaches only 82% of the strength the classical tables ask of it. What helps: Build a check into anything depending on Moon's themes — a review, a backup, a second quote.
      summary: 10 areas in your chart deserve conscious handling rather than luck. Each one below comes with something practical to do about it, and none of them is a verdict.
   == Part 7: Timing outlook
      # Now: Moon – Venus – Jupiter
        Moon Mahadasha Sept 2017 – Sept 2027; Venus Antardasha Jul 2025 – Mar 2027; Jupiter Pratyantardasha to Aug 2026; Mercury Sookshma to Jun 2026. Cross-check: Yogini Ulka–Bhramari · Chara Virgo–Leo.
-       - Main period — Moon rules your 4th, sits in your 9th in an enemy's sign at 0.85×, and is a functional neutral for your Lagna. Receptivity is high, and so is impressionability.
+       - Main period — Moon rules your 4th, sits in your 9th in an enemy's sign at 0.82×, and is a functional neutral for your Lagna. Receptivity is high, and so is impressionability.
        - Sub-period — Venus rules your 2nd and 7th, sits in your 10th in a great friend's sign at 1.37×, and is a functional malefic for your Lagna. Its themes now run through wealth & family and partnership.
      # The main periods ahead
-       - Moon Mahadasha, Sept 2017 – Sept 2027 (age 27–37): Moon rules your 4th, sits in your 9th in an enemy's sign at 0.85×, and is a functional neutral for your Lagna — a mixed period: good in some areas, effortful in others, because Moon is a functional neutral.
+       - Moon Mahadasha, Sept 2017 – Sept 2027 (age 27–37): Moon rules your 4th, sits in your 9th in an enemy's sign at 0.82×, and is a functional neutral for your Lagna — a mixed period: good in some areas, effortful in others, because Moon is a functional neutral.
        - Mars Mahadasha, Sept 2027 – Sept 2034 (age 37–44): Mars rules your 1st and 8th, sits in your 9th in a neutral sign at 1.23×, and is a functional benefic for your Lagna — a strong period that delivers, because Mars is a working planet for your Lagna that meets its Shadbala requirement (1.23×).
        - Rahu Mahadasha, Sept 2034 – Sept 2052 (age 44–62): Rahu rules no house (a node), sits in your 10th in a great friend's sign, and is a functional neutral for your Lagna — a mixed period: good in some areas, effortful in others, because Rahu is a functional neutral.
        - Jupiter Mahadasha, Sept 2052 – Sept 2068 (age 62–78): Jupiter rules your 9th and 12th, sits in your 3rd in a great enemy's sign at 1.21×, and is a functional benefic for your Lagna — a strong period that delivers, because Jupiter is a working planet for your Lagna that meets its Shadbala requirement (1.21×).
@@ -814,26 +814,26 @@ CHART canonical-delhi
      transit Sa sign=11 fromMoon=4 fromLagna=12: Saturn in the 4th from Moon (Kantaka Shani) presses on home, mother, property and inner peace. Domestic and workplace burdens peak together. Repair foundations literally and emotionally; avoid property gambles.
      transit Ra sign=10 fromMoon=3 fromLagna=11 R: Rahu in the 3rd from Moon supercharges daring: media, marketing and bold ventures pay. Courage is cheap fuel now — spend it on legitimate targets.
      transit Ke sign=4 fromMoon=9 fromLagna=5 R: Ketu in the 9th from Moon composts old beliefs: disillusion with packaged dharma, real contact with the unpackaged kind. Let the framework fall; keep the faith.
-     praty Mo 2026-01-01->2026-01-08: Moon periods run on emotional currents: home, mother, public connection and frequent change of scene.
-     praty Ma 2026-01-08->2026-02-12: Mars periods ignite action: property, litigation, competition, surgery, sport and command.
-     praty Ra 2026-02-12->2026-05-14: Rahu periods accelerate ambition beyond the speed limit: foreign matters, technology, mass platforms, unconventional gains — and periodic fog banks of confusion or scandal.
-     praty Ju 2026-05-14->2026-06-01: Jupiter periods expand whatever they touch: wisdom, wealth, children, teachers, faith and girth.
+     praty Mo 2026-01-01->2026-01-09: Moon periods run on emotional currents: home, mother, public connection and frequent change of scene.
+     praty Ma 2026-01-09->2026-02-14: Mars periods ignite action: property, litigation, competition, surgery, sport and command.
+     praty Ra 2026-02-14->2026-05-16: Rahu periods accelerate ambition beyond the speed limit: foreign matters, technology, mass platforms, unconventional gains — and periodic fog banks of confusion or scandal.
+     praty Ju 2026-05-16->2026-06-01: Jupiter periods expand whatever they touch: wisdom, wealth, children, teachers, faith and girth.
   seg 2026-06-01->2026-10-31 [Jupiter enters Cancer] Mo-Ve
      antar: Antardasha of Venus: Venus periods sweeten the ledger: relationships, luxury, arts, vehicles and negotiated wealth flow forward. Marriage and partnership matters mature. Overindulgence is the period's only tax collector. Venus sits natally in your 10th house in Capricorn — Great Friend's Sign (Adhi Mitra), retrograde. As lord of the 2nd and 7th, its period activates wealth and marriage. Expect this period to deliver its promises with interest — its natal strength converts effort into durable results.
      transit Ju sign=3 fromMoon=8 fromLagna=4: Jupiter in the 8th from Moon expands the hidden ledger: inheritance, insurance and research gain, while vitality and reputation want conservative handling. Depth work over display.
      transit Sa sign=11 fromMoon=4 fromLagna=12 R: Saturn in the 4th from Moon (Kantaka Shani) presses on home, mother, property and inner peace. Domestic and workplace burdens peak together. Repair foundations literally and emotionally; avoid property gambles.
      transit Ra sign=10 fromMoon=3 fromLagna=11 R: Rahu in the 3rd from Moon supercharges daring: media, marketing and bold ventures pay. Courage is cheap fuel now — spend it on legitimate targets.
      transit Ke sign=4 fromMoon=9 fromLagna=5 R: Ketu in the 9th from Moon composts old beliefs: disillusion with packaged dharma, real contact with the unpackaged kind. Let the framework fall; keep the faith.
-     praty Ju 2026-06-01->2026-08-04: Jupiter periods expand whatever they touch: wisdom, wealth, children, teachers, faith and girth.
-     praty Sa 2026-08-04->2026-10-31: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices.
+     praty Ju 2026-06-01->2026-08-05: Jupiter periods expand whatever they touch: wisdom, wealth, children, teachers, faith and girth.
+     praty Sa 2026-08-05->2026-10-31: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices.
   seg 2026-10-31->2026-12-05 [Jupiter enters Leo] Mo-Ve
      antar: Antardasha of Venus: Venus periods sweeten the ledger: relationships, luxury, arts, vehicles and negotiated wealth flow forward. Marriage and partnership matters mature. Overindulgence is the period's only tax collector. Venus sits natally in your 10th house in Capricorn — Great Friend's Sign (Adhi Mitra), retrograde. As lord of the 2nd and 7th, its period activates wealth and marriage. Expect this period to deliver its promises with interest — its natal strength converts effort into durable results.
      transit Ju sign=4 fromMoon=9 fromLagna=5: Jupiter in the 9th from Moon is the dharma jackpot: gurus appear, fortune compounds, journeys enlighten, father-figures bless. The single best window for higher study and pilgrimage.
      transit Sa sign=11 fromMoon=4 fromLagna=12 R: Saturn in the 4th from Moon (Kantaka Shani) presses on home, mother, property and inner peace. Domestic and workplace burdens peak together. Repair foundations literally and emotionally; avoid property gambles.
      transit Ra sign=10 fromMoon=3 fromLagna=11 R: Rahu in the 3rd from Moon supercharges daring: media, marketing and bold ventures pay. Courage is cheap fuel now — spend it on legitimate targets.
      transit Ke sign=4 fromMoon=9 fromLagna=5 R: Ketu in the 9th from Moon composts old beliefs: disillusion with packaged dharma, real contact with the unpackaged kind. Let the framework fall; keep the faith.
-     praty Sa 2026-10-31->2026-11-08: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices.
-     praty Me 2026-11-08->2026-12-05: Mercury periods busy the calendar with commerce, communication, study, documentation and travel.
+     praty Sa 2026-10-31->2026-11-09: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices.
+     praty Me 2026-11-09->2026-12-05: Mercury periods busy the calendar with commerce, communication, study, documentation and travel.
   seg 2026-12-05->2027-01-01 [Rahu enters Capricorn (retrograde); Ketu enters Cancer (retrograde)] Mo-Ve
      antar: Antardasha of Venus: Venus periods sweeten the ledger: relationships, luxury, arts, vehicles and negotiated wealth flow forward. Marriage and partnership matters mature. Overindulgence is the period's only tax collector. Venus sits natally in your 10th house in Capricorn — Great Friend's Sign (Adhi Mitra), retrograde. As lord of the 2nd and 7th, its period activates wealth and marriage. Expect this period to deliver its promises with interest — its natal strength converts effort into durable results.
      transit Ju sign=4 fromMoon=9 fromLagna=5 R: Jupiter in the 9th from Moon is the dharma jackpot: gurus appear, fortune compounds, journeys enlighten, father-figures bless. The single best window for higher study and pilgrimage.
@@ -885,28 +885,28 @@ CHART pune-yoga-dense
 ==============================================================================
 
 --- meta ---
-  ayanamsha=lahiri value=23.7719 node=mean
+  ayanamsha=lahiri value=23.7802 node=mean
   bhavaMethod=sripati tz=Asia/Kolkata local=1994-03-11 06:15
   birthUtc=1994-03-11T00:45:00Z
 
 --- ascendant ---
-  Aquarius 15°28' lon=315.4778 nak=23 pada=3
-  mc=231.0850
+  Aquarius 15°28' lon=315.4698 nak=23 pada=3
+  mc=231.0766
 
 --- planets ---
-  Su  Aquarius     26°26' lon=326.4433 h= 1 b= 1 nak=24 pada=2 nakLord=Ju nakRel=friend  greatEnemy   spd=  0.9991 
-  Mo  Aquarius     12°13' lon=312.2186 h= 1 b= 1 nak=23 pada=2 nakLord=Ra nakRel=neutral enemy        spd= 12.3590 
-  Ma  Aquarius      9°02' lon=309.0379 h= 1 b= 1 nak=23 pada=1 nakLord=Ra nakRel=neutral enemy        spd=  0.7866 
-  Me  Aquarius      0°28' lon=300.4756 h= 1 b=12 nak=22 pada=3 nakLord=Ma nakRel=neutral enemy        spd=  0.5293 
-  Ju  Libra        20°42' lon=200.7123 h= 9 b= 9 nak=15 pada=1 nakLord=Ju nakRel=self    greatEnemy   spd= -0.0328 R
-  Ve  Pisces        9°15' lon=339.2513 h= 2 b= 2 nak=25 pada=2 nakLord=Sa nakRel=friend  exalted      spd=  1.2442 
-  Sa  Aquarius     11°09' lon=311.1605 h= 1 b= 1 nak=23 pada=2 nakLord=Ra nakRel=neutral moolatrikona spd=  0.1189 
-  Ra  Scorpio       3°39' lon=213.6654 h=10 b= 9 nak=16 pada=1 nakLord=Sa nakRel=friend  debilitated  spd= -0.0530 R
-  Ke  Taurus        3°39' lon= 33.6654 h= 4 b= 3 nak= 2 pada=3 nakLord=Su nakRel=enemy   debilitated  spd= -0.0530 R
+  Su  Aquarius     26°26' lon=326.4350 h= 1 b= 1 nak=24 pada=2 nakLord=Ju nakRel=friend  greatEnemy   spd=  0.9991 
+  Mo  Aquarius     12°12' lon=312.2103 h= 1 b= 1 nak=23 pada=2 nakLord=Ra nakRel=neutral enemy        spd= 12.3590 
+  Ma  Aquarius      9°01' lon=309.0296 h= 1 b= 1 nak=23 pada=1 nakLord=Ra nakRel=neutral enemy        spd=  0.7866 
+  Me  Aquarius      0°28' lon=300.4673 h= 1 b=12 nak=22 pada=3 nakLord=Ma nakRel=neutral enemy        spd=  0.5293 
+  Ju  Libra        20°42' lon=200.7040 h= 9 b= 9 nak=15 pada=1 nakLord=Ju nakRel=self    greatEnemy   spd= -0.0328 R
+  Ve  Pisces        9°14' lon=339.2430 h= 2 b= 2 nak=25 pada=2 nakLord=Sa nakRel=friend  exalted      spd=  1.2442 
+  Sa  Aquarius     11°09' lon=311.1522 h= 1 b= 1 nak=23 pada=2 nakLord=Ra nakRel=neutral moolatrikona spd=  0.1189 
+  Ra  Scorpio       3°39' lon=213.6613 h=10 b= 9 nak=16 pada=1 nakLord=Sa nakRel=friend  debilitated  spd= -0.0530 R
+  Ke  Taurus        3°39' lon= 33.6613 h= 4 b= 3 nak= 2 pada=3 nakLord=Su nakRel=enemy   debilitated  spd= -0.0530 R
 
 --- cusps (bhava madhya / sandhi) ---
-  madhya: 315.48 347.35 19.22 51.09 79.22 107.35 135.48 167.35 199.22 231.09 259.22 287.35
-  sandhi: 331.41 3.28 35.15 65.15 93.28 121.41 151.41 183.28 215.15 245.15 273.28 301.41
+  madhya: 315.47 347.34 19.21 51.08 79.21 107.34 135.47 167.34 199.21 231.08 259.21 287.34
+  sandhi: 331.40 3.27 35.14 65.14 93.27 121.40 151.40 183.27 215.14 245.14 273.27 301.40
 
 --- ashtakavarga ---
   Su   3  4  2  3  5  4  4  6  6  2  5  4
@@ -931,15 +931,15 @@ CHART pune-yoga-dense
   Ke   12/100 Afflicted  factors=Dignity: Debilitated (Neecha):-20 | House placement (4):6 | Aspect from Mars:-5 | Aspect from Rahu:-5 | Nakshatra lord Sun (Krittika) — enemy:-4
 
 --- shadbala ---
-  Su  total=  549.890 rupas=  9.165 req=390.000 ratio=1.410 ishta=47.830 kashta=11.867
-  Mo  total=  335.054 rupas=  5.584 req=360.000 ratio=0.931 ishta=17.710 kashta=36.882
-  Ma  total=  461.367 rupas=  7.689 req=300.000 ratio=1.538 ishta=17.141 kashta=14.197
-  Me  total=  400.173 rupas=  6.670 req=420.000 ratio=0.953 ishta=24.146 kashta=30.587
-  Ju  total=  319.701 rupas=  5.328 req=390.000 ratio=0.820 ishta=31.989 kashta=25.652
-  Ve  total=  368.130 rupas=  6.136 req=330.000 ratio=1.116 ishta=18.255 kashta=17.847
-  Sa  total=  380.352 rupas=  6.339 req=300.000 ratio=1.268 ishta=10.172 kashta=45.344
+  Su  total=  524.738 rupas=  8.746 req=390.000 ratio=1.345 ishta=33.820 kashta=22.496
+  Mo  total=  330.309 rupas=  5.505 req=360.000 ratio=0.918 ishta=12.522 kashta=38.576
+  Ma  total=  461.370 rupas=  7.690 req=300.000 ratio=1.538 ishta=17.142 kashta=14.192
+  Me  total=  400.175 rupas=  6.670 req=420.000 ratio=0.953 ishta=24.148 kashta=30.586
+  Ju  total=  319.705 rupas=  5.328 req=390.000 ratio=0.820 ishta=31.991 kashta=25.651
+  Ve  total=  368.127 rupas=  6.135 req=330.000 ratio=1.116 ishta=18.255 kashta=17.851
+  Sa  total=  380.354 rupas=  6.339 req=300.000 ratio=1.268 ishta=10.173 kashta=45.343
   strongest=Su weakest=Ju
-  bhavaBala: H1=268.506 H2=363.481 H3=463.789 H4=348.812 H5=410.454 H6=386.679 H7=517.768 H8=367.586 H9=425.227 H10=473.196 H11=379.865 H12=485.760
+  bhavaBala: H1=268.508 H2=363.484 H3=463.792 H4=348.810 H5=410.456 H6=381.934 H7=492.616 H8=367.588 H9=425.225 H10=473.199 H11=379.869 H12=485.763
 
 --- vargas ---
   D1  asc=10  Su:10 Mo:10 Ma:10 Me:10 Ju: 6 Ve:11 Sa:10 Ra: 7 Ke: 1
@@ -989,15 +989,15 @@ CHART pune-yoga-dense
   sunrise=1994-03-10T01:17:13Z
 
 --- dasha ---
-  MD Ra  1986-09-11 -> 2004-09-10
-  MD Ju  2004-09-10 -> 2020-09-10
-  MD Sa  2020-09-10 -> 2039-09-11
-  MD Me  2039-09-11 -> 2056-09-10
-  MD Ke  2056-09-10 -> 2063-09-11
-  MD Ve  2063-09-11 -> 2083-09-11
-  MD Su  2083-09-11 -> 2089-09-11
-  MD Mo  2089-09-11 -> 2099-09-11
-  MD Ma  2099-09-11 -> 2106-09-12
+  MD Ra  1986-09-15 -> 2004-09-15
+  MD Ju  2004-09-15 -> 2020-09-15
+  MD Sa  2020-09-15 -> 2039-09-15
+  MD Me  2039-09-15 -> 2056-09-15
+  MD Ke  2056-09-15 -> 2063-09-15
+  MD Ve  2063-09-15 -> 2083-09-15
+  MD Su  2083-09-15 -> 2089-09-15
+  MD Mo  2089-09-15 -> 2099-09-15
+  MD Ma  2099-09-15 -> 2106-09-16
   active@2026-06-15: Sa-Ke-Ke
 
 --- transits + sade sati (pinned now) ---
@@ -1006,7 +1006,7 @@ CHART pune-yoga-dense
   Ra  Aquarius      9°12' fromMoon= 1 fromLagna= 1 R
   Ke  Leo           9°12' fromMoon= 7 fromLagna= 7 R
   Su  Taurus       29°42' fromMoon= 4 fromLagna= 4 
-  Ma  Aries        25°49' fromMoon= 3 fromLagna= 3 
+  Ma  Aries        25°48' fromMoon= 3 fromLagna= 3 
   sadeSatiPhase=setting
 
 --- numerology ---
@@ -1065,7 +1065,7 @@ CHART pune-yoga-dense
   == Navamsa — the inner person
      [1] The Navamsa (D-9) is a second chart derived from your birth chart by dividing each sign into nine parts. Tradition reads it for the inner person and for marriage, and treats it as the test of whether what the birth chart promises actually holds. Its rising sign is Aquarius. If the birth chart is how life presents itself, the Navamsa is how you are on the inside once the noise settles — and an Aquarius inner nature is detached, systemic and unconventionally principled, thinking in groups and futures rather than individuals and moments. Independent to a fault, and warm in a way that surprises people. When the outer sign (Aquarius) and inner sign (Aquarius) differ in element, people who only know you casually often misread you; those close to you meet the Navamsa.
   == By the classical six-fold measure (Shadbala)
-     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Sun is your strongest planet at 9.16 rupas (141% of its required minimum) and Jupiter the weakest at 5.33 rupas (82%). Note this differs from the quicker overall score above — the six-fold measure weighs birth-time and motion factors the quick score does not; where they disagree, the Shadbala verdict is the classical one.
+     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Sun is your strongest planet at 8.75 rupas (135% of its required minimum) and Jupiter the weakest at 5.33 rupas (82%). Note this differs from the quicker overall score above — the six-fold measure weighs birth-time and motion factors the quick score does not; where they disagree, the Shadbala verdict is the classical one.
      [2] Practically: lean on Sun's themes when the stakes are high, and give Jupiter's themes more preparation time than feels necessary.
   == Aspects on your rising sign — who edits the personality
      [1] Planets influence houses they do not sit in by 'aspecting' them — casting their influence across the chart to particular houses. Every planet aspects the 7th house from itself, and Mars, Jupiter, Saturn, Rahu and Ketu each have extra special aspects. The following planets aspect your rising sign, and each one edits the personality others meet:
@@ -1096,9 +1096,9 @@ CHART pune-yoga-dense
      [3] The ruler, Saturn, also falls in the star-group (nakshatra) called Shatabhisha, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Rahu, and the flavour is: veiled healing; solitary depths, mysticism and medicine. Rahu, the ruler of that nakshatra, is neutral toward Saturn, so this flavour comes through as it is — neither boosted nor blocked.
      [4] Sun sits here at 26°26' Aquarius. For your Aquarius rising sign, Sun rules your 7th house — marriage — which makes it neither for you nor against you by rulership (functionally neutral). It also rules one of the two houses (the 2nd and 7th) that the tradition watches for health in its main periods, so its periods deserve a little extra care. The Sun on the Lagna gives an unmistakable presence — authority, vitality and a spine that does not bend easily. The body runs hot and the ego runs close to the surface; leadership comes naturally, but so does the tendency to dominate rooms that only needed a participant. Aquarius belongs to a great enemy of Sun, so it struggles to be itself here. Expect what Sun stands for to be taxed — and expect deliberate attention to this planet to pay back more than usual, precisely because it starts from behind.
      [5] Sun falls in the nakshatra Purva Bhadrapada (2nd quarter), ruled by Jupiter, whose flavour is: fiery twin-front transformation; intensity behind an austere face. Jupiter, the ruler of that nakshatra, is a natural friend of Sun, so this flavour is passed on willingly and arrives in a form you recognise.
-     [6] Moon sits here at 12°13' Aquarius. For your Aquarius rising sign, Moon rules your 6th house — health — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). Moon on the Lagna makes the face of the chart emotional, responsive and public-facing. Moods are visible weather; the public likes this person without quite knowing why. Wellbeing tracks the Moon's dignity and phase closely. Aquarius belongs to an enemy of Moon, so it meets resistance here — a guest whose host does not much like it. Results in this house take roughly twice the usual persistence to arrive.
+     [6] Moon sits here at 12°12' Aquarius. For your Aquarius rising sign, Moon rules your 6th house — health — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). Moon on the Lagna makes the face of the chart emotional, responsive and public-facing. Moods are visible weather; the public likes this person without quite knowing why. Wellbeing tracks the Moon's dignity and phase closely. Aquarius belongs to an enemy of Moon, so it meets resistance here — a guest whose host does not much like it. Results in this house take roughly twice the usual persistence to arrive.
      [7] Moon falls in the nakshatra Shatabhisha (2nd quarter), ruled by Rahu, whose flavour is: veiled healing; solitary depths, mysticism and medicine. Rahu, the ruler of that nakshatra, is neutral toward Moon, so this flavour comes through as it is — neither boosted nor blocked.
-     [8] Mars sits here at 9°02' Aquarius. For your Aquarius rising sign, Mars rules your 3rd and 10th houses — courage and career — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). Mars on the Lagna gives heat to the body and edge to the will — athletic, direct, quick to act and quick to scar. Mangal dosha — the Mars placement traditionally checked before marriage — applies here. You do not wait; the life lesson is learning what deserves the weapon and what deserves patience. Aquarius belongs to an enemy of Mars, so it meets resistance here — a guest whose host does not much like it. Results in this house take roughly twice the usual persistence to arrive.
+     [8] Mars sits here at 9°01' Aquarius. For your Aquarius rising sign, Mars rules your 3rd and 10th houses — courage and career — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). Mars on the Lagna gives heat to the body and edge to the will — athletic, direct, quick to act and quick to scar. Mangal dosha — the Mars placement traditionally checked before marriage — applies here. You do not wait; the life lesson is learning what deserves the weapon and what deserves patience. Aquarius belongs to an enemy of Mars, so it meets resistance here — a guest whose host does not much like it. Results in this house take roughly twice the usual persistence to arrive.
      [9] Mars falls in the nakshatra Shatabhisha (1st quarter), ruled by Rahu, whose flavour is: veiled healing; solitary depths, mysticism and medicine. Rahu, the ruler of that nakshatra, is neutral toward Mars, so this flavour comes through as it is — neither boosted nor blocked.
      [10] Mercury sits here at 0°28' Aquarius. For your Aquarius rising sign, Mercury rules your 5th and 8th houses — intelligence and longevity — which makes it neither for you nor against you by rulership (functionally neutral). Mercury on the Lagna gives a quick, youthful, wit-forward presence — the eternal student who reads the room in seconds. Health is wiry rather than robust. The danger is cleverness used as armour against depth. Aquarius belongs to an enemy of Mercury, so it meets resistance here — a guest whose host does not much like it. Results in this house take roughly twice the usual persistence to arrive. One refinement: houses can be counted two ways. By whole signs (used above) Mercury is in the 1st, but by the more precise method that measures from the exact house boundaries (Bhava Chalit), it falls in the 12th. Read its concrete, day-to-day results in the 12th house too; its strength and comfort by sign, described above, stay as they are.
      [11] Mercury falls in the nakshatra Dhanishta (3rd quarter), ruled by Mars, whose flavour is: abundant rhythm; music, wealth and adaptive movement. Mars, the ruler of that nakshatra, is neutral toward Mercury, so this flavour comes through as it is — neither boosted nor blocked.
@@ -1126,13 +1126,13 @@ CHART pune-yoga-dense
      [1] Your 2nd house falls in Pisces. This is the part of the chart that covers wealth, family, speech, food and accumulated resources. Venus sits in it, so the affairs of this house are things you live directly rather than watch from a distance.
      [2] Pisces is ruled by Jupiter, so Jupiter is the ruler of your 2nd house — the planet whose condition decides how this area of life goes. Jupiter sits in your 9th house at 20°42' Libra, which is the sign of a great enemy, where it struggles to be itself. It is also retrograde (appearing to move backwards in the sky at your birth). Counting from the 2nd house itself, Jupiter stands 8 places along — the 8th from its own house, which is one of the three difficult positions (the 6th, 8th and 12th, called 'dusthana'). The matters of this house are undermined a little from within, and putting them right takes deliberate, sustained effort rather than luck. Because the ruler sits in the 9th, the affairs of your 2nd house get worked out mostly through fortune — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 45 out of 100 (moderate). Jupiter can carry the 2nd house, but results here follow your own effort closely rather than being handed to you.
      [3] The ruler, Jupiter, also falls in the star-group (nakshatra) called Vishakha, in its 1st quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Jupiter, and the flavour is: goal-fixated determination; twin ambitions pursued with fervour. Jupiter sits in a nakshatra it rules itself, so its intent reaches the world undiluted — what it promises, it delivers in its own voice.
-     [4] Venus sits here at 9°15' Pisces. For your Aquarius rising sign, Venus rules your 4th and 9th houses — home and fortune — which makes it the single most helpful planet your rising sign can have (the 'yogakaraka'), because it rules one of the supporting houses and one of the fortunate houses at the same time. Venus in the 2nd sweetens wealth and speech alike: money through arts, luxury goods, finance and beauty industries. The voice may literally be musical. Family life is refined; the palate is expensive and knows it. Pisces is the sign where Venus is exalted — its strongest possible position. Everything Venus stands for runs at full, sometimes overwhelming, capacity here; this is one of the power centres of your chart.
+     [4] Venus sits here at 9°14' Pisces. For your Aquarius rising sign, Venus rules your 4th and 9th houses — home and fortune — which makes it the single most helpful planet your rising sign can have (the 'yogakaraka'), because it rules one of the supporting houses and one of the fortunate houses at the same time. Venus in the 2nd sweetens wealth and speech alike: money through arts, luxury goods, finance and beauty industries. The voice may literally be musical. Family life is refined; the palate is expensive and knows it. Pisces is the sign where Venus is exalted — its strongest possible position. Everything Venus stands for runs at full, sometimes overwhelming, capacity here; this is one of the power centres of your chart.
      [5] Venus falls in the nakshatra Uttara Bhadrapada (2nd quarter), ruled by Saturn, whose flavour is: deep-sea serenity; wisdom raised from the depths, slow and profound. Saturn, the ruler of that nakshatra, is a natural friend of Venus, so this flavour is passed on willingly and arrives in a form you recognise.
      [6] Rahu aspects this house — that is, it reaches into it from where it sits, the 10th house in Scorpio, where it is debilitated, retrograde. By nature Rahu is a hard planet (a 'malefic'), and for your rising sign it is neither for you nor against you by rulership (functionally neutral). The aspect landing here is Rahu's special 5th-house aspect — an amplifier of intelligence and of desire. Rahu's aspect on the 2nd creates hunger around wealth, family and speech — accumulation is driven, sometimes through unorthodox or foreign channels, and the voice can persuade past the facts. Family history carries something unresolved. A hard planet in a weak position troubles the house without building much capability in return: the friction comes with little compensating discipline.
      [7] Every aspect reaching this house comes from a hard planet. With no gentle planet to balance them, what this house stands for needs conscious defending, and the house tends to mature through difficulty rather than ease — which also means it usually matures well.
   == 3rd House — Aries  occupied=false lord=Ma planets=[] aspects=[Ju:7,Sa:3]
      [1] Your 3rd house falls in Aries. This is the part of the chart that covers courage, siblings, communication, skills and self-effort. No planet sits in it. That is not a weakness in itself — most houses in most charts are empty. An empty house is read the way the classical texts prescribe: by the condition of the planet that rules it, and by the planets that aspect it from elsewhere.
-     [2] Aries is ruled by Mars, so Mars is the ruler of your 3rd house — the planet whose condition decides how this area of life goes. Mars sits in your 1st house at 9°02' Aquarius, which is an enemy's sign, where it meets resistance. Counting from the 3rd house itself, Mars stands 11 places along — the 11th from its own house, a workable but unremarkable position that neither helps nor hurts. Because the ruler sits in the 1st, the affairs of your 3rd house get worked out mostly through self — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 46 out of 100 (moderate). Mars can carry the 3rd house, but results here follow your own effort closely rather than being handed to you.
+     [2] Aries is ruled by Mars, so Mars is the ruler of your 3rd house — the planet whose condition decides how this area of life goes. Mars sits in your 1st house at 9°01' Aquarius, which is an enemy's sign, where it meets resistance. Counting from the 3rd house itself, Mars stands 11 places along — the 11th from its own house, a workable but unremarkable position that neither helps nor hurts. Because the ruler sits in the 1st, the affairs of your 3rd house get worked out mostly through self — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 46 out of 100 (moderate). Mars can carry the 3rd house, but results here follow your own effort closely rather than being handed to you.
      [3] The ruler, Mars, also falls in the star-group (nakshatra) called Shatabhisha, in its 1st quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Rahu, and the flavour is: veiled healing; solitary depths, mysticism and medicine. Rahu, the ruler of that nakshatra, is neutral toward Mars, so this flavour comes through as it is — neither boosted nor blocked.
      [4] Jupiter aspects this house — that is, it reaches into it from where it sits, the 9th house in Libra, in a great enemy's sign, retrograde. By nature Jupiter is a gentle planet (a 'benefic'), and for your rising sign it is a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). The aspect landing here is the full 7th-house aspect every planet casts — in Jupiter's case a direct protection. Jupiter's glance on the 3rd raises courage into principle and communication into teaching; skills are pursued for their meaning. Siblings are a source of support rather than rivalry. The good intent is there, but the planet itself is poorly placed, so the protection is real yet thin, and tends to arrive later than you expect. Note the split, though: gentle by nature but working against your rising sign by the houses it rules, so its blessing here comes with strings attached.
      [5] Saturn also aspects this house, from the 1st house in Aquarius, in its moolatrikona sign — a hard planet by nature, and one that works in your favour by the houses it rules. The aspect landing here is Saturn's special 3rd-house aspect — the grinding one, which wears down rather than blocks outright. Saturn's glance on the 3rd converts courage into endurance: you outlast rather than outcharge. Effort is sustained over years and skills are mastered by repetition, while relations with siblings carry distance or duty. A hard planet in a strong position does not merely trouble a house — it also forces you to become competent in its affairs, charging the discipline as its price. Its rulerships soften this considerably — a hard planet that works for your rising sign behaves far better than its reputation.
@@ -1140,7 +1140,7 @@ CHART pune-yoga-dense
      [7] In short: with no planet in it to speak for it, how your 3rd house goes rests on Mars's condition in the 1st and on the aspects described above. Anything that strengthens Mars — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.
   == 4th House — Taurus  occupied=true lord=Ve planets=[Ke] aspects=[Ma:4,Ra:7]
      [1] Your 4th house falls in Taurus. This is the part of the chart that covers home, mother, emotional foundations, property and inner contentment. Ketu sits in it, so the affairs of this house are things you live directly rather than watch from a distance.
-     [2] Taurus is ruled by Venus, so Venus is the ruler of your 4th house — the planet whose condition decides how this area of life goes. Venus sits in your 2nd house at 9°15' Pisces, which is the sign where it is exalted — at its very strongest. Counting from the 4th house itself, Venus stands 11 places along — the 11th from its own house, a workable but unremarkable position that neither helps nor hurts. Because the ruler sits in the 2nd, the affairs of your 4th house get worked out mostly through wealth — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 61 out of 100 (strong), so Venus is in a position to actually deliver what the 4th house stands for, not merely promise it.
+     [2] Taurus is ruled by Venus, so Venus is the ruler of your 4th house — the planet whose condition decides how this area of life goes. Venus sits in your 2nd house at 9°14' Pisces, which is the sign where it is exalted — at its very strongest. Counting from the 4th house itself, Venus stands 11 places along — the 11th from its own house, a workable but unremarkable position that neither helps nor hurts. Because the ruler sits in the 2nd, the affairs of your 4th house get worked out mostly through wealth — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 61 out of 100 (strong), so Venus is in a position to actually deliver what the 4th house stands for, not merely promise it.
      [3] The ruler, Venus, also falls in the star-group (nakshatra) called Uttara Bhadrapada, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Saturn, and the flavour is: deep-sea serenity; wisdom raised from the depths, slow and profound. Saturn, the ruler of that nakshatra, is a natural friend of Venus, so this flavour is passed on willingly and arrives in a form you recognise.
      [4] Ketu sits here at 3°39' Taurus. Ketu rules no sign of its own. It works through the planet that owns the sign it sits in, through the ruler of its star-group (nakshatra), and through whatever it sits beside — a shadow that takes on the colour of its surroundings rather than a house ruler with an agenda of its own. Ketu in the 4th unroots the home: moves, a mother-bond marked by absence or spirituality, comfort found nowhere until found within. Property matters stay unglamorous. The true homeland you seek has no postal code. Taurus is the sign where Ketu is debilitated — its weakest position in the zodiac. Its confidence is undermined from the start and the matters it rules need conscious, repeated shoring up, unless a cancellation (Neechabhanga, checked in the yoga findings) turns the early weakness into eventual strength. Ketu is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first. One refinement: houses can be counted two ways. By whole signs (used above) Ketu is in the 4th, but by the more precise method that measures from the exact house boundaries (Bhava Chalit), it falls in the 3rd. Read its concrete, day-to-day results in the 3rd house too; its strength and comfort by sign, described above, stay as they are.
      [5] Ketu falls in the nakshatra Krittika (3rd quarter), ruled by Sun, whose flavour is: sharp, purifying fire; cuts through falsehood, ambitious and critical. Sun, the ruler of that nakshatra, is a natural enemy of Ketu, so even a well-placed Ketu has its results filtered through an unsympathetic hand — expect what it promises to arrive altered, later, or at a price.
@@ -1156,7 +1156,7 @@ CHART pune-yoga-dense
      [6] In short: with no planet in it to speak for it, how your 5th house goes rests on Mercury's condition in the 1st and on the aspects described above. Anything that strengthens Mercury — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.
   == 6th House — Cancer  occupied=false lord=Mo planets=[] aspects=[Ra:9]
      [1] Your 6th house falls in Cancer. This is the part of the chart that covers health, debts, enemies, service, litigation and daily discipline. No planet sits in it. That is not a weakness in itself — most houses in most charts are empty. An empty house is read the way the classical texts prescribe: by the condition of the planet that rules it, and by the planets that aspect it from elsewhere.
-     [2] Cancer is ruled by Moon, so Moon is the ruler of your 6th house — the planet whose condition decides how this area of life goes. Moon sits in your 1st house at 12°13' Aquarius, which is an enemy's sign, where it meets resistance. Counting from the 6th house itself, Moon stands 8 places along — the 8th from its own house, which is one of the three difficult positions (the 6th, 8th and 12th, called 'dusthana'). The matters of this house are undermined a little from within, and putting them right takes deliberate, sustained effort rather than luck. Because the ruler sits in the 1st, the affairs of your 6th house get worked out mostly through self — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 45 out of 100 (moderate). Moon can carry the 6th house, but results here follow your own effort closely rather than being handed to you.
+     [2] Cancer is ruled by Moon, so Moon is the ruler of your 6th house — the planet whose condition decides how this area of life goes. Moon sits in your 1st house at 12°12' Aquarius, which is an enemy's sign, where it meets resistance. Counting from the 6th house itself, Moon stands 8 places along — the 8th from its own house, which is one of the three difficult positions (the 6th, 8th and 12th, called 'dusthana'). The matters of this house are undermined a little from within, and putting them right takes deliberate, sustained effort rather than luck. Because the ruler sits in the 1st, the affairs of your 6th house get worked out mostly through self — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 45 out of 100 (moderate). Moon can carry the 6th house, but results here follow your own effort closely rather than being handed to you.
      [3] The ruler, Moon, also falls in the star-group (nakshatra) called Shatabhisha, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Rahu, and the flavour is: veiled healing; solitary depths, mysticism and medicine. Rahu, the ruler of that nakshatra, is neutral toward Moon, so this flavour comes through as it is — neither boosted nor blocked.
      [4] Rahu aspects this house — that is, it reaches into it from where it sits, the 10th house in Scorpio, where it is debilitated, retrograde. By nature Rahu is a hard planet (a 'malefic'), and for your rising sign it is neither for you nor against you by rulership (functionally neutral). The aspect landing here is Rahu's special 9th-house aspect — a distorting influence on inherited fortune and belief. Rahu on the 6th is one of its genuinely strong glances: enemies are overwhelmed, competition is relished, and you prosper in litigation, service and the messier arenas others avoid. Diagnoses can be obscure. A hard planet in a weak position troubles the house without building much capability in return: the friction comes with little compensating discipline.
      [5] Every aspect reaching this house comes from a hard planet. With no gentle planet to balance them, what this house stands for needs conscious defending, and the house tends to mature through difficulty rather than ease — which also means it usually matures well.
@@ -1183,14 +1183,14 @@ CHART pune-yoga-dense
      [8] In short: with no planet in it to speak for it, how your 8th house goes rests on Mercury's condition in the 1st and on the aspects described above. Anything that strengthens Mercury — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.
   == 9th House — Libra  occupied=true lord=Ve planets=[Ju] aspects=[]
      [1] Your 9th house falls in Libra. This is the part of the chart that covers fortune, dharma, higher learning, the guru, father and long journeys. Jupiter sits in it, so the affairs of this house are things you live directly rather than watch from a distance.
-     [2] Libra is ruled by Venus, so Venus is the ruler of your 9th house — the planet whose condition decides how this area of life goes. Venus sits in your 2nd house at 9°15' Pisces, which is the sign where it is exalted — at its very strongest. Counting from the 9th house itself, Venus stands 6 places along — the 6th from its own house, which is one of the three difficult positions (the 6th, 8th and 12th, called 'dusthana'). The matters of this house are undermined a little from within, and putting them right takes deliberate, sustained effort rather than luck. Because the ruler sits in the 2nd, the affairs of your 9th house get worked out mostly through wealth — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 61 out of 100 (strong), so Venus is in a position to actually deliver what the 9th house stands for, not merely promise it.
+     [2] Libra is ruled by Venus, so Venus is the ruler of your 9th house — the planet whose condition decides how this area of life goes. Venus sits in your 2nd house at 9°14' Pisces, which is the sign where it is exalted — at its very strongest. Counting from the 9th house itself, Venus stands 6 places along — the 6th from its own house, which is one of the three difficult positions (the 6th, 8th and 12th, called 'dusthana'). The matters of this house are undermined a little from within, and putting them right takes deliberate, sustained effort rather than luck. Because the ruler sits in the 2nd, the affairs of your 9th house get worked out mostly through wealth — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 61 out of 100 (strong), so Venus is in a position to actually deliver what the 9th house stands for, not merely promise it.
      [3] The ruler, Venus, also falls in the star-group (nakshatra) called Uttara Bhadrapada, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Saturn, and the flavour is: deep-sea serenity; wisdom raised from the depths, slow and profound. Saturn, the ruler of that nakshatra, is a natural friend of Venus, so this flavour is passed on willingly and arrives in a form you recognise.
      [4] Jupiter sits here at 20°42' Libra. For your Aquarius rising sign, Jupiter rules your 2nd and 11th houses — wealth and gains — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). It also rules one of the two houses (the 2nd and 7th) that the tradition watches for health in its main periods, so its periods deserve a little extra care. Jupiter in the 9th is the guru on the guru's throne: faith, fortune, a benevolent father, and luck that looks unearned to onlookers. Higher learning, pilgrimage and publishing prosper. Your beliefs shape your entire material outcome. Libra belongs to a great enemy of Jupiter, so it struggles to be itself here. Expect what Jupiter stands for to be taxed — and expect deliberate attention to this planet to pay back more than usual, precisely because it starts from behind. Jupiter is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first.
      [5] Jupiter falls in the nakshatra Vishakha (1st quarter), ruled by Jupiter, whose flavour is: goal-fixated determination; twin ambitions pursued with fervour. Jupiter sits in a nakshatra it rules itself, so its intent reaches the world undiluted — what it promises, it delivers in its own voice.
      [6] No planet aspects the 9th house. Its affairs run on the ruler's condition alone, with nothing from outside either reinforcing or interfering — outcomes here are quieter and more in your own hands than elsewhere in the chart.
   == 10th House — Scorpio  occupied=true lord=Ma planets=[Ra] aspects=[Sa:10,Ke:7]
      [1] Your 10th house falls in Scorpio. This is the part of the chart that covers career, status, authority, karma and public achievement. Rahu sits in it, so the affairs of this house are things you live directly rather than watch from a distance.
-     [2] Scorpio is ruled by Mars, so Mars is the ruler of your 10th house — the planet whose condition decides how this area of life goes. Mars sits in your 1st house at 9°02' Aquarius, which is an enemy's sign, where it meets resistance. Counting from the 10th house itself, Mars stands 4 places along — the 4th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 1st, the affairs of your 10th house get worked out mostly through self — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 46 out of 100 (moderate). Mars can carry the 10th house, but results here follow your own effort closely rather than being handed to you.
+     [2] Scorpio is ruled by Mars, so Mars is the ruler of your 10th house — the planet whose condition decides how this area of life goes. Mars sits in your 1st house at 9°01' Aquarius, which is an enemy's sign, where it meets resistance. Counting from the 10th house itself, Mars stands 4 places along — the 4th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 1st, the affairs of your 10th house get worked out mostly through self — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 46 out of 100 (moderate). Mars can carry the 10th house, but results here follow your own effort closely rather than being handed to you.
      [3] The ruler, Mars, also falls in the star-group (nakshatra) called Shatabhisha, in its 1st quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Rahu, and the flavour is: veiled healing; solitary depths, mysticism and medicine. Rahu, the ruler of that nakshatra, is neutral toward Mars, so this flavour comes through as it is — neither boosted nor blocked.
      [4] Rahu sits here at 3°39' Scorpio. Rahu rules no sign of its own. It works through the planet that owns the sign it sits in, through the ruler of its star-group (nakshatra), and through whatever it sits beside — a shadow that takes on the colour of its surroundings rather than a house ruler with an agenda of its own. Rahu in the 10th is the fame algorithm: obsessive career ambition, mass-market instincts, success through technology, media or foreign systems. Reputation inflates fast — and needs ethical ballast to avoid equally fast correction. Scorpio is the sign where Rahu is debilitated — its weakest position in the zodiac. Its confidence is undermined from the start and the matters it rules need conscious, repeated shoring up, unless a cancellation (Neechabhanga, checked in the yoga findings) turns the early weakness into eventual strength. Rahu is retrograde — it appeared to be moving backwards through the sky when you were born. In practice that turns its energy inward and intensifies it: the themes of this house come back around more than once, and matters tend to conclude on the second or third pass rather than the first. One refinement: houses can be counted two ways. By whole signs (used above) Rahu is in the 10th, but by the more precise method that measures from the exact house boundaries (Bhava Chalit), it falls in the 9th. Read its concrete, day-to-day results in the 9th house too; its strength and comfort by sign, described above, stay as they are.
      [5] Rahu falls in the nakshatra Anuradha (1st quarter), ruled by Saturn, whose flavour is: loyal, disciplined devotion; friendship as a spiritual force. Saturn, the ruler of that nakshatra, is a natural friend of Rahu, so this flavour is passed on willingly and arrives in a form you recognise.
@@ -1379,7 +1379,7 @@ CHART pune-yoga-dense
   personality [Your strongest and weakest planets] Saturn is your strongest planet at 69 (strong), sitting in your 1st house in Aquarius.
   personality [Atmakaraka — what this life is for] Sun is your Atmakaraka — literally the 'soul significator', the planet that has travelled furthest through its sign, which the Jaimini school of astrology treats as the planet carrying the deepest purpose of the life.
   personality [Navamsa — the inner person] Its rising sign is Aquarius.
-  personality [By the classical six-fold measure (Shadbala)] By that measure Sun is your strongest planet at 9.16 rupas (141% of its required minimum) and Jupiter the weakest at 5.33 rupas (82%).
+  personality [By the classical six-fold measure (Shadbala)] By that measure Sun is your strongest planet at 8.75 rupas (135% of its required minimum) and Jupiter the weakest at 5.33 rupas (82%).
   personality [Aspects on your rising sign — who edits the personality] Jupiter aspects your rising sign from your 9th house.
   personality [How you are seen vs how you are (Arudha Lagna)] Yours falls in Taurus, while your actual rising sign is Aquarius.
   personality [Yoga signatures in the personality] 4 combinations in your chart stamp themselves directly on the character: Budhaditya Yoga, Chandra-Mangala Yoga, Sasa Yoga (Pancha Mahapurusha), Sunapha Yoga.
@@ -1427,8 +1427,8 @@ CHART pune-yoga-dense
      # The foundation: Aquarius Lagna with Sun, Moon, Mars, Mercury and Saturn in the 1st house
        Your Lagna is at 15°28' Aquarius in Shatabhisha pada 3.
        Sun sits at 26°26'. It is in a great enemy's sign.
-       Moon sits at 12°13', close to the rising degree. It is in an enemy's sign.
-       Mars sits at 9°02', close to the rising degree. Mars is also the strongest planet by Shadbala ratio (1.54× required) and is in an enemy's sign.
+       Moon sits at 12°12', close to the rising degree. It is in an enemy's sign.
+       Mars sits at 9°01', close to the rising degree. Mars is also the strongest planet by Shadbala ratio (1.54× required) and is in an enemy's sign.
        Mercury sits at 0°28'. It is in an enemy's sign.
        Saturn sits at 11°09', close to the rising degree. It is in its moolatrikona.
        - Your outward nature is detached, systemic and unconventionally principled, thinking in groups and futures rather than individuals and moments. Independent to a fault, and warm in a way that surprises people.
@@ -1453,7 +1453,7 @@ CHART pune-yoga-dense
        - Saturn meets its Shadbala requirement (1.27×) — enough to deliver what it promises.
        - Saturn is own sign in the Navamsa. Its inner quality confirms the outer promise.
      # The mind: Moon in Aquarius with Sun, Mars, Mercury and Saturn in the 1st house
-       The Moon is at 12°13' Aquarius in Shatabhisha pada 2, joined by Sun, Mars, Mercury and Saturn. Jupiter aspects them.
+       The Moon is at 12°12' Aquarius in Shatabhisha pada 2, joined by Sun, Mars, Mercury and Saturn. Jupiter aspects them.
        - With the Moon in Aquarius, the mind is detached and observational, feeling at one remove and more comfortable with humanity than with individuals. Emotional independence is real, occasionally to the point of remoteness.
        - Shatabhisha gives veiled healing; solitary depths, mysticism and medicine.
        - Sun with the Moon: Sun–Moon fuses will and feeling into one channel — a self-contained, subjective nature born near the new Moon. Decisiveness is high, but the inner counsel-chamber has one voice; you benefit enormously from advisors you actually consult.
@@ -1488,7 +1488,7 @@ CHART pune-yoga-dense
        - Being in its own nakshatra, Jupiter is reliable: what it shows on the surface is what it delivers.
        - Jupiter is the weakest planet in Shadbala (0.82×).
      # Venus in the 2nd (Pisces, Uttara Bhadrapada)
-       Venus is at 9°15' in Uttara Bhadrapada pada 2, exalted, at 1.12× its Shadbala requirement.
+       Venus is at 9°14' in Uttara Bhadrapada pada 2, exalted, at 1.12× its Shadbala requirement.
        - Venus in the 2nd sweetens wealth and speech alike: money through arts, luxury goods, finance and beauty industries.
        - The voice may literally be musical.
        - Family life is refined; the palate is expensive and knows it.
@@ -1509,14 +1509,14 @@ CHART pune-yoga-dense
      summary: You are already in a supportive main period — the Saturn Mahadasha runs to 2039, and the Venus Mahadasha from 2063 is the next strong stretch.
   == Part 2: Career
      # The 10th house: Scorpio
-       The 10th house is Scorpio, occupied by Rahu. Its lord Mars is in the 1st at 9°02' Aquarius (Shatabhisha), in an enemy's sign, at 1.54× its Shadbala requirement.
+       The 10th house is Scorpio, occupied by Rahu. Its lord Mars is in the 1st at 9°01' Aquarius (Shatabhisha), in an enemy's sign, at 1.54× its Shadbala requirement.
        Saturn and Ketu aspect it; it holds 34 SAV bindus (well above the 28 average); Bhava Bala 7.9 rupas.
        - Your 10th lord Mars sits in your 1st, carrying career & status into your body, your temperament and how you come across — a supportive house, so results flow with less resistance.
        - Mars works through Shatabhisha: veiled healing; solitary depths, mysticism and medicine.
        - Rahu here: Rahu in the 10th is the fame algorithm: obsessive career ambition, mass-market instincts, success through technology, media or foreign systems. Reputation inflates fast — and needs ethical ballast to avoid equally fast correction.
        - Saturn's aspect: Saturn's aspect on the 10th lands on the house Saturn naturally stands for, and is one of the strongest career glances in the chart: authority through service, seniority through endurance, and a reputation for reliability that compounds.
        - Ketu's aspect: Ketu on the 10th gives a career pursued without hunger for its rewards, often technical, healing or spiritual, and a public standing you are oddly indifferent to.
-       - Sun, the natural karaka of authority and status, is in a great enemy's sign in the 1st at 1.41× — a solid support for a working life with standing.
+       - Sun, the natural karaka of authority and status, is in a great enemy's sign in the 1st at 1.35× — a solid support for a working life with standing.
        - Saturn, the natural karaka of work and endurance, is in its moolatrikona in the 1st at 1.27× — a solid support for a working life with standing.
        - Counted from the Moon, the 10th is Scorpio; its lord Mars sits in your 1st in an enemy's sign, so the work that also satisfies you emotionally runs through technical & courage-driven.
      # The Dasamsa (D10): Cancer rising
@@ -1586,8 +1586,8 @@ CHART pune-yoga-dense
      summary: The 2nd lord Jupiter (0.82×) decides what you keep and the 11th lord Jupiter (0.82×) what comes in; the yogas above decide how much of it stays.
   == Part 4: Marriage and relationships
      # The 7th house: Leo
-       The 7th house is Leo, with no occupants. Its lord Sun is in the 1st at 26°26' Aquarius (Purva Bhadrapada), in a great enemy's sign, at 1.41× its Shadbala requirement.
-       Sun, Moon, Mars, Mercury and Saturn aspect it; it holds 26 SAV bindus (just below the 28 average); Bhava Bala 8.6 rupas.
+       The 7th house is Leo, with no occupants. Its lord Sun is in the 1st at 26°26' Aquarius (Purva Bhadrapada), in a great enemy's sign, at 1.35× its Shadbala requirement.
+       Sun, Moon, Mars, Mercury and Saturn aspect it; it holds 26 SAV bindus (just below the 28 average); Bhava Bala 8.2 rupas.
        - Your 7th lord Sun sits in your 1st, carrying partnership into your body, your temperament and how you come across — a supportive house, so results flow with less resistance.
        - Sun works through Purva Bhadrapada: fiery twin-front transformation; intensity behind an austere face.
        - Sun's aspect: The Sun's gaze on the 7th brings a distinguished, capable partner and public dealings conducted with visible authority.
@@ -1620,7 +1620,7 @@ CHART pune-yoga-dense
        - There are no strong foreign markers on your marriage axis, which leans the reading toward a partner from a familiar cultural circle.
        - That is a tendency in the chart, not a boundary on your life — plenty of these charts marry across every kind of distance.
      # When marriage is most likely
-       - May 2026 – Jul 2027 (age 32–33): Saturn–Ketu period, strong (83% confidence), confirmed by Yogini and Chara dasha — running now.
+       - May 2026 – Jul 2027 (age 32–33): Saturn–Ketu period, strong (82% confidence), confirmed by Yogini and Chara dasha — running now.
        - Mar 2033 – Apr 2034 (age 39–40): Saturn–Mars period, strong (88% confidence), confirmed by Yogini and Chara dasha.
      summary: Your marriage indications are mixed: warm significators on one side, some classical delay markers on the other. For a chart like this the windows matter far more than the average does.
      summary: Marriage score 55/100 — read it together with the windows: timing matters more than the average for this house.
@@ -1632,7 +1632,7 @@ CHART pune-yoga-dense
        - Saturn works through Shatabhisha: veiled healing; solitary depths, mysticism and medicine.
        - Ketu's aspect: Ketu's glance on the 12th is its most natural station: expenditure that quietly serves liberation, ease in solitude and in foreign lands, a vivid inner life in sleep.
      # The 9th house (long journeys): Libra
-       The 9th house is Libra, occupied by Jupiter. Its lord Venus is in the 2nd at 9°15' Pisces (Uttara Bhadrapada), exalted, at 1.12× its Shadbala requirement.
+       The 9th house is Libra, occupied by Jupiter. Its lord Venus is in the 2nd at 9°14' Pisces (Uttara Bhadrapada), exalted, at 1.12× its Shadbala requirement.
        It holds 25 SAV bindus (just below the 28 average); Bhava Bala 7.1 rupas.
        - Your 9th lord Venus sits in your 2nd, carrying fortune & belief into money you keep, family, food and what you say — a growth house, so results build with effort over time.
        - Venus works through Uttara Bhadrapada: deep-sea serenity; wisdom raised from the depths, slow and profound.
@@ -1650,18 +1650,18 @@ CHART pune-yoga-dense
        - That is usually the thread worth following when an opportunity appears and you are trying to judge whether it is the one.
      # When foreign doors open
        - May 2026 – Jul 2027 (age 32–33): Saturn–Ketu period, strong (84% confidence), confirmed by Chara dasha — running now.
+       - Jul 2027 – Sept 2030 (age 33–36): Saturn–Venus period, strong (81% confidence).
        - Sept 2030 – Aug 2031 (age 36–37): Saturn–Sun period, strong (87% confidence), confirmed by Yogini dasha.
-       - Mar 2033 – Apr 2034 (age 39–40): Saturn–Mars period, strong (82% confidence).
      summary: Foreign themes are present in your chart at a moderate level — travelling often is the shape they most naturally take, and the place you come from keeps its pull on you.
      summary: The 12th lord is in its moolatrikona in your 1st; with Rahu in the 10th, that sets how far the pull abroad goes.
   == Part 6: Health and things to watch
      # Vitality: Aquarius Lagna and its lord Saturn
        - The 1st house holds 26 SAV bindus and 4.5 rupas of Bhava Bala — a constitution that needs routine and rest to stay strong.
        - Saturn, the Lagna lord (body and resilience), is in its moolatrikona in the 1st at 1.27× — well supported.
-       - Sun, vitality, is in a great enemy's sign in the 1st at 1.41× — watch the heart, eyes, bones and overall vitality.
-       - Moon, the mind and sleep, is in an enemy's sign in the 1st at 0.93× — watch the mind, sleep, chest and body fluids.
+       - Sun, vitality, is in a great enemy's sign in the 1st at 1.35× — watch the heart, eyes, bones and overall vitality.
+       - Moon, the mind and sleep, is in an enemy's sign in the 1st at 0.92× — watch the mind, sleep, chest and body fluids.
      # The 6th house (illness and recovery): Cancer
-       The 6th house is Cancer, with no occupants. Its lord Moon is in the 1st at 12°13' Aquarius (Shatabhisha), in an enemy's sign, at 0.93× its Shadbala requirement.
+       The 6th house is Cancer, with no occupants. Its lord Moon is in the 1st at 12°12' Aquarius (Shatabhisha), in an enemy's sign, at 0.92× its Shadbala requirement.
        Rahu aspects it; it holds 34 SAV bindus (well above the 28 average); Bhava Bala 6.4 rupas.
        - Your 6th lord Moon sits in your 1st, carrying health & rivals into your body, your temperament and how you come across — a supportive house, so results flow with less resistance.
        - Moon works through Shatabhisha: veiled healing; solitary depths, mysticism and medicine.
@@ -1676,7 +1676,7 @@ CHART pune-yoga-dense
        - Ketu's aspect: Ketu's glance on the 8th is the planet of letting go in the house of endings and transformation: genuine occult aptitude, ease with mortality and transformation, and sudden events that feel fated rather than accidental.
      # Planets and conditions to watch
        - Mercury is below its Shadbala requirement (0.95×): give extra care to the nerves, skin, speech and lungs.
-       - Moon is below its Shadbala requirement (0.93×): give extra care to the mind, sleep, chest and body fluids.
+       - Moon is below its Shadbala requirement (0.92×): give extra care to the mind, sleep, chest and body fluids.
        - Jupiter is below its Shadbala requirement (0.82×): give extra care to the liver, fat metabolism and blood sugar.
        - Sun is in Mrita avastha (a "dead" degree): it gives little on its own, so its body areas (the heart, eyes, bones and overall vitality) depend on routine care.
        - Rahu is debilitated: unusual or hard-to-diagnose conditions, toxins and anxiety are the sensitive area in its periods.
@@ -1697,7 +1697,7 @@ CHART pune-yoga-dense
      summary: 10 areas in your chart deserve conscious handling rather than luck. Each one below comes with something practical to do about it, and none of them is a verdict.
   == Part 7: Timing outlook
      # Now: Saturn – Ketu – Ketu
-       Saturn Mahadasha Sept 2020 – Sept 2039; Ketu Antardasha May 2026 – Jul 2027; Ketu Pratyantardasha to Jun 2026; Mercury Sookshma to Jun 2026. Cross-check: Yogini Mangala–Ulka · Chara Gemini–Capricorn.
+       Saturn Mahadasha Sept 2020 – Sept 2039; Ketu Antardasha May 2026 – Jul 2027; Ketu Pratyantardasha to Jun 2026; Saturn Sookshma to Jun 2026. Cross-check: Yogini Mangala–Ulka · Chara Gemini–Capricorn.
        - Main period — Saturn rules your 1st and 12th, sits in your 1st in its moolatrikona at 1.27×, and is a functional benefic for your Lagna. What is built now is built permanently.
        - Sub-period — Ketu rules no house (a node), sits in your 4th debilitated, and is a functional neutral for your Lagna. Its themes now run through its placement.
      # The main periods ahead
@@ -1714,39 +1714,39 @@ CHART pune-yoga-dense
   hasDasha=true beforeBirth=false
   maha Sa 2026-01-01->2027-01-01: Mahadasha of Saturn: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices. What is built now is built permanently. Health of joints, teeth and morale needs scheduled maintenance. Saturn sits natally in your 1st house in Aquarius — Moolatrikona. As lord of the 1st and 12th, its period activates self and expenditure. Expect this period to deliver its promises with interest — its natal strength converts effort into durable results.
   sadeSati: Sade Sati is in its closing (setting) phase this year — Saturn in the 2nd from the natal Moon. The audit's ledger is being ruled off; burdens visibly lighten as the phase completes.
-  seg 2026-01-01->2026-05-24 [Window begins] Sa-Me
+  seg 2026-01-01->2026-05-28 [Window begins] Sa-Me
      antar: Antardasha of Mercury: Mercury periods busy the calendar with commerce, communication, study, documentation and travel. Multiple income streams and multiple browser tabs. The nervous system is the period's working capital — protect it with routine. Mercury sits natally in your 1st house in Aquarius — Enemy Sign (Shatru). As lord of the 5th and 8th, its period activates intelligence and longevity. Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion.
      transit Ju sign=2 fromMoon=5 fromLagna=5: Jupiter in the 5th from Moon is among the finest transits: children, creativity, romance, mantra-siddhi and honest speculation all receive grace. Conceive projects — and possibly heirs.
      transit Sa sign=11 fromMoon=2 fromLagna=2: Saturn in the 2nd from Moon — the closing chapter of Sade Sati presses on finances and family speech. Budget conservatively, speak sparingly at home, and settle debts; what survives this audit is genuinely yours.
      transit Ra sign=10 fromMoon=1 fromLagna=1 R: Rahu over the natal Moon amplifies ambition and anxiety in the same current. Public image inflates; mental hygiene must be deliberate. Big swings, both directions.
      transit Ke sign=4 fromMoon=7 fromLagna=7 R: Ketu in the 7th from Moon detaches partnership scripts: relationships are audited for karmic completion. What remains after this transit is genuinely chosen.
-     praty Sa 2026-01-01->2026-05-24: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices.
-  seg 2026-05-24->2026-06-01 [Antardasha changes to Ketu] Sa-Ke
+     praty Sa 2026-01-01->2026-05-28: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices.
+  seg 2026-05-28->2026-06-01 [Antardasha changes to Ketu] Sa-Ke
      antar: Antardasha of Ketu: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths. Material outcomes turn erratic while inner outcomes compound. The period rewards surrender and punishes grasping with unusual precision. Ketu sits natally in your 4th house in Taurus — Debilitated (Neecha), retrograde. As a nodal graha it delivers the agenda of its dispositor and conjunctions. Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion.
      transit Ju sign=2 fromMoon=5 fromLagna=5: Jupiter in the 5th from Moon is among the finest transits: children, creativity, romance, mantra-siddhi and honest speculation all receive grace. Conceive projects — and possibly heirs.
      transit Sa sign=11 fromMoon=2 fromLagna=2: Saturn in the 2nd from Moon — the closing chapter of Sade Sati presses on finances and family speech. Budget conservatively, speak sparingly at home, and settle debts; what survives this audit is genuinely yours.
      transit Ra sign=10 fromMoon=1 fromLagna=1 R: Rahu over the natal Moon amplifies ambition and anxiety in the same current. Public image inflates; mental hygiene must be deliberate. Big swings, both directions.
      transit Ke sign=4 fromMoon=7 fromLagna=7 R: Ketu in the 7th from Moon detaches partnership scripts: relationships are audited for karmic completion. What remains after this transit is genuinely chosen.
-     praty Ke 2026-05-24->2026-06-01: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths.
+     praty Ke 2026-05-28->2026-06-01: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths.
   seg 2026-06-01->2026-10-31 [Jupiter enters Cancer] Sa-Ke
      antar: Antardasha of Ketu: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths. Material outcomes turn erratic while inner outcomes compound. The period rewards surrender and punishes grasping with unusual precision. Ketu sits natally in your 4th house in Taurus — Debilitated (Neecha), retrograde. As a nodal graha it delivers the agenda of its dispositor and conjunctions. Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion.
      transit Ju sign=3 fromMoon=6 fromLagna=6: Jupiter in the 6th from Moon sits low: health niggles, service burdens and quiet erosion of optimism. Serve, heal, and pay down obligations; expansion resumes on schedule next year.
      transit Sa sign=11 fromMoon=2 fromLagna=2 R: Saturn in the 2nd from Moon — the closing chapter of Sade Sati presses on finances and family speech. Budget conservatively, speak sparingly at home, and settle debts; what survives this audit is genuinely yours.
      transit Ra sign=10 fromMoon=1 fromLagna=1 R: Rahu over the natal Moon amplifies ambition and anxiety in the same current. Public image inflates; mental hygiene must be deliberate. Big swings, both directions.
      transit Ke sign=4 fromMoon=7 fromLagna=7 R: Ketu in the 7th from Moon detaches partnership scripts: relationships are audited for karmic completion. What remains after this transit is genuinely chosen.
-     praty Ke 2026-06-01->2026-06-17: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths.
-     praty Ve 2026-06-17->2026-08-23: Venus periods sweeten the ledger: relationships, luxury, arts, vehicles and negotiated wealth flow forward.
-     praty Su 2026-08-23->2026-09-13: Sun periods centre authority, visibility, government dealings, the father, and the consolidation of identity.
-     praty Mo 2026-09-13->2026-10-16: Moon periods run on emotional currents: home, mother, public connection and frequent change of scene.
-     praty Ma 2026-10-16->2026-10-31: Mars periods ignite action: property, litigation, competition, surgery, sport and command.
+     praty Ke 2026-06-01->2026-06-21: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths.
+     praty Ve 2026-06-21->2026-08-28: Venus periods sweeten the ledger: relationships, luxury, arts, vehicles and negotiated wealth flow forward.
+     praty Su 2026-08-28->2026-09-17: Sun periods centre authority, visibility, government dealings, the father, and the consolidation of identity.
+     praty Mo 2026-09-17->2026-10-21: Moon periods run on emotional currents: home, mother, public connection and frequent change of scene.
+     praty Ma 2026-10-21->2026-10-31: Mars periods ignite action: property, litigation, competition, surgery, sport and command.
   seg 2026-10-31->2026-12-05 [Jupiter enters Leo] Sa-Ke
      antar: Antardasha of Ketu: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths. Material outcomes turn erratic while inner outcomes compound. The period rewards surrender and punishes grasping with unusual precision. Ketu sits natally in your 4th house in Taurus — Debilitated (Neecha), retrograde. As a nodal graha it delivers the agenda of its dispositor and conjunctions. Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion.
      transit Ju sign=4 fromMoon=7 fromLagna=7: Jupiter in the 7th from Moon graces partnership: marriages form or mend, alliances bring fortune, and public dealings meet goodwill. Negotiate everything important now.
      transit Sa sign=11 fromMoon=2 fromLagna=2 R: Saturn in the 2nd from Moon — the closing chapter of Sade Sati presses on finances and family speech. Budget conservatively, speak sparingly at home, and settle debts; what survives this audit is genuinely yours.
      transit Ra sign=10 fromMoon=1 fromLagna=1 R: Rahu over the natal Moon amplifies ambition and anxiety in the same current. Public image inflates; mental hygiene must be deliberate. Big swings, both directions.
      transit Ke sign=4 fromMoon=7 fromLagna=7 R: Ketu in the 7th from Moon detaches partnership scripts: relationships are audited for karmic completion. What remains after this transit is genuinely chosen.
-     praty Ma 2026-10-31->2026-11-09: Mars periods ignite action: property, litigation, competition, surgery, sport and command.
-     praty Ra 2026-11-09->2026-12-05: Rahu periods accelerate ambition beyond the speed limit: foreign matters, technology, mass platforms, unconventional gains — and periodic fog banks of confusion or scandal.
+     praty Ma 2026-10-31->2026-11-13: Mars periods ignite action: property, litigation, competition, surgery, sport and command.
+     praty Ra 2026-11-13->2026-12-05: Rahu periods accelerate ambition beyond the speed limit: foreign matters, technology, mass platforms, unconventional gains — and periodic fog banks of confusion or scandal.
   seg 2026-12-05->2027-01-01 [Rahu enters Capricorn (retrograde); Ketu enters Cancer (retrograde)] Sa-Ke
      antar: Antardasha of Ketu: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths. Material outcomes turn erratic while inner outcomes compound. The period rewards surrender and punishes grasping with unusual precision. Ketu sits natally in your 4th house in Taurus — Debilitated (Neecha), retrograde. As a nodal graha it delivers the agenda of its dispositor and conjunctions. Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion.
      transit Ju sign=4 fromMoon=7 fromLagna=7 R: Jupiter in the 7th from Moon graces partnership: marriages form or mend, alliances bring fortune, and public dealings meet goodwill. Negotiate everything important now.
@@ -1778,7 +1778,7 @@ CHART pune-yoga-dense
   month August 2026 | Saturn – Ketu – Venus (Maha – Antar – Pratyantar)
      [1] The Sun energises your 6th house — visibility, decisions and authority-dealings concentrate on health.
      [2] Mars drives through your 5th house: heat, urgency and initiative pressure in intelligence.
-  month September 2026 | Saturn – Ketu – Moon (Maha – Antar – Pratyantar)
+  month September 2026 | Saturn – Ketu – Sun (Maha – Antar – Pratyantar)
      [1] The Sun energises your 7th house — visibility, decisions and authority-dealings concentrate on marriage.
      [2] Mars drives through your 5th house: heat, urgency and initiative pressure in intelligence.
   month October 2026 | Saturn – Ketu – Moon (Maha – Antar – Pratyantar)
@@ -1798,27 +1798,27 @@ CHART southern-hemisphere
 ==============================================================================
 
 --- meta ---
-  ayanamsha=lahiri value=23.5574 node=mean
+  ayanamsha=lahiri value=23.5606 node=mean
   bhavaMethod=sripati tz=Australia/Melbourne local=1978-11-02 21:40
   birthUtc=1978-11-02T10:40:00Z
 
 --- ascendant ---
-  Taurus 8°01' lon=38.0216 nak=2 pada=4
-  mc=321.5778
+  Taurus 8°01' lon=38.0197 nak=2 pada=4
+  mc=321.5749
 
 --- planets ---
-  Su  Libra        16°05' lon=196.0990 h= 6 b= 6 nak=14 pada=3 nakLord=Ra nakRel=neutral debilitated  spd=  1.0014 
-  Mo  Scorpio       6°48' lon=216.8011 h= 7 b= 7 nak=16 pada=2 nakLord=Sa nakRel=neutral debilitated  spd= 14.0756 
-  Ma  Scorpio       6°43' lon=216.7216 h= 7 b= 7 nak=16 pada=2 nakLord=Sa nakRel=neutral own          spd=  0.7182 
-  Me  Scorpio       5°13' lon=215.2209 h= 7 b= 7 nak=16 pada=1 nakLord=Sa nakRel=neutral enemy        spd=  1.3930 
-  Ju  Cancer       14°37' lon=104.6218 h= 3 b= 3 nak= 7 pada=4 nakLord=Sa nakRel=neutral exalted      spd=  0.0735 
-  Ve  Libra        24°45' lon=204.7613 h= 6 b= 6 nak=15 pada=2 nakLord=Ju nakRel=neutral own          spd= -0.5441 R
-  Sa  Leo          17°59' lon=137.9870 h= 4 b= 4 nak=10 pada=2 nakLord=Ve nakRel=friend  neutral      spd=  0.0857 
-  Ra  Virgo         0°49' lon=150.8228 h= 5 b= 4 nak=11 pada=2 nakLord=Su nakRel=enemy   greatFriend  spd= -0.0530 R
-  Ke  Pisces        0°49' lon=330.8228 h=11 b=10 nak=24 pada=4 nakLord=Ju nakRel=neutral enemy        spd= -0.0530 R
+  Su  Libra        16°05' lon=196.0958 h= 6 b= 6 nak=14 pada=3 nakLord=Ra nakRel=neutral debilitated  spd=  1.0014 
+  Mo  Scorpio       6°47' lon=216.7980 h= 7 b= 7 nak=16 pada=2 nakLord=Sa nakRel=neutral debilitated  spd= 14.0756 
+  Ma  Scorpio       6°43' lon=216.7185 h= 7 b= 7 nak=16 pada=2 nakLord=Sa nakRel=neutral own          spd=  0.7182 
+  Me  Scorpio       5°13' lon=215.2177 h= 7 b= 7 nak=16 pada=1 nakLord=Sa nakRel=neutral enemy        spd=  1.3930 
+  Ju  Cancer       14°37' lon=104.6186 h= 3 b= 3 nak= 7 pada=4 nakLord=Sa nakRel=neutral exalted      spd=  0.0735 
+  Ve  Libra        24°45' lon=204.7582 h= 6 b= 6 nak=15 pada=2 nakLord=Ju nakRel=neutral own          spd= -0.5441 R
+  Sa  Leo          17°59' lon=137.9839 h= 4 b= 4 nak=10 pada=2 nakLord=Ve nakRel=friend  neutral      spd=  0.0857 
+  Ra  Virgo         0°49' lon=150.8187 h= 5 b= 4 nak=11 pada=2 nakLord=Su nakRel=enemy   greatFriend  spd= -0.0529 R
+  Ke  Pisces        0°49' lon=330.8187 h=11 b=10 nak=24 pada=4 nakLord=Ju nakRel=neutral enemy        spd= -0.0529 R
 
 --- cusps (bhava madhya / sandhi) ---
-  madhya: 38.02 72.54 107.06 141.58 167.06 192.54 218.02 252.54 287.06 321.58 347.06 12.54
+  madhya: 38.02 72.54 107.06 141.57 167.06 192.54 218.02 252.54 287.06 321.57 347.06 12.54
   sandhi: 55.28 89.80 124.32 154.32 179.80 205.28 235.28 269.80 304.32 334.32 359.80 25.28
 
 --- ashtakavarga ---
@@ -1844,15 +1844,15 @@ CHART southern-hemisphere
   Ke   36/100 Weak       factors=Dignity: Enemy Sign (Shatru):-8 | House placement (11):3 | Aspect from Jupiter:6 | Aspect from Rahu:-5
 
 --- shadbala ---
-  Su  total=  343.934 rupas=  5.732 req=390.000 ratio=0.882 ishta=6.868 kashta=46.186
-  Mo  total=  423.534 rupas=  7.059 req=360.000 ratio=1.176 ishta=4.182 kashta=52.090
-  Ma  total=  350.442 rupas=  5.841 req=300.000 ratio=1.168 ishta=14.407 kashta=38.140
-  Me  total=  435.862 rupas=  7.264 req=420.000 ratio=1.038 ishta=29.291 kashta=25.931
-  Ju  total=  542.182 rupas=  9.036 req=390.000 ratio=1.390 ishta=41.999 kashta=9.634
-  Ve  total=  335.551 rupas=  5.593 req=330.000 ratio=1.017 ishta=22.839 kashta=13.576
-  Sa  total=  385.170 rupas=  6.419 req=300.000 ratio=1.284 ishta=28.002 kashta=28.777
-  strongest=Ju weakest=Ve
-  bhavaBala: H1=362.823 H2=460.939 H3=543.607 H4=283.506 H5=460.221 H6=293.211 H7=403.767 H8=565.014 H9=416.098 H10=399.821 H11=552.436 H12=400.740
+  Su  total=  332.338 rupas=  5.539 req=390.000 ratio=0.852 ishta=4.855 kashta=52.967
+  Mo  total=  416.630 rupas=  6.944 req=360.000 ratio=1.157 ishta=2.956 kashta=55.846
+  Ma  total=  350.443 rupas=  5.841 req=300.000 ratio=1.168 ishta=14.406 kashta=38.141
+  Me  total=  435.860 rupas=  7.264 req=420.000 ratio=1.038 ishta=29.292 kashta=25.930
+  Ju  total=  542.181 rupas=  9.036 req=390.000 ratio=1.390 ishta=42.000 kashta=9.633
+  Ve  total=  335.552 rupas=  5.593 req=330.000 ratio=1.017 ishta=22.838 kashta=13.576
+  Sa  total=  385.169 rupas=  6.419 req=300.000 ratio=1.284 ishta=28.002 kashta=28.778
+  strongest=Ju weakest=Su
+  bhavaBala: H1=362.825 H2=460.938 H3=536.702 H4=271.910 H5=460.220 H6=293.213 H7=403.768 H8=565.013 H9=416.098 H10=399.821 H11=552.435 H12=400.741
 
 --- vargas ---
   D1  asc= 1  Su: 6 Mo: 7 Ma: 7 Me: 7 Ju: 3 Ve: 6 Sa: 4 Ra: 5 Ke:11
@@ -1902,15 +1902,15 @@ CHART southern-hemisphere
   sunrise=1978-11-01T19:13:00Z
 
 --- dasha ---
-  MD Sa  1973-11-23 -> 1992-11-23
-  MD Me  1992-11-23 -> 2009-11-23
-  MD Ke  2009-11-23 -> 2016-11-23
-  MD Ve  2016-11-23 -> 2036-11-23
-  MD Su  2036-11-23 -> 2042-11-23
-  MD Mo  2042-11-23 -> 2052-11-23
-  MD Ma  2052-11-23 -> 2059-11-24
-  MD Ra  2059-11-24 -> 2077-11-23
-  MD Ju  2077-11-23 -> 2093-11-23
+  MD Sa  1973-11-25 -> 1992-11-24
+  MD Me  1992-11-24 -> 2009-11-25
+  MD Ke  2009-11-25 -> 2016-11-24
+  MD Ve  2016-11-24 -> 2036-11-24
+  MD Su  2036-11-24 -> 2042-11-25
+  MD Mo  2042-11-25 -> 2052-11-24
+  MD Ma  2052-11-24 -> 2059-11-25
+  MD Ra  2059-11-25 -> 2077-11-25
+  MD Ju  2077-11-25 -> 2093-11-25
   active@2026-06-15: Ve-Ra-Ve
 
 --- transits + sade sati (pinned now) ---
@@ -1919,7 +1919,7 @@ CHART southern-hemisphere
   Ra  Aquarius      9°12' fromMoon= 4 fromLagna=10 R
   Ke  Leo           9°12' fromMoon=10 fromLagna= 4 R
   Su  Taurus       29°42' fromMoon= 7 fromLagna= 1 
-  Ma  Aries        25°49' fromMoon= 6 fromLagna=12 
+  Ma  Aries        25°48' fromMoon= 6 fromLagna=12 
   sadeSatiPhase=none
 
 --- numerology ---
@@ -1970,8 +1970,8 @@ CHART southern-hemisphere
   == Navamsa — the inner person
      [1] The Navamsa (D-9) is a second chart derived from your birth chart by dividing each sign into nine parts. Tradition reads it for the inner person and for marriage, and treats it as the test of whether what the birth chart promises actually holds. Its rising sign is Pisces. If the birth chart is how life presents itself, the Navamsa is how you are on the inside once the noise settles — and a Pisces inner nature is impressionable, compassionate and porous to atmosphere, absorbing whatever surrounds you and needing boundaries you are reluctant to build. Imagination and faith are the standing strengths. When the outer sign (Taurus) and inner sign (Pisces) differ in element, people who only know you casually often misread you; those close to you meet the Navamsa.
   == By the classical six-fold measure (Shadbala)
-     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Jupiter is your strongest planet at 9.04 rupas (139% of its required minimum) and Venus the weakest at 5.59 rupas (102%). This agrees with the quicker overall score above, which makes the reading more solid.
-     [2] Practically: lean on Jupiter's themes when the stakes are high, and give Venus's themes more preparation time than feels necessary.
+     [1] Shadbala is the full classical strength calculation — six separate measures (position, direction, time of birth, motion, nature and aspects) added together and expressed in units called rupas, with each planet having a minimum it is expected to reach. By that measure Jupiter is your strongest planet at 9.04 rupas (139% of its required minimum) and Sun the weakest at 5.54 rupas (85%). This agrees with the quicker overall score above, which makes the reading more solid.
+     [2] Practically: lean on Jupiter's themes when the stakes are high, and give Sun's themes more preparation time than feels necessary.
   == Aspects on your rising sign — who edits the personality
      [1] Planets influence houses they do not sit in by 'aspecting' them — casting their influence across the chart to particular houses. Every planet aspects the 7th house from itself, and Mars, Jupiter, Saturn, Rahu and Ketu each have extra special aspects. The following planets aspect your rising sign, and each one edits the personality others meet:
      [2] Moon aspects your rising sign from your 7th house — the full 7th-house aspect every planet casts.
@@ -2020,7 +2020,7 @@ CHART southern-hemisphere
      [6] In short: with no planet in it to speak for it, how your 2nd house goes rests on Mercury's condition in the 7th and on the aspects described above. Anything that strengthens Mercury — its main periods, its transits, deliberate attention to what it stands for — improves this house; nothing else reaches it directly.
   == 3rd House — Cancer  occupied=true lord=Mo planets=[Ju] aspects=[Ke:5]
      [1] Your 3rd house falls in Cancer. This is the part of the chart that covers courage, siblings, communication, skills and self-effort. Jupiter sits in it, so the affairs of this house are things you live directly rather than watch from a distance.
-     [2] Cancer is ruled by Moon, so Moon is the ruler of your 3rd house — the planet whose condition decides how this area of life goes. Moon sits in your 7th house at 6°48' Scorpio, which is the sign where it is debilitated — its weakest position. Counting from the 3rd house itself, Moon stands 5 places along — the 5th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 7th, the affairs of your 3rd house get worked out mostly through marriage — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 21 out of 100 (afflicted), which is low. The 3rd house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
+     [2] Cancer is ruled by Moon, so Moon is the ruler of your 3rd house — the planet whose condition decides how this area of life goes. Moon sits in your 7th house at 6°47' Scorpio, which is the sign where it is debilitated — its weakest position. Counting from the 3rd house itself, Moon stands 5 places along — the 5th from its own house, which is one of the supportive positions (the corner houses 1, 4, 7, 10 and the fortunate houses 5 and 9). The ruler actively backs what it rules. Because the ruler sits in the 7th, the affairs of your 3rd house get worked out mostly through marriage — that is where they actually play out in daily life. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 21 out of 100 (afflicted), which is low. The 3rd house is under-resourced at its ruler, and its affairs need conscious support from you before they hold weight.
      [3] The ruler, Moon, also falls in the star-group (nakshatra) called Anuradha, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Saturn, and the flavour is: loyal, disciplined devotion; friendship as a spiritual force. Saturn, the ruler of that nakshatra, is neutral toward Moon, so this flavour comes through as it is — neither boosted nor blocked.
      [4] Jupiter sits here at 14°37' Cancer. For your Taurus rising sign, Jupiter rules your 8th and 11th houses — longevity and gains — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). Jupiter in the 3rd gives wise initiative — courage tempered by ethics. Siblings prosper or are themselves guru-figures. Writing and teaching flow naturally, though ambition here is softer than talent; effort must be deliberate. Cancer is the sign where Jupiter is exalted — its strongest possible position. Everything Jupiter stands for runs at full, sometimes overwhelming, capacity here; this is one of the power centres of your chart.
      [5] Jupiter falls in the nakshatra Pushya (4th quarter), ruled by Saturn, whose flavour is: nourishing, dutiful, deeply auspicious; grows what it protects. Saturn, the ruler of that nakshatra, is neutral toward Jupiter, so this flavour comes through as it is — neither boosted nor blocked.
@@ -2057,7 +2057,7 @@ CHART southern-hemisphere
      [1] Your 7th house falls in Scorpio. This is the part of the chart that covers marriage, partnerships, business alliances and public dealings. Moon, Mars, Mercury all sit in it, which makes this one of the main arenas of your life — a lot happens here, and it happens to you directly.
      [2] Scorpio is ruled by Mars, so Mars is the ruler of your 7th house — the planet whose condition decides how this area of life goes. Mars sits in your 7th house at 6°43' Scorpio, which is its own sign, so it is on home ground. It sits in the very house it rules, which is the strongest endorsement a house can get: the ruler is at home, defending its own affairs directly. Its overall strength — a combined score from its sign, house, aspects and other factors — comes to 56 out of 100 (moderate). Mars can carry the 7th house, but results here follow your own effort closely rather than being handed to you.
      [3] The ruler, Mars, also falls in the star-group (nakshatra) called Anuradha, in its 2nd quarter. Each nakshatra has its own ruling planet and its own flavour — here the ruler is Saturn, and the flavour is: loyal, disciplined devotion; friendship as a spiritual force. Saturn, the ruler of that nakshatra, is neutral toward Mars, so this flavour comes through as it is — neither boosted nor blocked.
-     [4] Moon sits here at 6°48' Scorpio. For your Taurus rising sign, Moon rules your 3rd house — courage — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). Moon in the 7th seeks completion through the partner — emotionally generous, occasionally dependent. The spouse is nurturing or moody or both. Public dealings prosper; the crowd feels understood by you. Scorpio is the sign where Moon is debilitated — its weakest position in the zodiac. Its confidence is undermined from the start and the matters it rules need conscious, repeated shoring up, unless a cancellation (Neechabhanga, checked in the yoga findings) turns the early weakness into eventual strength.
+     [4] Moon sits here at 6°47' Scorpio. For your Taurus rising sign, Moon rules your 3rd house — courage — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). Moon in the 7th seeks completion through the partner — emotionally generous, occasionally dependent. The spouse is nurturing or moody or both. Public dealings prosper; the crowd feels understood by you. Scorpio is the sign where Moon is debilitated — its weakest position in the zodiac. Its confidence is undermined from the start and the matters it rules need conscious, repeated shoring up, unless a cancellation (Neechabhanga, checked in the yoga findings) turns the early weakness into eventual strength.
      [5] Moon falls in the nakshatra Anuradha (2nd quarter), ruled by Saturn, whose flavour is: loyal, disciplined devotion; friendship as a spiritual force. Saturn, the ruler of that nakshatra, is neutral toward Moon, so this flavour comes through as it is — neither boosted nor blocked.
      [6] Mars sits here at 6°43' Scorpio. For your Taurus rising sign, Mars rules your 7th and 12th houses — marriage and expenditure — which makes it a planet whose house rulerships pull against your interests, whatever its natural character (a 'functional malefic'). It also rules one of the two houses (the 2nd and 7th) that the tradition watches for health in its main periods, so its periods deserve a little extra care. Mars in the 7th brings a strong-willed, independent spouse and a partnership that must convert argument into engine. Classic Mangal dosha seat: marriage benefits from maturity, matching charts, or simply marrying a fellow warrior who enjoys the sparring. Scorpio is Mars's own sign, so it is on home ground here: what it gives is stable and self-sufficient, and does not depend on other planets cooperating.
      [7] Mars falls in the nakshatra Anuradha (2nd quarter), ruled by Saturn, whose flavour is: loyal, disciplined devotion; friendship as a spiritual force. Saturn, the ruler of that nakshatra, is neutral toward Mars, so this flavour comes through as it is — neither boosted nor blocked.
@@ -2277,7 +2277,7 @@ CHART southern-hemisphere
   personality [Your strongest and weakest planets] Jupiter is your strongest planet at 67 (strong), sitting in your 3rd house in Cancer.
   personality [Atmakaraka — what this life is for] Venus is your Atmakaraka — literally the 'soul significator', the planet that has travelled furthest through its sign, which the Jaimini school of astrology treats as the planet carrying the deepest purpose of the life.
   personality [Navamsa — the inner person] Its rising sign is Pisces.
-  personality [By the classical six-fold measure (Shadbala)] By that measure Jupiter is your strongest planet at 9.04 rupas (139% of its required minimum) and Venus the weakest at 5.59 rupas (102%).
+  personality [By the classical six-fold measure (Shadbala)] By that measure Jupiter is your strongest planet at 9.04 rupas (139% of its required minimum) and Sun the weakest at 5.54 rupas (85%).
   personality [Aspects on your rising sign — who edits the personality] Moon aspects your rising sign from your 7th house — the full 7th-house aspect every planet casts.
   personality [How you are seen vs how you are (Arudha Lagna)] Yours falls in Pisces, while your actual rising sign is Taurus.
   personality [Yoga signatures in the personality] 4 combinations in your chart stamp themselves directly on the character: Chandra-Mangala Yoga, Ruchaka Yoga (Pancha Mahapurusha), Yogakaraka in Strength, Anapha Yoga.
@@ -2338,7 +2338,7 @@ CHART southern-hemisphere
        - Venus meets its Shadbala requirement (1.02×) — enough to deliver what it promises.
        - Venus is own sign in the Navamsa. Its inner quality confirms the outer promise.
      # The mind: Moon in Scorpio with Mars and Mercury in the 7th house
-       The Moon is at 6°48' Scorpio in Anuradha pada 2, joined by Mars and Mercury. Jupiter and Ketu aspect them.
+       The Moon is at 6°47' Scorpio in Anuradha pada 2, joined by Mars and Mercury. Jupiter and Ketu aspect them.
        - With the Moon in Scorpio, the mind runs deep, secretive and intense, with feelings neither displayed nor discarded. This is the Moon's hardest station and the compensation is formidable psychological depth.
        - Anuradha gives loyal, disciplined devotion; friendship as a spiritual force.
        - Mars with the Moon: Moon–Mars (Chandra-Mangala) monetises instinct: entrepreneurial reflexes, protective passion, wealth built through decisive emotional intelligence. The same circuitry produces flash-flood tempers — profitable when dammed, destructive when not.
@@ -2361,13 +2361,13 @@ CHART southern-hemisphere
        - A "dead" degree. Your thinking is intuitive and emotional rather than coldly logical. You can be indecisive at times and are sometimes misunderstood in communication; you learn by absorbing rather than memorising.
        - Mercury rules your 2nd and 5th, so thinking, speech, trade and everything written down run through wealth & family and children & creativity.
      # Sun in the 6th (Libra, Swati)
-       Sun is at 16°05' in Swati pada 3, debilitated, at 0.88× its Shadbala requirement.
+       Sun is at 16°05' in Swati pada 3, debilitated, at 0.85× its Shadbala requirement.
        - Sun in the 6th is a disease-crusher and enemy-burner — one of the Sun's finest seats.
        - Health rebounds from setbacks, rivals underestimate at their peril, and service roles turn into command roles.
        - Employment under others chafes until authority is earned.
        - Sun rules your 4th, so authority, confidence and the sense of self runs through home & mother.
        - Neecha Bhanga: Sun's debilitation is cancelled because Saturn, exalted in that very sign's field, occupies a kendra; and the lord of its exaltation sign, Mars, occupies a kendra from Lagna.
-       - Sun is the weakest planet in Shadbala (0.88×).
+       - Sun is the weakest planet in Shadbala (0.85×).
      # Jupiter in the 3rd (Cancer, Pushya)
        Jupiter is at 14°37' in Pushya pada 4, exalted, at 1.39× its Shadbala requirement.
        - Jupiter in the 3rd gives wise initiative — courage tempered by ethics.
@@ -2391,7 +2391,7 @@ CHART southern-hemisphere
        - Income arrives through niche or technical channels.
        - The social ladder holds no rungs you care to grip — freedom is the actual profit.
      summary: At the surface you are steady, sensual and practical. Underneath, the mind is intense, private and probing, and the soul (Venus) is balanced, diplomatic and aesthetic.
-     summary: Your strongest planet is Jupiter (1.39× by Shadbala) and your weakest is Sun (0.88×). The main lessons run through authority, confidence and the sense of self, and through managing stubbornness.
+     summary: Your strongest planet is Jupiter (1.39× by Shadbala) and your weakest is Sun (0.85×). The main lessons run through authority, confidence and the sense of self, and through managing stubbornness.
      summary: You are already in a supportive main period — the Venus Mahadasha runs to 2036.
   == Part 2: Career
      # The 10th house: Aquarius
@@ -2401,7 +2401,7 @@ CHART southern-hemisphere
        - Saturn works through Purva Phalguni: pleasure-loving warmth; charm, patronage and creative enjoyment.
        - Mars's aspect: Mars's aspect on the 10th lands on the house where Mars is naturally strongest: driving ambition, executive force, and a career built on decisive action — defence, surgery, engineering, sport, enterprise.
        - Saturn's aspect: Saturn's aspect on the 10th lands on the house Saturn naturally stands for, and is one of the strongest career glances in the chart: authority through service, seniority through endurance, and a reputation for reliability that compounds.
-       - Sun, the natural karaka of authority and status, is debilitated in the 6th at 0.88× — recognition comes later and through persistence.
+       - Sun, the natural karaka of authority and status, is debilitated in the 6th at 0.85× — recognition comes later and through persistence.
        - Saturn, the natural karaka of work and endurance, is in a neutral sign in the 4th at 1.28× — a solid support for a working life with standing.
        - Counted from the Moon, the 10th is Leo; its lord Sun sits in your 6th debilitated, so the work that also satisfies you emotionally runs through authority & administration.
      # The Dasamsa (D10): Pisces rising
@@ -2541,8 +2541,8 @@ CHART southern-hemisphere
      # Vitality: Taurus Lagna and its lord Venus
        - The 1st house holds 31 SAV bindus and 6.0 rupas of Bhava Bala — a sound base constitution.
        - Venus, the Lagna lord (body and resilience), is in its own sign in the 6th at 1.02× — well supported.
-       - Sun, vitality, is debilitated in the 6th at 0.88× — watch the heart, eyes, bones and overall vitality.
-       - Moon, the mind and sleep, is debilitated in the 7th at 1.18× — watch the mind, sleep, chest and body fluids.
+       - Sun, vitality, is debilitated in the 6th at 0.85× — watch the heart, eyes, bones and overall vitality.
+       - Moon, the mind and sleep, is debilitated in the 7th at 1.16× — watch the mind, sleep, chest and body fluids.
      # The 6th house (illness and recovery): Libra
        The 6th house is Libra, occupied by Sun and Venus. Its lord Venus is in the 6th at 24°45' Libra (Vishakha), in its own sign, retrograde, at 1.02× its Shadbala requirement.
        Saturn aspects it; it holds 23 SAV bindus (well below the 28 average); Bhava Bala 4.9 rupas.
@@ -2557,7 +2557,7 @@ CHART southern-hemisphere
        - Your 8th lord Jupiter sits in your 3rd, carrying upheaval & depth into courage, effort, siblings and short journeys — a growth house, so results build with effort over time.
        - Jupiter works through Pushya: nourishing, dutiful, deeply auspicious; grows what it protects.
      # Planets and conditions to watch
-       - Sun is below its Shadbala requirement (0.88×): give extra care to the heart, eyes, bones and overall vitality.
+       - Sun is below its Shadbala requirement (0.85×): give extra care to the heart, eyes, bones and overall vitality.
        - Moon is debilitated: the mind, sleep, chest and body fluids are the sensitive area in its periods.
        - Mercury is in Mrita avastha (a "dead" degree): it gives little on its own, so its body areas (the nerves, skin, speech and lungs) depend on routine care.
        - Venus is in Mrita avastha (a "dead" degree): it gives little on its own, so its body areas (the kidneys, reproductive system and hormones) depend on routine care.
@@ -2580,8 +2580,8 @@ CHART southern-hemisphere
        - Sub-period — Rahu rules no house (a node), sits in your 5th in a great friend's sign, and is a functional neutral for your Lagna. Its themes now run through its placement.
      # The main periods ahead
        - Venus Mahadasha, Nov 2016 – Nov 2036 (age 38–58): Venus rules your 1st and 6th, sits in your 6th in its own sign at 1.02×, and is a functional neutral for your Lagna — a strong period that delivers, because Venus is a working planet for your Lagna that meets its Shadbala requirement (1.02×).
-       - Sun Mahadasha, Nov 2036 – Nov 2042 (age 58–64): Sun rules your 4th, sits in your 6th debilitated at 0.88×, and is a functional benefic for your Lagna — a mixed period: good in some areas, effortful in others, because Sun is a working planet without enough strength to deliver fully.
-       - Moon Mahadasha, Nov 2042 – Nov 2052 (age 64–74): Moon rules your 3rd, sits in your 7th debilitated at 1.18×, and is a functional malefic for your Lagna — a mixed period: good in some areas, effortful in others, because Moon is a functional malefic that meets its Shadbala requirement (1.18×).
+       - Sun Mahadasha, Nov 2036 – Nov 2042 (age 58–64): Sun rules your 4th, sits in your 6th debilitated at 0.85×, and is a functional benefic for your Lagna — a mixed period: good in some areas, effortful in others, because Sun is a working planet without enough strength to deliver fully.
+       - Moon Mahadasha, Nov 2042 – Nov 2052 (age 64–74): Moon rules your 3rd, sits in your 7th debilitated at 1.16×, and is a functional malefic for your Lagna — a mixed period: good in some areas, effortful in others, because Moon is a functional malefic that meets its Shadbala requirement (1.16×).
        - Mars Mahadasha, Nov 2052 – Nov 2059 (age 74–81): Mars rules your 7th and 12th, sits in your 7th in its own sign at 1.17×, and is a functional malefic for your Lagna — a mixed period: good in some areas, effortful in others, because Mars is a functional malefic that meets its Shadbala requirement (1.17×).
      # The strongest and the most demanding stretches (next 15 years)
        - Strongest: Venus–Saturn, Sept 2029 – Nov 2032; Venus–Mercury, Nov 2032 – Sept 2035 — both lords are working planets for your Lagna with the strength (Shadbala or varga dignity) to deliver.
@@ -2604,17 +2604,17 @@ CHART southern-hemisphere
      transit Sa sign=11 fromMoon=5 fromLagna=11 R: Saturn in the 5th from Moon tests the heart's departments: children's responsibilities, creative droughts, romance under realism's lamp. Study and disciplined practice are favoured over speculation of every kind.
      transit Ra sign=10 fromMoon=4 fromLagna=10 R: Rahu in the 4th from Moon unsettles home and heart: relocations, property fog, maternal concerns. Anchor daily routines; defer emotional verdicts until the fog lifts.
      transit Ke sign=4 fromMoon=10 fromLagna=4 R: Ketu in the 10th from Moon detaches career from identity: recognition matters less, mastery more. Ideal for technical depth and terrible for status campaigns.
-     praty Ve 2026-06-01->2026-06-27: Venus periods sweeten the ledger: relationships, luxury, arts, vehicles and negotiated wealth flow forward.
-     praty Su 2026-06-27->2026-08-21: Sun periods centre authority, visibility, government dealings, the father, and the consolidation of identity.
-     praty Mo 2026-08-21->2026-10-31: Moon periods run on emotional currents: home, mother, public connection and frequent change of scene.
+     praty Ve 2026-06-01->2026-06-29: Venus periods sweeten the ledger: relationships, luxury, arts, vehicles and negotiated wealth flow forward.
+     praty Su 2026-06-29->2026-08-23: Sun periods centre authority, visibility, government dealings, the father, and the consolidation of identity.
+     praty Mo 2026-08-23->2026-10-31: Moon periods run on emotional currents: home, mother, public connection and frequent change of scene.
   seg 2026-10-31->2026-12-05 [Jupiter enters Leo] Ve-Ra
      antar: Antardasha of Rahu: Rahu periods accelerate ambition beyond the speed limit: foreign matters, technology, mass platforms, unconventional gains — and periodic fog banks of confusion or scandal. Verify everything; ride the wave with a keel of ethics. Rahu sits natally in your 5th house in Virgo — Great Friend's Sign (Adhi Mitra), retrograde. As a nodal graha it delivers the agenda of its dispositor and conjunctions. Expect this period to deliver its promises with interest — its natal strength converts effort into durable results.
      transit Ju sign=4 fromMoon=10 fromLagna=4: Jupiter in the 10th from Moon is classically mixed — career visibility rises while inner satisfaction lags. Accept the promotion but audit the ethics of every shortcut offered with it.
      transit Sa sign=11 fromMoon=5 fromLagna=11 R: Saturn in the 5th from Moon tests the heart's departments: children's responsibilities, creative droughts, romance under realism's lamp. Study and disciplined practice are favoured over speculation of every kind.
      transit Ra sign=10 fromMoon=4 fromLagna=10 R: Rahu in the 4th from Moon unsettles home and heart: relocations, property fog, maternal concerns. Anchor daily routines; defer emotional verdicts until the fog lifts.
      transit Ke sign=4 fromMoon=10 fromLagna=4 R: Ketu in the 10th from Moon detaches career from identity: recognition matters less, mastery more. Ideal for technical depth and terrible for status campaigns.
-     praty Mo 2026-10-31->2026-11-20: Moon periods run on emotional currents: home, mother, public connection and frequent change of scene.
-     praty Ma 2026-11-20->2026-12-05: Mars periods ignite action: property, litigation, competition, surgery, sport and command.
+     praty Mo 2026-10-31->2026-11-22: Moon periods run on emotional currents: home, mother, public connection and frequent change of scene.
+     praty Ma 2026-11-22->2026-12-05: Mars periods ignite action: property, litigation, competition, surgery, sport and command.
   seg 2026-12-05->2027-01-01 [Rahu enters Capricorn (retrograde); Ketu enters Cancer (retrograde)] Ve-Ra
      antar: Antardasha of Rahu: Rahu periods accelerate ambition beyond the speed limit: foreign matters, technology, mass platforms, unconventional gains — and periodic fog banks of confusion or scandal. Verify everything; ride the wave with a keel of ethics. Rahu sits natally in your 5th house in Virgo — Great Friend's Sign (Adhi Mitra), retrograde. As a nodal graha it delivers the agenda of its dispositor and conjunctions. Expect this period to deliver its promises with interest — its natal strength converts effort into durable results.
      transit Ju sign=4 fromMoon=10 fromLagna=4 R: Jupiter in the 10th from Moon is classically mixed — career visibility rises while inner satisfaction lags. Accept the promotion but audit the ethics of every shortcut offered with it.
@@ -2666,27 +2666,27 @@ CHART polar-equal-house
 ==============================================================================
 
 --- meta ---
-  ayanamsha=lahiri value=23.8806 node=mean
+  ayanamsha=lahiri value=23.8799 node=mean
   bhavaMethod=sripati tz=Europe/Oslo local=2001-12-21 03:05
   birthUtc=2001-12-21T02:05:00Z
 
 --- ascendant ---
-  Libra 0°49' lon=180.8251 nak=13 pada=3
-  mc=113.5940
+  Libra 0°49' lon=180.8258 nak=13 pada=3
+  mc=113.5946
 
 --- planets ---
-  Su  Sagittarius   5°23' lon=245.3863 h= 3 b= 3 nak=18 pada=2 nakLord=Ke nakRel=neutral neutral      spd=  1.0184 
-  Mo  Aquarius     15°59' lon=315.9964 h= 5 b= 5 nak=23 pada=3 nakLord=Ra nakRel=neutral friend       spd= 11.8741 
-  Ma  Aquarius     15°00' lon=315.0107 h= 5 b= 5 nak=23 pada=3 nakLord=Ra nakRel=neutral friend       spd=  0.7319 
-  Me  Sagittarius  14°27' lon=254.4512 h= 3 b= 3 nak=19 pada=1 nakLord=Ve nakRel=friend  enemy        spd=  1.5889 C
-  Ju  Gemini       18°14' lon= 78.2431 h= 9 b= 9 nak= 5 pada=4 nakLord=Ra nakRel=neutral greatEnemy   spd= -0.1294 R
-  Ve  Scorpio      29°32' lon=239.5476 h= 2 b= 3 nak=17 pada=4 nakLord=Me nakRel=friend  friend       spd=  1.2586 C
-  Sa  Taurus       16°12' lon= 46.2076 h= 8 b= 8 nak= 3 pada=2 nakLord=Mo nakRel=enemy   neutral      spd= -0.0750 R
-  Ra  Gemini        3°03' lon= 63.0591 h= 9 b= 9 nak= 4 pada=3 nakLord=Ma nakRel=enemy   neutral      spd= -0.0530 R
-  Ke  Sagittarius   3°03' lon=243.0591 h= 3 b= 3 nak=18 pada=1 nakLord=Ke nakRel=self    enemy        spd= -0.0530 R
+  Su  Sagittarius   5°23' lon=245.3870 h= 3 b= 3 nak=18 pada=2 nakLord=Ke nakRel=neutral neutral      spd=  1.0184 
+  Mo  Aquarius     15°59' lon=315.9971 h= 5 b= 5 nak=23 pada=3 nakLord=Ra nakRel=neutral friend       spd= 11.8741 
+  Ma  Aquarius     15°00' lon=315.0114 h= 5 b= 5 nak=23 pada=3 nakLord=Ra nakRel=neutral friend       spd=  0.7319 
+  Me  Sagittarius  14°27' lon=254.4519 h= 3 b= 3 nak=19 pada=1 nakLord=Ve nakRel=friend  enemy        spd=  1.5889 C
+  Ju  Gemini       18°14' lon= 78.2438 h= 9 b= 9 nak= 5 pada=4 nakLord=Ra nakRel=neutral greatEnemy   spd= -0.1294 R
+  Ve  Scorpio      29°32' lon=239.5483 h= 2 b= 3 nak=17 pada=4 nakLord=Me nakRel=friend  friend       spd=  1.2586 C
+  Sa  Taurus       16°12' lon= 46.2083 h= 8 b= 8 nak= 3 pada=2 nakLord=Mo nakRel=enemy   neutral      spd= -0.0750 R
+  Ra  Gemini        3°03' lon= 63.0551 h= 9 b= 9 nak= 4 pada=3 nakLord=Ma nakRel=enemy   neutral      spd= -0.0530 R
+  Ke  Sagittarius   3°03' lon=243.0551 h= 3 b= 3 nak=18 pada=1 nakLord=Ke nakRel=self    enemy        spd= -0.0530 R
 
 --- cusps (bhava madhya / sandhi) ---
-  madhya: 180.83 218.41 256.00 293.59 316.00 338.41 0.83 38.41 76.00 113.59 136.00 158.41
+  madhya: 180.83 218.42 256.01 293.59 316.01 338.42 0.83 38.42 76.01 113.59 136.01 158.42
   sandhi: 199.62 237.21 274.80 304.80 327.21 349.62 19.62 57.21 94.80 124.80 147.21 169.62
 
 --- ashtakavarga ---
@@ -2762,11 +2762,11 @@ CHART polar-equal-house
   sunrise=none
 
 --- dasha ---
-  MD Ra  1989-05-17 -> 2007-05-18
-  MD Ju  2007-05-18 -> 2023-05-18
-  MD Sa  2023-05-18 -> 2042-05-17
-  MD Me  2042-05-17 -> 2059-05-18
-  MD Ke  2059-05-18 -> 2066-05-17
+  MD Ra  1989-05-17 -> 2007-05-17
+  MD Ju  2007-05-17 -> 2023-05-17
+  MD Sa  2023-05-17 -> 2042-05-17
+  MD Me  2042-05-17 -> 2059-05-17
+  MD Ke  2059-05-17 -> 2066-05-17
   MD Ve  2066-05-17 -> 2086-05-17
   MD Su  2086-05-17 -> 2092-05-17
   MD Mo  2092-05-17 -> 2102-05-18
@@ -2779,7 +2779,7 @@ CHART polar-equal-house
   Ra  Aquarius      9°12' fromMoon= 1 fromLagna= 5 R
   Ke  Leo           9°12' fromMoon= 7 fromLagna=11 R
   Su  Taurus       29°42' fromMoon= 4 fromLagna= 8 
-  Ma  Aries        25°49' fromMoon= 3 fromLagna= 7 
+  Ma  Aries        25°48' fromMoon= 3 fromLagna= 7 
   sadeSatiPhase=setting
 
 --- numerology ---
@@ -3431,28 +3431,28 @@ CHART polar-equal-house
   hasDasha=true beforeBirth=false
   maha Sa 2026-01-01->2027-01-01: Mahadasha of Saturn: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices. What is built now is built permanently. Health of joints, teeth and morale needs scheduled maintenance. Saturn sits natally in your 8th house in Taurus — Neutral Sign (Sama), retrograde. As lord of the 4th and 5th, its period activates home and intelligence. The period lord's neutral condition means results will track your conduct closely — this is an earned-outcome stretch, not a fated one.
   sadeSati: Sade Sati is in its closing (setting) phase this year — Saturn in the 2nd from the natal Moon. The audit's ledger is being ruled off; burdens visibly lighten as the phase completes.
-  seg 2026-01-01->2026-05-21 [Window begins] Sa-Sa
+  seg 2026-01-01->2026-05-20 [Window begins] Sa-Sa
      antar: Antardasha of Saturn: Saturn periods slow the film and raise the weights: duty, structure, chronic matters and long-postponed dues all present invoices. What is built now is built permanently. Health of joints, teeth and morale needs scheduled maintenance. Saturn sits natally in your 8th house in Taurus — Neutral Sign (Sama), retrograde. As lord of the 4th and 5th, its period activates home and intelligence. The period lord's neutral condition means results will track your conduct closely — this is an earned-outcome stretch, not a fated one.
      transit Ju sign=2 fromMoon=5 fromLagna=9: Jupiter in the 5th from Moon is among the finest transits: children, creativity, romance, mantra-siddhi and honest speculation all receive grace. Conceive projects — and possibly heirs.
      transit Sa sign=11 fromMoon=2 fromLagna=6: Saturn in the 2nd from Moon — the closing chapter of Sade Sati presses on finances and family speech. Budget conservatively, speak sparingly at home, and settle debts; what survives this audit is genuinely yours.
      transit Ra sign=10 fromMoon=1 fromLagna=5 R: Rahu over the natal Moon amplifies ambition and anxiety in the same current. Public image inflates; mental hygiene must be deliberate. Big swings, both directions.
      transit Ke sign=4 fromMoon=7 fromLagna=11 R: Ketu in the 7th from Moon detaches partnership scripts: relationships are audited for karmic completion. What remains after this transit is genuinely chosen.
-     praty Ju 2026-01-01->2026-05-21: Jupiter periods expand whatever they touch: wisdom, wealth, children, teachers, faith and girth.
-  seg 2026-05-21->2026-06-01 [Antardasha changes to Mercury] Sa-Me
+     praty Ju 2026-01-01->2026-05-20: Jupiter periods expand whatever they touch: wisdom, wealth, children, teachers, faith and girth.
+  seg 2026-05-20->2026-06-01 [Antardasha changes to Mercury] Sa-Me
      antar: Antardasha of Mercury: Mercury periods busy the calendar with commerce, communication, study, documentation and travel. Multiple income streams and multiple browser tabs. The nervous system is the period's working capital — protect it with routine. Mercury sits natally in your 3rd house in Sagittarius — Enemy Sign (Shatru), combust. As lord of the 9th and 12th, its period activates fortune and expenditure. Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion.
      transit Ju sign=2 fromMoon=5 fromLagna=9: Jupiter in the 5th from Moon is among the finest transits: children, creativity, romance, mantra-siddhi and honest speculation all receive grace. Conceive projects — and possibly heirs.
      transit Sa sign=11 fromMoon=2 fromLagna=6: Saturn in the 2nd from Moon — the closing chapter of Sade Sati presses on finances and family speech. Budget conservatively, speak sparingly at home, and settle debts; what survives this audit is genuinely yours.
      transit Ra sign=10 fromMoon=1 fromLagna=5 R: Rahu over the natal Moon amplifies ambition and anxiety in the same current. Public image inflates; mental hygiene must be deliberate. Big swings, both directions.
      transit Ke sign=4 fromMoon=7 fromLagna=11 R: Ketu in the 7th from Moon detaches partnership scripts: relationships are audited for karmic completion. What remains after this transit is genuinely chosen.
-     praty Me 2026-05-21->2026-06-01: Mercury periods busy the calendar with commerce, communication, study, documentation and travel.
+     praty Me 2026-05-20->2026-06-01: Mercury periods busy the calendar with commerce, communication, study, documentation and travel.
   seg 2026-06-01->2026-10-31 [Jupiter enters Cancer] Sa-Me
      antar: Antardasha of Mercury: Mercury periods busy the calendar with commerce, communication, study, documentation and travel. Multiple income streams and multiple browser tabs. The nervous system is the period's working capital — protect it with routine. Mercury sits natally in your 3rd house in Sagittarius — Enemy Sign (Shatru), combust. As lord of the 9th and 12th, its period activates fortune and expenditure. Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion.
      transit Ju sign=3 fromMoon=6 fromLagna=10: Jupiter in the 6th from Moon sits low: health niggles, service burdens and quiet erosion of optimism. Serve, heal, and pay down obligations; expansion resumes on schedule next year.
      transit Sa sign=11 fromMoon=2 fromLagna=6 R: Saturn in the 2nd from Moon — the closing chapter of Sade Sati presses on finances and family speech. Budget conservatively, speak sparingly at home, and settle debts; what survives this audit is genuinely yours.
      transit Ra sign=10 fromMoon=1 fromLagna=5 R: Rahu over the natal Moon amplifies ambition and anxiety in the same current. Public image inflates; mental hygiene must be deliberate. Big swings, both directions.
      transit Ke sign=4 fromMoon=7 fromLagna=11 R: Ketu in the 7th from Moon detaches partnership scripts: relationships are audited for karmic completion. What remains after this transit is genuinely chosen.
-     praty Me 2026-06-01->2026-10-07: Mercury periods busy the calendar with commerce, communication, study, documentation and travel.
-     praty Ke 2026-10-07->2026-10-31: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths.
+     praty Me 2026-06-01->2026-10-06: Mercury periods busy the calendar with commerce, communication, study, documentation and travel.
+     praty Ke 2026-10-06->2026-10-31: Ketu periods unplug the story: detachment, endings, spiritual openings and research depths.
   seg 2026-10-31->2026-12-05 [Jupiter enters Leo] Sa-Me
      antar: Antardasha of Mercury: Mercury periods busy the calendar with commerce, communication, study, documentation and travel. Multiple income streams and multiple browser tabs. The nervous system is the period's working capital — protect it with routine. Mercury sits natally in your 3rd house in Sagittarius — Enemy Sign (Shatru), combust. As lord of the 9th and 12th, its period activates fortune and expenditure. Because the period lord is natally strained, its results arrive discounted and delayed; double the diligence on its portfolios and treat windfalls with suspicion.
      transit Ju sign=4 fromMoon=7 fromLagna=11: Jupiter in the 7th from Moon graces partnership: marriages form or mend, alliances bring fortune, and public dealings meet goodwill. Negotiate everything important now.

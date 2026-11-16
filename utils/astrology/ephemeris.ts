@@ -1,6 +1,6 @@
 import * as Astronomy from "astronomy-engine";
 import { norm360 } from "./math";
-import { centuriesFromJ2000 } from "./ayanamsha";
+import { centuriesFromJ2000, nutation } from "./ayanamsha";
 import type { NodeMode, PlanetId } from "./types";
 
 /**
@@ -8,6 +8,12 @@ import type { NodeMode, PlanetId } from "./types";
  * Astronomy.Ecliptic() returns true-ecliptic-of-date coordinates from a J2000
  * equatorial vector, which is exactly what sidereal astrology needs before
  * subtracting the ayanamsha.
+ *
+ * FRAME CONTRACT: everything `tropicalLongitude` returns is measured from the
+ * TRUE equinox of date (nutation included), because `getAyanamsha` returns the
+ * true ayanamsha (mean + nutation) and the two must cancel. The mean lunar
+ * node is the one body whose formula is referred to the MEAN equinox, so the
+ * nutation in longitude is added to it here to bring it into the same frame.
  */
 
 const BODY_MAP: Partial<Record<PlanetId, Astronomy.Body>> = {
@@ -25,9 +31,9 @@ export function tropicalLongitude(id: PlanetId, date: Date, nodeMode: NodeMode =
     case "Mo":
       return norm360(Astronomy.EclipticGeoMoon(date).lon);
     case "Ra":
-      return nodeMode === "true" ? trueLunarNode(date) : meanLunarNode(date);
+      return nodeMode === "true" ? trueLunarNode(date) : meanNodeOfTrueEquinox(date);
     case "Ke":
-      return norm360((nodeMode === "true" ? trueLunarNode(date) : meanLunarNode(date)) + 180);
+      return norm360((nodeMode === "true" ? trueLunarNode(date) : meanNodeOfTrueEquinox(date)) + 180);
     default: {
       const vec = Astronomy.GeoVector(BODY_MAP[id]!, date, true);
       return norm360(Astronomy.Ecliptic(vec).elon);
@@ -46,7 +52,12 @@ export function eclipticLatitude(id: PlanetId, date: Date): number | undefined {
   return Astronomy.Ecliptic(Astronomy.GeoVector(body, date, true)).elat;
 }
 
-/** Mean ascending lunar node (tropical), Meeus polynomial. */
+/** The mean node re-expressed from the true equinox of date (see FRAME CONTRACT above). */
+function meanNodeOfTrueEquinox(date: Date): number {
+  return norm360(meanLunarNode(date) + nutation(date).longitude);
+}
+
+/** Mean ascending lunar node (tropical, mean equinox of date), Meeus polynomial. */
 export function meanLunarNode(date: Date): number {
   const T = centuriesFromJ2000(date);
   const omega =
@@ -108,6 +119,15 @@ export function isRetrograde(id: PlanetId, date: Date, nodeMode: NodeMode = "mea
 export function obliquity(date: Date): number {
   const T = centuriesFromJ2000(date);
   return 23.43929111 - 0.0130041667 * T - 1.6388889e-7 * T * T + 5.0361111e-7 * T * T * T;
+}
+
+/**
+ * True obliquity (mean + nutation in obliquity). The one to pair with
+ * true-equinox longitudes and apparent sidereal time — the Ascendant, the MC
+ * and declinations all want this, not the mean value.
+ */
+export function trueObliquity(date: Date): number {
+  return obliquity(date) + nutation(date).obliquity;
 }
 
 /** Greenwich apparent sidereal time in degrees. */
@@ -207,7 +227,7 @@ export function nextSunrise(date: Date, lat: number, lon: number): Date | null {
 
 /**
  * Geocentric declination (kranti) in degrees, for Ayana bala. Derived from
- * the true-ecliptic-of-date longitude/latitude and the mean obliquity:
+ * the true-ecliptic-of-date longitude/latitude and the true obliquity:
  *   sin δ = sin β · cos ε + cos β · sin ε · sin λ
  * For Rahu/Ketu (β = 0 by definition of the node) this reduces to
  * sin δ = sin ε · sin λ.
@@ -238,7 +258,7 @@ export function declination(id: PlanetId, date: Date): number {
     }
   }
   const rad = Math.PI / 180;
-  const eps = obliquity(date) * rad;
+  const eps = trueObliquity(date) * rad;
   const lam = lonDeg * rad;
   const bet = latDeg * rad;
   const sinDec = Math.sin(bet) * Math.cos(eps) + Math.cos(bet) * Math.sin(eps) * Math.sin(lam);

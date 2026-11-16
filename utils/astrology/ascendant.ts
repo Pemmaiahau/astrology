@@ -1,13 +1,15 @@
 import { DEG, norm360 } from "./math";
-import { gastDegrees, obliquity } from "./ephemeris";
+import { gastDegrees, trueObliquity } from "./ephemeris";
 
 /**
  * Tropical ascendant and midheaven from UTC instant + geographic coordinates.
- * RAMC = GAST + east longitude. Standard spherical formulae.
+ * RAMC = GAST + east longitude, with the true obliquity (GAST is apparent
+ * sidereal time, so the equinox it refers to is the true one). Standard
+ * spherical formulae.
  */
 export function tropicalAscMc(date: Date, lat: number, lonEast: number): { asc: number; mc: number } {
   const ramc = norm360(gastDegrees(date) + lonEast);
-  const eps = obliquity(date);
+  const eps = trueObliquity(date);
   const th = ramc * DEG;
   const e = eps * DEG;
   const phi = lat * DEG;

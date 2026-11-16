@@ -63,14 +63,16 @@ import { computeVargaSet, vargaSign, VIMSHOPAKA_WEIGHTS } from "../varga";
 import { detectYogas } from "../yogas";
 import {
   AYANAMSHA_IDS, AYANAMSHA_LABELS, AYANAMSHA_SHORT, getAyanamsha,
-  lahiriAyanamsha, pushyaAyanamsha, ramanAyanamsha,
+  lahiriAyanamsha, meanLahiriAyanamsha, pushyaAyanamsha, ramanAyanamsha,
 } from "../ayanamsha";
 import {
   CHOGHADIYA_MEANING, computeDayParts, computeLimbTimings, karanaNameOfHalf, nightKaalas,
 } from "../dayParts";
 import { computePanchang } from "../panchang";
 import { SIGN_LORDS as SIGN_LORDS_V, EXALTATION as EXALT_V, OWN_SIGNS as OWN_V, MOOLATRIKONA as MT_V, SHADBALA_PLANETS } from "../constants";
-import { contributesBindu } from "../ashtakavarga";
+import {
+  contributesBindu, computeAshtakavargaReductions, ekadhipatyaShodhana, trikonaShodhana,
+} from "../ashtakavarga";
 import { charaDasha, charaDashaYears } from "../charaDasha";
 import { activeDashaAt, subPeriodsOf } from "../dasha";
 import { detectExtendedYogas } from "../extendedYogas";
@@ -360,6 +362,21 @@ console.log("\n=== Phase 1A: dignity refactor + ephemeris helpers ===");
   const sb = computeShadbala(chart);
   check("Shadbala computes for canonical chart", sb !== null);
   if (sb) {
+    // Cheshta is a 0–60 scale for every graha. The Sun's is its Ayana bala and
+    // the Moon's its Paksha bala, each taken BEFORE the doubling Kala applies.
+    {
+      const part = (id: "Su" | "Mo", label: string) =>
+        sb.planets[id].kala.find((f) => f.label === label)!.virupas;
+      check(
+        "Cheshta bala never exceeds 60 virupas",
+        Object.values(sb.planets).every((p) => p.cheshta[0].virupas >= 0 && p.cheshta[0].virupas <= 60 + 1e-9)
+      );
+      check(
+        "Sun's Cheshta is half its (doubled) Ayana bala; Moon's is half its (doubled) Paksha bala",
+        approx(sb.planets.Su.cheshta[0].virupas, part("Su", "Ayana") / 2, 1e-9) &&
+          approx(sb.planets.Mo.cheshta[0].virupas, part("Mo", "Paksha") / 2, 1e-9)
+      );
+    }
     // Naisargika exactly matches the fixed ladder
     let naisOk = true;
     for (const [id, expected] of Object.entries(NAISARGIKA_BALA)) {
@@ -500,8 +517,10 @@ console.log("\n=== Phase 1A: dignity refactor + ephemeris helpers ===");
   // Mean remains the default everywhere
   {
     const ra = chart.planets.find((p) => p.id === "Ra")!;
+    // The mean node is referred to the mean equinox, so it pairs with the MEAN
+    // ayanamsha; `chart.meta.ayanamshaValue` is the true one (mean + nutation).
     const meanAtBirth = meanLunarNode(chart.birthUtc!);
-    const sidereal = ((meanAtBirth - chart.meta.ayanamshaValue) % 360 + 360) % 360;
+    const sidereal = ((meanAtBirth - meanLahiriAyanamsha(chart.birthUtc!)) % 360 + 360) % 360;
     check("Chart Rahu still uses mean node by default", approx(ra.longitude, sidereal, 1e-6));
   }
 }
@@ -2635,6 +2654,21 @@ console.log("\n=== Phase 6: birth time rectification ===");
     "Raman orders below Pushya, which orders below Lahiri",
     ramanAyanamsha(NOW8) < pushyaAyanamsha(NOW8) && pushyaAyanamsha(NOW8) < lahiriAyanamsha(NOW8)
   );
+  {
+    // 23°51'25.5" mean / 23°51'11" true at J2000.0 are the published Lahiri
+    // values; the difference is the nutation in longitude (−13.9") on that date.
+    const J2000 = new Date(Date.UTC(2000, 0, 1, 12));
+    check(
+      "Mean Lahiri ayanamsha at J2000.0 is 23°51'25.5\"",
+      approx(meanLahiriAyanamsha(J2000), 23 + 51 / 60 + 25.53 / 3600, 0.2 / 3600),
+      meanLahiriAyanamsha(J2000).toFixed(6)
+    );
+    check(
+      "True Lahiri ayanamsha at J2000.0 is 23°51'11.6\" (mean plus nutation)",
+      approx(lahiriAyanamsha(J2000), 23 + 51 / 60 + 11.6 / 3600, 1 / 3600),
+      lahiriAyanamsha(J2000).toFixed(6)
+    );
+  }
   check(
     "getAyanamsha dispatches every id to its own function",
     getAyanamsha("lahiri", NOW8) === lahiriAyanamsha(NOW8) &&
@@ -2784,6 +2818,18 @@ console.log("\n=== Phase 6: birth time rectification ===");
       "Every weekday's night-choghadiya opens on the published name",
       parts.every((p) => p.choghadiyaNight[0].name === NIGHT_START[p.varaIndex]),
       parts.map((p) => `${p.varaName.slice(0, 3)}=${p.choghadiyaNight[0].name}`).join(" ")
+    );
+    // The night cycle advances five places per division, not one: the
+    // published Sunday night runs Shubh, Amrit, Char, Rog, Kaal, Labh, Udveg,
+    // Shubh, and every other night is the same sequence entered elsewhere.
+    const NIGHT_ORDER = ["Shubh", "Amrit", "Char", "Rog", "Kaal", "Labh", "Udveg"];
+    check(
+      "Every weekday's night-choghadiya follows the published night order throughout",
+      parts.every((p) => {
+        const at = NIGHT_ORDER.indexOf(p.choghadiyaNight[0].name);
+        return p.choghadiyaNight.every((c, i) => c.name === NIGHT_ORDER[(at + i) % 7]);
+      }),
+      parts.filter((p) => p.varaIndex === 0).map((p) => p.choghadiyaNight.map((c) => c.name).join(" ")).join("")
     );
     check(
       "Every choghadiya carries a meaning string",
@@ -3679,7 +3725,7 @@ console.log("\n=== Phase 6: birth time rectification ===");
       chart, ayanamsha: "lahiri", nodeMode: "mean", dashaTree: null, activeDasha: null, transits: null,
       sadeSati: null, ashtakavarga: null, yogas: detectYogas(chart), vargas: null, jaimini: null,
       shadbala: null, bhavaBala: null, speculation: null, intimacy: null,
-      expert: { dashaBalance: null, sookshma: [], currentSookshma: null, yogini: null, chara: null, special: null, transit: null, extendedYogas: [], avasthas: av },
+      expert: { dashaBalance: null, sookshma: [], currentSookshma: null, yogini: null, chara: null, special: null, transit: null, extendedYogas: [], avasthas: av, sensitivity: null },
       generatedAt: new Date("2026-06-15T00:00:00Z"),
     });
     check("Export: Avasthas and Secondary marakas appear, no leaks",
@@ -3873,7 +3919,12 @@ console.log("\n=== Phase 6: birth time rectification ===");
   has("Moon debilitated in the Navamsa (Scorpio)", "The Moon is debilitated in the Navamsa (Scorpio).");
   has("Arudha Lagna Aries in the 5th with Moon, Venus, Rahu", "Your Arudha Lagna (public image) is Aries in the 5th, with Moon, Venus and Rahu.");
   has("Sun Atmakaraka, vargottama, in the 4th", "The soul: Sun (Atmakaraka) in Pisces in the 4th house, vargottama");
-  has("Sun strongest in absolute Shadbala", "Sun is the strongest planet in absolute Shadbala");
+  // The pasted sample reading called the Sun the strongest planet in absolute
+  // Shadbala. That held only while the Sun's Cheshta was double-counted (81 on a
+  // 0-60 scale); with Cheshta corrected the Sun totals 481.6 virupas against
+  // Mars's 487.5, so the reading now states the Sun's ratio instead. The two are
+  // 6 virupas apart - closer than the approximate sub-balas can separate.
+  has("Sun above its Shadbala requirement", /Sun is at 1\.2\d× its Shadbala requirement/);
   has("Atmakaraka at the gandanta junction", "the Atmakaraka sits at a gandanta junction");
   has("Karakamsa Pisces with Jupiter", "Your Karakamsa is Pisces, and Jupiter is also there in the Navamsa.");
   has("Budhaditya with a debilitated Mercury", /Intellect: Budhaditya Yoga.* with a debilitated Mercury/);
@@ -3979,6 +4030,112 @@ console.log("\n=== Phase 6: birth time rectification ===");
     blocks15.map((b) => b.kind).join(",") === "heading,paragraph,heading,table,bullet");
   const table15 = blocks15.find((b) => b.kind === "table");
   check("PDF: table cells lose their inline markup", table15?.kind === "table" && table15.body[0][1] === "two");
+}
+
+// ---------------------------------------------------------------------------
+// Phase 16: Ashtakavarga reductions, the house-lord and aspects-received
+// tables, and the birth-time sensitivity layer of the Markdown export.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 16: Ashtakavarga shodhana + export additions ===");
+  const same = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
+
+  // Trikona: fire 5/3/4 → 2/0/1; earth has a zero → untouched; air all equal →
+  // all zero; water 6/2/7 → 4/0/5.
+  //                 Ar Ta Ge Cn Le Vi Li Sc Sg Cp Aq Pi
+  const raw =       [5, 0, 3, 6, 3, 4, 3, 2, 4, 2, 3, 7];
+  const afterTri =  [2, 0, 0, 4, 0, 4, 0, 0, 1, 2, 0, 5];
+  check("Trikona Shodhana subtracts each trine's least figure, leaving a trine with a zero alone",
+    same(trikonaShodhana(raw), afterTri), trikonaShodhana(raw).join(" "));
+
+  // Ekadhipatya, one case per pair:
+  //   Ar 4 (occupied) / Sc 6 (empty)  → empty cut down to the occupied figure: 4 / 4
+  //   Ta 5 (occupied) / Li 3 (empty)  → occupied is larger, empty becomes zero: 5 / 0
+  //   Ge 2 (empty)    / Vi 5 (empty)  → both take the smaller: 2 / 2
+  //   Sg 3 (empty)    / Pi 3 (empty)  → equal, both become zero: 0 / 0
+  //   Cp 4 (occupied) / Aq 1 (occupied) → both occupied, untouched: 4 / 1
+  //   Cn, Le are never reduced.
+  //                 Ar Ta Ge Cn Le Vi Li Sc Sg Cp Aq Pi
+  const tri =       [4, 5, 2, 7, 6, 5, 3, 6, 3, 4, 1, 3];
+  const occupied =  [true, true, false, false, false, false, false, false, false, true, true, false];
+  const afterEka =  [4, 5, 2, 7, 6, 2, 0, 4, 0, 4, 1, 0];
+  check("Ekadhipatya Shodhana applies each of the five rules and exempts Cancer and Leo",
+    same(ekadhipatyaShodhana(tri, occupied), afterEka), ekadhipatyaShodhana(tri, occupied).join(" "));
+  check("Ekadhipatya Shodhana leaves a pair alone when either figure is zero",
+    same(ekadhipatyaShodhana([0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0], new Array(12).fill(false)),
+      [0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0]));
+
+  const chart16 = computeAutoChart(
+    { name: "P16", dateISO: "1986-04-11", time: "23:50", gender: "male",
+      place: { name: "Bengaluru", country: "India", lat: 12.9716, lon: 77.5946, timezone: "Asia/Kolkata" } },
+    "lahiri"
+  )!;
+  const signs16: Partial<Record<PlanetId, number>> = {};
+  for (const pl of chart16.planets) signs16[pl.id] = pl.sign;
+  const av16 = computeAshtakavarga(signs16, chart16.ascendant.sign);
+  const red16 = computeAshtakavargaReductions(av16, signs16);
+  const seven = ["Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa"];
+  check("Reductions only ever remove bindus, never add them",
+    seven.every((id) => red16.trikona[id].every((v, i) => v >= 0 && v <= av16.bav[id][i]) &&
+      red16.ekadhipatya[id].every((v, i) => v >= 0 && v <= red16.trikona[id][i])));
+  check("Every trine holds a zero after Trikona Shodhana",
+    seven.every((id) => [0, 1, 2, 3].every((t) => [t, t + 4, t + 8].some((sg) => red16.trikona[id][sg] === 0))));
+  check("Shodhya Pinda is Rashi Pinda plus Graha Pinda, and the reduced SAV sums the seven",
+    seven.every((id) => red16.pinda[id].total === red16.pinda[id].rashi + red16.pinda[id].graha) &&
+      red16.reducedSav.every((v, sg) => v === seven.reduce((a, id) => a + red16.ekadhipatya[id][sg], 0)));
+
+  // --- Export additions on the same chart.
+  const tree16 = vimshottariTree(chart16.planets.find((pl) => pl.id === "Mo")!.longitude, chart16.birthUtc!);
+  const now16 = new Date("2026-11-16T06:00:00.000Z");
+  const jai16 = computeJaimini(chart16);
+  const expert16 = buildExpertLayers({
+    chart: chart16, ayanamsha: "lahiri", nodeMode: "mean", now: now16, dashaTree: tree16,
+    activeDasha: activeDashaAt(tree16, now16), ashtakavarga: av16, jaimini: jai16,
+  });
+  const bts = expert16.sensitivity;
+  check("Birth-time sensitivity is computed for an ephemeris chart", bts !== null);
+  if (bts) {
+    const win = (v: string) => {
+      const row = bts.vargaLagna.find((x) => x.varga === v)!;
+      return (row.earlier ?? bts.horizonMinutes) + (row.later ?? bts.horizonMinutes);
+    };
+    check("The Lagna moves between 0.1° and 0.6° per minute", bts.lagnaDegPerMinute > 0.1 && bts.lagnaDegPerMinute < 0.6,
+      bts.lagnaDegPerMinute.toFixed(3));
+    // A D-60 part is 0°30' of Lagna and a navamsa 3°20', so their windows are
+    // those arcs divided by the Lagna's speed.
+    check("The D-60 Lagna window is half a degree of Lagna motion",
+      approx(win("D60"), 0.5 / bts.lagnaDegPerMinute, 0.5), `${win("D60").toFixed(2)} min`);
+    check("The D-9 Lagna window is 3°20' of Lagna motion",
+      approx(win("D9"), (10 / 3) / bts.lagnaDegPerMinute, 0.5), `${win("D9").toFixed(2)} min`);
+    check("Finer vargas never hold longer than the Rashi Lagna",
+      ["D9", "D10", "D60"].every((v) => win(v) <= win("D1")));
+    check("Mercury at 0°23' Pisces is reported as rashi sandhi",
+      bts.sandhi.some((x) => x.id === "Me" && x.fromBoundary < 1));
+    check("Vimshottari dates move by days per minute of birth-time error",
+      bts.dashaDaysPerMinute !== null && bts.dashaDaysPerMinute > 1 && bts.dashaDaysPerMinute < 8,
+      bts.dashaDaysPerMinute?.toFixed(2));
+  }
+
+  const md16 = buildMarkdownReport({
+    chart: chart16, ayanamsha: "lahiri", nodeMode: "mean", dashaTree: tree16,
+    activeDasha: activeDashaAt(tree16, now16), transits: null, sadeSati: null, ashtakavarga: av16,
+    yogas: detectYogas(chart16), vargas: computeVargaSet(chart16), jaimini: jai16,
+    shadbala: computeShadbala(chart16), bhavaBala: null, speculation: null, intimacy: null,
+    expert: expert16, generatedAt: now16,
+  });
+  for (const h of [
+    "### Birth-time sensitivity", "### Aspects received by each house",
+    "### Conjunctions and aspects received by each planet", "### After Trikona Shodhana (first reduction)",
+    "### After Ekadhipatya Shodhana (second reduction)", "### Shodhya Pinda",
+  ]) {
+    check(`Markdown export carries "${h.replace("### ", "")}"`, md16.includes(h));
+  }
+  // Sagittarius Lagna: the Lagna lord Jupiter is in Aquarius, the 3rd.
+  check("House-lord table places the 1st lord Jupiter in Aquarius, the 3rd house",
+    /\| 1 \| Sagittarius \(Dhanu\) \| Jupiter \(Guru\) \| Aquarius \(Kumbha\) \| 3 \| 3rd \|/.test(md16));
+  // The 9th (Leo) is empty and receives Jupiter's 7th, Saturn's 10th and Rahu's 5th.
+  check("Aspects-received table lists Jupiter (7th), Saturn (10th) and Rahu (5th) on the 9th house",
+    /\| 9 \| Leo \| Sun \| — \| Jupiter \(7th\), Saturn \(10th\), Rahu \(5th\) \|/.test(md16));
 }
 
 // ---------------------------------------------------------------------------

@@ -339,7 +339,8 @@ function meanSun(date: Date): number {
  * longitude) folded to 0–180, / 3. Seeghrocca = mean Sun for Ma/Ju/Sa; the
  * planet's own mean heliocentric longitude for Me/Ve (J2000 mean elements).
  * The Sun's Cheshta equals its Ayana bala and the Moon's equals its Paksha
- * bala, per the standard BPHS convention.
+ * bala, per the standard BPHS convention — in both cases the undoubled value
+ * (see `computeShadbala`).
  */
 function cheshtaBala(id: PlanetId7, lon: number, birthUtc: Date, ayanamshaValue: number): number {
   const d = daysFromJ2000(birthUtc);
@@ -450,9 +451,14 @@ export function computeShadbala(chart: ChartData): ShadbalaSet | null {
       // Yuddha adjustment appended after totals (needs both combatants' sums).
     ];
 
+    // The Sun's Cheshta is its Ayana bala and the Moon's its Paksha bala
+    // (BPHS) — the plain 0–60 values, not the doubled ones those two carry
+    // inside Kala bala. `ayana` and `paksha` above are already doubled for
+    // exactly these two grahas, so the doubling is undone here; reusing them
+    // as they stand let Cheshta run to 120 on a scale that ends at 60.
     const cheshtaValue =
-      id === "Su" ? ayana :
-      id === "Mo" ? paksha :
+      id === "Su" ? ayana / 2 :
+      id === "Mo" ? paksha / 2 :
       cheshtaBala(id, p.longitude, birthUtc, chart.meta.ayanamshaValue);
     const cheshta: BalaFactor[] = [{ label: "Cheshta", virupas: cheshtaValue }];
 

@@ -7,14 +7,52 @@ export function centuriesFromJ2000(date: Date): number {
 }
 
 /**
- * Lahiri (Chitra Paksha) ayanamsha.
- * Anchored at 23°51'11" (23.85306°) on J2000.0 with the general precession
- * rate; accurate to well under an arcminute across ±150 years of J2000,
- * which matches the precision budget of the ephemeris layer.
+ * Nutation in longitude (Δψ) and in obliquity (Δε), in degrees — the four
+ * leading terms of the IAU 1980 series (Meeus, "Astronomical Algorithms" ch.
+ * 22), good to about 0.5", which is inside the ephemeris layer's own budget.
+ *
+ * It lives here rather than in `ephemeris.ts` because the ayanamsha needs it
+ * and `ephemeris.ts` already imports this module.
+ */
+export function nutation(date: Date): { longitude: number; obliquity: number } {
+  const T = centuriesFromJ2000(date);
+  const rad = Math.PI / 180;
+  const omega = (125.04452 - 1934.136261 * T) * rad; // Moon's mean ascending node
+  const sun2 = 2 * (280.4665 + 36000.7698 * T) * rad; // twice the Sun's mean longitude
+  const moon2 = 2 * (218.3165 + 481267.8813 * T) * rad; // twice the Moon's mean longitude
+  const dpsi = -17.2 * Math.sin(omega) - 1.32 * Math.sin(sun2) - 0.23 * Math.sin(moon2) + 0.21 * Math.sin(2 * omega);
+  const deps = 9.2 * Math.cos(omega) + 0.57 * Math.cos(sun2) + 0.1 * Math.cos(moon2) - 0.09 * Math.cos(2 * omega);
+  return { longitude: dpsi / 3600, obliquity: deps / 3600 };
+}
+
+/**
+ * Mean Lahiri (Chitra Paksha) ayanamsha — the precession of the mean equinox
+ * since the Lahiri zero point, with no nutation in it. Fitted to the Swiss
+ * Ephemeris SE_SIDM_LAHIRI value (23°51'25.53" at J2000.0); agrees with it to
+ * 0.1" across 1850–2150.
+ */
+export function meanLahiriAyanamsha(date: Date): number {
+  const T = centuriesFromJ2000(date);
+  return 23.857092 + 1.396888 * T + 0.0003086 * T * T;
+}
+
+/**
+ * Lahiri (Chitra Paksha) ayanamsha as it has to be subtracted from this
+ * engine's tropical longitudes: the mean ayanamsha PLUS the nutation in
+ * longitude — the "true ayanamsha" Indian ephemerides print (23°51'11" at
+ * J2000.0).
+ *
+ * The nutation term is not optional. Every tropical longitude the ephemeris
+ * layer produces is measured from the TRUE equinox of date, which wobbles
+ * ±17" around the mean equinox over the 18.6-year nodal cycle. Subtracting a
+ * nutation-free ayanamsha from a nutated longitude leaves that wobble in the
+ * sidereal result; an earlier version did exactly that (it froze the J2000
+ * nutation into the constant) and was off by up to ~38" depending on the birth
+ * year. With the term in, sidereal positions agree with the Swiss Ephemeris to
+ * a few arcseconds.
  */
 export function lahiriAyanamsha(date: Date): number {
-  const T = centuriesFromJ2000(date);
-  return 23.85306 + 1.3969713 * T + 0.0003086 * T * T;
+  return meanLahiriAyanamsha(date) + nutation(date).longitude;
 }
 
 /**
@@ -41,8 +79,8 @@ export function pushyaAyanamsha(date: Date): number {
  *   difference    =  1.446704°
  *
  * (Epoch constants per the Swiss Ephemeris ayanamsha table, SE_SIDM_LAHIRI and
- * SE_SIDM_RAMAN.) Raman inherits the same sub-arcminute bias as `lahiriAyanamsha`,
- * which is the documented precision budget of this layer — see SOURCES.md.
+ * SE_SIDM_RAMAN.) Raman inherits the nutation term and the precision of
+ * `lahiriAyanamsha`.
  *
  * Raman's practical effect: every sidereal longitude moves ~1°26' forward
  * relative to Lahiri, which is enough to change a Lagna, a Moon nakshatra (and

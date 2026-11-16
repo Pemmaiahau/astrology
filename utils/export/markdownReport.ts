@@ -1,7 +1,10 @@
-import { aspectedSigns } from "@/utils/astrology/aspects";
+import { aspectedSigns, drishtiOnSign } from "@/utils/astrology/aspects";
 import { AYANAMSHA_LABELS } from "@/utils/astrology/ayanamsha";
 import {
   AV_PLANETS,
+  GRAHA_GUNAKARA,
+  RASHI_GUNAKARA,
+  computeAshtakavargaReductions,
   type AshtakavargaResult,
 } from "@/utils/astrology/ashtakavarga";
 import {
@@ -28,7 +31,7 @@ import {
   type CharaKarakaId,
   type JaiminiInfo,
 } from "@/utils/astrology/jaimini";
-import { norm360 } from "@/utils/astrology/math";
+import { norm360, separation } from "@/utils/astrology/math";
 import { naturalRelation, temporalRelation, DIGNITY_LABELS } from "@/utils/astrology/states";
 import { activeDashaAt, type ActiveDasha } from "@/utils/astrology/dasha";
 import type { BhavaBala, ShadbalaSet } from "@/utils/astrology/shadbala";
@@ -234,7 +237,102 @@ function birthDetails(input: MarkdownReportInput): string[] {
         ["Reference date (transits, running dasha)", input.generatedAt.toISOString()],
       ]
     ),
+    ...birthTimeSensitivitySection(input),
   ];
+}
+
+/** Minutes as "N min" / "N min SS s", or the horizon when nothing changed inside it. */
+function fmtMinutes(minutes: number | null, horizon: number): string {
+  if (minutes === null) return `more than ${horizon} min`;
+  let whole = Math.floor(minutes);
+  let sec = Math.round((minutes - whole) * 60);
+  if (sec === 60) {
+    whole += 1;
+    sec = 0;
+  }
+  return sec === 0 ? `${whole} min` : `${whole} min ${String(sec).padStart(2, "0")} s`;
+}
+
+const BOUNDARY_KIND_LABEL = {
+  sign: "sign (and every varga sign)",
+  nakshatra: "nakshatra (and its lord)",
+  pada: "nakshatra pada (and Navamsa sign)",
+} as const;
+
+function birthTimeSensitivitySection(input: MarkdownReportInput): string[] {
+  const out = heading(3, "Birth-time sensitivity");
+  const bts = input.expert?.sensitivity;
+  if (!bts) {
+    return [
+      ...out,
+      "_Needs an ephemeris chart with a birth instant and coordinates; it cannot be assessed for a manually entered chart, whose Lagna is typed in rather than derived from the clock._",
+      "",
+    ];
+  }
+
+  out.push(
+    `The birth time is recorded to the minute. The Lagna moves ${bts.lagnaDegPerMinute.toFixed(3)}° per minute of clock time here (1° in about ${(1 / bts.lagnaDegPerMinute).toFixed(1)} minutes). The table shows how much earlier or later the birth could have been with each varga Lagna unchanged; a varga whose window is shorter than the uncertainty in the recorded time should be read as provisional, and with it every house position in that varga.`,
+    ""
+  );
+  out.push(
+    ...table(
+      ["Varga", "Lagna", "Holds if born up to … earlier", "Holds if born up to … later", "Total window"],
+      bts.vargaLagna.map((v) => [
+        `${v.varga} — ${VARGA_NAMES[v.varga]}`,
+        SIGNS[v.sign],
+        fmtMinutes(v.earlier, bts.horizonMinutes),
+        fmtMinutes(v.later, bts.horizonMinutes),
+        v.earlier === null || v.later === null
+          ? `more than ${Math.round((v.earlier ?? bts.horizonMinutes) + (v.later ?? bts.horizonMinutes))} min`
+          : fmtMinutes(v.earlier + v.later, bts.horizonMinutes),
+      ])
+    )
+  );
+
+  out.push(
+    `**Grahas that change sign, nakshatra or pada within ${bts.boundaryWindowMinutes} minutes of the recorded time:**`,
+    ""
+  );
+  out.push(
+    ...(bts.boundaries.length
+      ? table(
+          ["Graha", "What changes", "If the birth was", "Arc to the boundary"],
+          bts.boundaries.map((b) => [
+            PLANET_NAMES[b.id],
+            BOUNDARY_KIND_LABEL[b.kind],
+            `${fmtMinutes(Math.abs(b.minutes), bts.horizonMinutes)} ${b.minutes < 0 ? "earlier" : "later"}`,
+            fmtDMS(b.arc),
+          ])
+        )
+      : ["_None — every graha keeps its sign, nakshatra and pada across that window._", ""])
+  );
+
+  out.push("**Rashi sandhi (Lagna or graha within 1° of a sign boundary):**", "");
+  out.push(
+    ...(bts.sandhi.length
+      ? table(
+          ["Point", "Position", "Distance from the boundary"],
+          bts.sandhi.map((x) => [
+            x.id === "As" ? "Ascendant" : PLANET_NAMES[x.id],
+            `${fmtDMS(x.degInSign)} ${SIGNS[x.sign]}`,
+            fmtDMS(x.fromBoundary),
+          ])
+        )
+      : ["_None._", ""])
+  );
+
+  if (bts.dashaDaysPerMinute !== null) {
+    out.push(
+      `- **Vimshottari dates:** every dasha boundary in section 16 moves about ${Math.abs(bts.dashaDaysPerMinute).toFixed(1)} days for each minute of error in the birth time (earlier dates for a later birth). Yogini dates move in the same direction, in proportion to the opening yogini's years.`
+    );
+  }
+  out.push(
+    "- **Time-driven points in section 6:** Pranapada crosses a sign every 6 minutes and the Ghati Lagna every 24, the Hora Lagna every hour and the Bhava Lagna every 2 hours; Gulika and Mandi depend on the sunrise and sunset times as well as the clock.",
+    "- **Shadbala and Bhava Bala:** Dig, Kendradi, Nathonnatha, Tribhaga and Hora bala all read the birth time; a change of Lagna sign or of Chalit bhava reshuffles them.",
+    "- **Positions:** sidereal longitudes agree with the Swiss Ephemeris to a few arcseconds, so a graha's placement is only doubtful when it is listed in one of the two tables above.",
+    ""
+  );
+  return out;
 }
 
 function panchangSection(input: MarkdownReportInput): string[] {
@@ -363,14 +461,46 @@ function coreSignatures(input: MarkdownReportInput): string[] {
 }
 
 function houseLords(input: MarkdownReportInput): string[] {
-  const lagna = input.chart.ascendant.sign;
+  const { chart, vargas } = input;
+  const lagna = chart.ascendant.sign;
   const rows = Array.from({ length: 12 }, (_, i) => {
+    const house = i + 1;
     const sign = (lagna + i) % 12;
-    return [i + 1, signName(sign), planetName(SIGN_LORDS[sign])];
+    const lordId = SIGN_LORDS[sign];
+    const lord = chart.planets.find((p) => p.id === lordId);
+    if (!lord) return [house, signName(sign), planetName(lordId), DASH, DASH, DASH, DASH, DASH, DASH, DASH];
+    const d9 = vargas?.charts.D9.positions.find((p) => p.id === lordId);
+    const state = [
+      lord.retrograde ? "Retrograde" : null,
+      lord.combust ? "Combust" : null,
+      lord.warWith ? `Graha Yuddha ${lord.warWinner ? "won" : "lost"}` : null,
+      d9?.vargottama ? "Vargottama" : null,
+    ].filter(Boolean);
+    return [
+      house,
+      signName(sign),
+      planetName(lordId),
+      signName(lord.sign),
+      lord.house,
+      // Inclusive count from the house to its lord: 1st = in its own house.
+      ordinal(((lord.house - house + 12) % 12) + 1),
+      DIGNITY_LABELS[lord.dignity],
+      state.join(", ") || DASH,
+      chart.planets.filter((p) => p.sign === lord.sign && p.id !== lordId).map((p) => PLANET_NAMES[p.id]).join(", ") || DASH,
+      d9 ? `${SIGNS[d9.sign]} — ${DIGNITY_LABELS[d9.dignity]}` : DASH,
+    ];
   });
   return [
     ...heading(2, "4. House Signs & Lords (Lagna Chart / D1)"),
-    ...table(["House", "Sign", "Lord"], rows),
+    'Each house with its lord and where that lord sits. "Counted from own house" is the inclusive count from the house to its lord: 1st means the lord is in its own house, 6th, 8th or 12th that it has gone to a dusthana from the house it rules.',
+    "",
+    ...table(
+      [
+        "House", "Sign", "Lord", "Lord placed in sign", "Lord placed in house", "Counted from own house",
+        "Lord's dignity", "Lord's state", "Lord conjunct", "Lord in Navamsa (D9)",
+      ],
+      rows
+    ),
   ];
 }
 
@@ -503,6 +633,58 @@ function aspectsSection(input: MarkdownReportInput): string[] {
     "Whole-sign Parashari drishti: every graha aspects the 7th from itself; Mars adds the 4th and 8th, Jupiter the 5th and 9th, Saturn the 3rd and 10th, Rahu and Ketu the 5th and 9th. Occupancy is not counted as an aspect.",
     "",
     ...table(["Planet", "In House", "Houses Aspected", "Signs Aspected", "Planets Aspected"], rows),
+    ...aspectsReceived(input),
+  ];
+}
+
+/** "Saturn (3rd)" — the aspecting graha with which of its aspects landed. */
+function drishtiLabels(chart: ChartData, sign: number): string {
+  return (
+    drishtiOnSign(chart, sign)
+      .map((d) => `${PLANET_NAMES[d.from]} (${ordinal(d.offset)})`)
+      .join(", ") || DASH
+  );
+}
+
+/**
+ * The same drishti as the table above, read from the receiving end — which
+ * grahas influence each house and each planet. A reader should not have to
+ * invert the cast-aspect table to learn what a house is under.
+ */
+function aspectsReceived(input: MarkdownReportInput): string[] {
+  const { chart } = input;
+  const lagna = chart.ascendant.sign;
+
+  const houseRows = Array.from({ length: 12 }, (_, i) => {
+    const sign = (lagna + i) % 12;
+    return [
+      i + 1,
+      SIGNS[sign],
+      PLANET_NAMES[SIGN_LORDS[sign]],
+      chart.planets.filter((p) => p.sign === sign).map((p) => PLANET_NAMES[p.id]).join(", ") || DASH,
+      drishtiLabels(chart, sign),
+    ];
+  });
+
+  const planetRows = chart.planets.map((p) => [
+    planetName(p.id),
+    p.house,
+    chart.planets
+      .filter((q) => q.id !== p.id && q.sign === p.sign)
+      .map((q) => `${PLANET_NAMES[q.id]} (${fmtDMS(separation(p.longitude, q.longitude))} apart)`)
+      .join(", ") || DASH,
+    drishtiLabels(chart, p.sign),
+  ]);
+
+  return [
+    ...heading(3, "Aspects received by each house"),
+    "The ordinal after each graha is which of its aspects lands here (7th = the universal aspect; 3rd/10th Saturn, 4th/8th Mars, 5th/9th Jupiter, Rahu and Ketu). Occupants influence the house by presence and are listed separately.",
+    "",
+    ...table(["House", "Sign", "Lord", "Occupants", "Aspected by"], houseRows),
+    ...heading(3, "Conjunctions and aspects received by each planet"),
+    "Conjunction is by sign, with the angular separation; aspects are the whole-sign drishti landing on the sign the planet occupies.",
+    "",
+    ...table(["Planet", "In House", "Conjunct with", "Aspected by"], planetRows),
   ];
 }
 
@@ -822,6 +1004,52 @@ function ashtakavargaSection(input: MarkdownReportInput): string[] {
         const sign = (lagna + i) % 12;
         return [i + 1, SIGNS[sign], ashtakavarga.sav[sign]];
       })
+    )
+  );
+
+  // --- Shodhana (reductions) and Shodhya Pinda.
+  const planetSigns: Partial<Record<PlanetId, number>> = {};
+  for (const p of chart.planets) planetSigns[p.id] = p.sign;
+  const red = computeAshtakavargaReductions(ashtakavarga, planetSigns);
+  const signHeaders = SIGNS.map((s) => s.slice(0, 3));
+  const total = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+
+  out.push(...heading(3, "After Trikona Shodhana (first reduction)"));
+  out.push(
+    "Within each trine of signs (fire, earth, air, water) the smallest of the three figures is subtracted from all three; a trine holding a zero is left as it is.",
+    ""
+  );
+  out.push(
+    ...table(
+      ["Chart", ...signHeaders, "Total"],
+      AV_PLANETS.map((id) => [PLANET_NAMES[id], ...red.trikona[id], total(red.trikona[id])])
+    )
+  );
+
+  out.push(...heading(3, "After Ekadhipatya Shodhana (second reduction)"));
+  out.push(
+    "Applied to the figures above, for each pair of signs owned by one graha (Cancer and Leo are exempt). Both signs occupied, or either figure zero: no change. One occupied: the empty sign is cut to the occupied sign's figure when that is smaller, otherwise the empty sign becomes zero. Neither occupied: both take the smaller figure, or both become zero when equal. Occupation counts the seven grahas, not Rahu or Ketu.",
+    ""
+  );
+  out.push(
+    ...table(
+      ["Chart", ...signHeaders, "Total"],
+      [
+        ...AV_PLANETS.map((id) => [PLANET_NAMES[id], ...red.ekadhipatya[id], total(red.ekadhipatya[id])]),
+        ["Reduced SAV (sum of the seven)", ...red.reducedSav, total(red.reducedSav)],
+      ]
+    )
+  );
+
+  out.push(...heading(3, "Shodhya Pinda"));
+  out.push(
+    `Built from the fully reduced figures. Rashi Pinda = sum of (bindus in a sign × that sign's multiplier: ${SIGNS.map((s, i) => `${s.slice(0, 3)} ${RASHI_GUNAKARA[i]}`).join(", ")}). Graha Pinda = sum of (bindus in the sign each graha occupies × that graha's multiplier: ${AV_PLANETS.map((id) => `${PLANET_NAMES[id]} ${GRAHA_GUNAKARA[id]}`).join(", ")}). Shodhya Pinda is the two added together.`,
+    ""
+  );
+  out.push(
+    ...table(
+      ["Planet", "Rashi Pinda", "Graha Pinda", "Shodhya Pinda"],
+      AV_PLANETS.map((id) => [PLANET_NAMES[id], red.pinda[id].rashi, red.pinda[id].graha, red.pinda[id].total])
     )
   );
   return out;

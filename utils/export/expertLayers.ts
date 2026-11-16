@@ -1,7 +1,9 @@
 import { contributesBindu, type AshtakavargaResult } from "@/utils/astrology/ashtakavarga";
+import { tropicalAscMc } from "@/utils/astrology/ascendant";
 import { computeAvasthas, type AvasthaSet } from "@/utils/astrology/avasthas";
+import { getAyanamsha } from "@/utils/astrology/ayanamsha";
 import { charaDasha, type CharaPeriod } from "@/utils/astrology/charaDasha";
-import { PLANETS } from "@/utils/astrology/constants";
+import { DASHA_YEARS, PLANETS } from "@/utils/astrology/constants";
 import { activeDashaAt, openingBalanceYears, subPeriodsOf, type ActiveDasha } from "@/utils/astrology/dasha";
 import { dailySpeed, isRetrograde } from "@/utils/astrology/ephemeris";
 import { detectExtendedYogas, type ExtendedFinding } from "@/utils/astrology/extendedYogas";
@@ -13,6 +15,7 @@ import { sadeSatiPeriods, type SadeSatiPeriod } from "@/utils/astrology/sadeSati
 import { retrogradeIntervals, signChangeEvents, type SignChange } from "@/utils/astrology/scan";
 import { computeSpecialPoints, type SpecialPoints } from "@/utils/astrology/specialPoints";
 import type { AyanamshaId, ChartData, DashaPeriod, NodeMode, PlanetId } from "@/utils/astrology/types";
+import { VARGA_IDS, vargaSign, type VargaId } from "@/utils/astrology/varga";
 import { yoginiDasha, type YoginiPeriod } from "@/utils/astrology/yogini";
 
 /**
@@ -22,7 +25,9 @@ import { yoginiDasha, type YoginiPeriod } from "@/utils/astrology/yogini";
  * Everything here is assembled from engine functions (`dasha.ts`, `yogini.ts`,
  * `charaDasha.ts`, `gochara.ts`, `sadeSati.ts`, `scan.ts`, `specialPoints.ts`,
  * `extendedYogas.ts`); this module adds no astrology of its own beyond the
- * small Tara/Chandra-bala and kakshya lookups below, which are table reads.
+ * small Tara/Chandra-bala and kakshya lookups below, which are table reads,
+ * and the birth-time sensitivity scan, which re-runs the engine's own Lagna
+ * and varga functions at neighbouring instants.
  */
 
 const MONTH_MS = 30.4375 * 86400000;
@@ -77,6 +82,126 @@ export interface ExpertLayers {
   transit: TransitDetail | null;
   extendedYogas: ExtendedFinding[];
   avasthas: AvasthaSet[];
+  sensitivity: BirthTimeSensitivity | null;
+}
+
+/**
+ * How far the recorded birth time can be wrong before a given part of the
+ * chart changes. A reader told only "D-60 Lagna is Libra" cannot know that the
+ * statement holds for two minutes either side of the stated time; this layer
+ * says so, in minutes, so each technique can be weighted by how much of it
+ * survives a realistic clock error.
+ */
+export interface BirthTimeSensitivity {
+  /** Sidereal Lagna motion at birth, in degrees per minute of clock time. */
+  lagnaDegPerMinute: number;
+  /**
+   * Per varga: how many minutes earlier / later the birth could have been with
+   * the varga Lagna unchanged. Null means it holds past the scan horizon.
+   */
+  vargaLagna: { varga: VargaId; sign: number; earlier: number | null; later: number | null }[];
+  /** Horizon of the varga-Lagna scan, in minutes either side of birth. */
+  horizonMinutes: number;
+  /**
+   * Grahas whose sign, nakshatra or pada would differ had the birth been up to
+   * `boundaryWindowMinutes` earlier or later. `minutes` is signed: negative =
+   * an earlier birth changes it, positive = a later one.
+   */
+  boundaries: { id: PlanetId; kind: "sign" | "nakshatra" | "pada"; minutes: number; arc: number }[];
+  boundaryWindowMinutes: number;
+  /** The Lagna and grahas within 1° of a sign boundary (rashi sandhi). */
+  sandhi: { id: PlanetId | "As"; sign: number; degInSign: number; fromBoundary: number }[];
+  /** Vimshottari: days every dasha date moves per minute of birth-time error. */
+  dashaDaysPerMinute: number | null;
+}
+
+const SENSITIVITY_HORIZON_MIN = 120;
+const SENSITIVITY_STEP_SEC = 10;
+const BOUNDARY_WINDOW_MIN = 30;
+const SANDHI_ORB = 1;
+
+/**
+ * Ephemeris charts only: a manual chart's Lagna is typed in, not derived from
+ * the clock, so "what if the clock were off" has no answer for it.
+ */
+function birthTimeSensitivity(chart: ChartData, ayanamsha: AyanamshaId): BirthTimeSensitivity | null {
+  const { birthUtc, lat, lon } = chart;
+  if (chart.meta.mode !== "auto" || !birthUtc || lat === undefined || lon === undefined) return null;
+  const t0 = birthUtc.getTime();
+  const ascAt = (ms: number): number => {
+    const at = new Date(ms);
+    return norm360(tropicalAscMc(at, lat, lon).asc - getAyanamsha(ayanamsha, at));
+  };
+
+  let rate = norm360(ascAt(t0 + 60000) - ascAt(t0 - 60000));
+  if (rate > 180) rate -= 360;
+  const lagnaDegPerMinute = rate / 2;
+
+  // Walk outward from the birth instant in both directions, recording the
+  // first step at which each varga's Lagna sign differs from the natal one.
+  const natal = VARGA_IDS.map((v) => vargaSign(v, chart.ascendant.longitude));
+  const first = (direction: 1 | -1): (number | null)[] => {
+    const found: (number | null)[] = VARGA_IDS.map(() => null);
+    const steps = (SENSITIVITY_HORIZON_MIN * 60) / SENSITIVITY_STEP_SEC;
+    for (let i = 1; i <= steps && found.some((f) => f === null); i++) {
+      const asc = ascAt(t0 + direction * i * SENSITIVITY_STEP_SEC * 1000);
+      VARGA_IDS.forEach((v, k) => {
+        if (found[k] === null && vargaSign(v, asc) !== natal[k]) found[k] = (i * SENSITIVITY_STEP_SEC) / 60;
+      });
+    }
+    return found;
+  };
+  const later = first(1);
+  const earlier = first(-1);
+
+  const boundaries: BirthTimeSensitivity["boundaries"] = [];
+  const widths: [BirthTimeSensitivity["boundaries"][number]["kind"], number][] = [
+    ["sign", 30], ["nakshatra", 360 / 27], ["pada", 360 / 108],
+  ];
+  for (const p of chart.planets) {
+    const perMinute = Math.abs(p.speed) / 1440;
+    if (perMinute === 0) continue;
+    // Sign, nakshatra and pada boundaries nest, so only the coarsest one that
+    // a given crossing changes is reported.
+    const seen = new Set<number>();
+    for (const [kind, width] of widths) {
+      const behind = norm360(p.longitude) % width;
+      const ahead = width - behind;
+      // Moving forward, a later birth meets the boundary ahead; retrograde, the one behind.
+      const laterArc = p.speed >= 0 ? ahead : behind;
+      const earlierArc = p.speed >= 0 ? behind : ahead;
+      for (const [arc, sign] of [[laterArc, 1], [earlierArc, -1]] as const) {
+        const minutes = arc / perMinute;
+        if (minutes > BOUNDARY_WINDOW_MIN || seen.has(sign)) continue;
+        seen.add(sign);
+        boundaries.push({ id: p.id, kind, minutes: sign * minutes, arc });
+      }
+    }
+  }
+
+  const sandhi: BirthTimeSensitivity["sandhi"] = [];
+  const near = (id: PlanetId | "As", longitude: number) => {
+    const d = norm360(longitude) % 30;
+    const fromBoundary = Math.min(d, 30 - d);
+    if (fromBoundary <= SANDHI_ORB) sandhi.push({ id, sign: Math.floor(norm360(longitude) / 30), degInSign: d, fromBoundary });
+  };
+  near("As", chart.ascendant.longitude);
+  for (const p of chart.planets) near(p.id, p.longitude);
+
+  const moon = chart.planets.find((p) => p.id === "Mo");
+  const dashaDaysPerMinute = moon
+    ? (moon.speed / 1440 / (360 / 27)) * DASHA_YEARS[moon.nakshatraLord] * 365.25
+    : null;
+
+  return {
+    lagnaDegPerMinute,
+    vargaLagna: VARGA_IDS.map((varga, k) => ({ varga, sign: natal[k], earlier: earlier[k], later: later[k] })),
+    horizonMinutes: SENSITIVITY_HORIZON_MIN,
+    boundaries,
+    boundaryWindowMinutes: BOUNDARY_WINDOW_MIN,
+    sandhi,
+    dashaDaysPerMinute,
+  };
 }
 
 /** Kakshya lords in order across a sign, 3°45' each (Parashari order). */
@@ -226,5 +351,6 @@ export function buildExpertLayers(input: {
     transit: transitDetail(chart, ayanamsha, nodeMode, now, ashtakavarga),
     extendedYogas: detectExtendedYogas(chart, jaimini),
     avasthas: computeAvasthas(chart),
+    sensitivity: birthTimeSensitivity(chart, ayanamsha),
   };
 }

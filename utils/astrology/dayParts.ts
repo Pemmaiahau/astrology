@@ -156,10 +156,14 @@ function nightPartRuledBy(lordIndexInWeekOrder: number, vara: number): number {
  *
  * The night's first choghadiya is the 5th onward in this same cycle, which
  * likewise reproduces every published night start (Sun Shubh · Mon Char ·
- * Tue Kaal · Wed Udveg · Thu Amrit · Fri Rog · Sat Labh). The cycle then
- * continues in the same direction as by day — that continuation is the one
- * element of this module taken from the rule rather than from a table, and it
- * is flagged here so it can be checked against a preferred panchang.
+ * Tue Kaal · Wed Udveg · Thu Amrit · Fri Rog · Sat Labh).
+ *
+ * By night the cycle does NOT advance one step at a time as it does by day: it
+ * advances FIVE (`CHOGHADIYA_NIGHT_STEP`). That is what the published night
+ * tables show — Sunday night runs Shubh, Amrit, Char, Rog, Kaal, Labh, Udveg,
+ * Shubh — and it is the same every-fifth-lord rule that picks the night's
+ * opening. An earlier version stepped by one at night, which got the opening
+ * right and the seven that follow wrong.
  */
 const CHOGHADIYA_CYCLE: { name: string; lord: PlanetId; quality: NamedSpan["quality"] }[] = [
   { name: "Udveg", lord: "Su", quality: "inauspicious" },
@@ -170,6 +174,10 @@ const CHOGHADIYA_CYCLE: { name: string; lord: PlanetId; quality: NamedSpan["qual
   { name: "Shubh", lord: "Ju", quality: "auspicious" },
   { name: "Rog", lord: "Ma", quality: "inauspicious" },
 ];
+
+/** Cycle positions advanced per division: one by day, five by night. */
+const CHOGHADIYA_DAY_STEP = 1;
+const CHOGHADIYA_NIGHT_STEP = 5;
 
 export const CHOGHADIYA_MEANING: Record<string, string> = {
   Udveg: "anxiety — government and official work only; avoid new undertakings",
@@ -298,9 +306,9 @@ export function computeDayParts(
   const dayStart = CHOGHADIYA_CYCLE.findIndex((c) => c.lord === varaLord);
   const nightStart = (dayStart + 5) % 7;
 
-  const buildChoghadiya = (spans: TimeSpan[], startIdx: number): NamedSpan[] =>
+  const buildChoghadiya = (spans: TimeSpan[], startIdx: number, step: number): NamedSpan[] =>
     spans.map((s, i) => {
-      const c = CHOGHADIYA_CYCLE[(startIdx + i) % 7];
+      const c = CHOGHADIYA_CYCLE[(startIdx + i * step) % 7];
       return { ...s, name: c.name, lord: c.lord, quality: c.quality, index: i + 1, current: contains(s, at) };
     });
 
@@ -318,8 +326,8 @@ export function computeDayParts(
       };
     });
 
-  const choghadiyaDay = buildChoghadiya(dayEighths, dayStart);
-  const choghadiyaNight = buildChoghadiya(nightEighths, nightStart);
+  const choghadiyaDay = buildChoghadiya(dayEighths, dayStart, CHOGHADIYA_DAY_STEP);
+  const choghadiyaNight = buildChoghadiya(nightEighths, nightStart, CHOGHADIYA_NIGHT_STEP);
   // Night horas continue the same descending-Chaldean run: 12 day horas precede them.
   const horaDay = buildHora(divide(daySunrise, daySunset, 12), 0);
   const horaNight = buildHora(divide(daySunset, dayNextSunrise, 12), 12);
