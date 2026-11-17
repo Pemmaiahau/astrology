@@ -10,6 +10,8 @@ import { DIGNITY_SHORT } from "@/utils/astrology/states";
 import { SIGNS } from "@/utils/astrology/constants";
 import { FullReasoning } from "./BriefView";
 import ReadingView from "./ReadingView";
+import { useReadingContext } from "./useReadingContext";
+import { houseState, type HouseState } from "@/data/interpretations/reading/judge";
 import CareerCard from "./CareerCard";
 import CautionsCard from "./CautionsCard";
 import ForeignCard from "./ForeignCard";
@@ -75,21 +77,44 @@ function DepthBlock({ reading }: { reading: HouseInterpretation }) {
   );
 }
 
-const TONE_STYLE: Record<HouseInterpretation["verdict"]["tone"], { label: string; className: string }> = {
-  favourable: { label: "Favourable", className: "bg-good-soft text-good ring-good-ring" },
-  split: { label: "Conditional", className: "bg-primary-soft text-heading ring-primary-ring" },
-  unfavourable: { label: "Weak", className: "bg-bad-soft text-bad ring-bad-ring" },
-  unscored: { label: "—", className: "text-fg-subtle ring-line-ring" },
+const TONE_STYLE: Record<HouseState["grade"], { label: string; className: string }> = {
+  strong: { label: "Strong", className: "bg-good-soft text-good ring-good-ring" },
+  mixed: { label: "Mixed", className: "bg-primary-soft text-heading ring-primary-ring" },
+  weak: { label: "Weak", className: "bg-bad-soft text-bad ring-bad-ring" },
 };
+
+/** The house judgement as a list, strongest factors first. */
+function JudgedFactors({ judged }: { judged: HouseState }) {
+  const sup = judged.factors.filter((f) => f.w > 0).sort((a, b) => b.w - a.w);
+  const opp = judged.factors.filter((f) => f.w < 0).sort((a, b) => a.w - b.w);
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <div>
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-good">Supporting</div>
+        <ul className="space-y-1 text-xs leading-snug text-fg">
+          {sup.length ? sup.map((f) => <li key={f.text}>▲ {f.text}</li>) : <li className="text-fg-subtle">Nothing notable.</li>}
+        </ul>
+      </div>
+      <div>
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-bad">Opposing</div>
+        <ul className="space-y-1 text-xs leading-snug text-fg">
+          {opp.length ? opp.map((f) => <li key={f.text}>▼ {f.text}</li>) : <li className="text-fg-subtle">Nothing notable.</li>}
+        </ul>
+      </div>
+    </div>
+  );
+}
 
 /**
  * One house as one row: the measurable facts (occupants, lord placement and
  * dignity, aspects, SAV, Bhava Bala) and the convergence verdict, with the
  * full reading and the classical corroboration one click away.
  */
-function HouseRow({ h }: { h: HouseInterpretation }) {
+function HouseRow({ h, judged }: { h: HouseInterpretation; judged: HouseState | null }) {
   const [open, setOpen] = useState(false);
-  const tone = TONE_STYLE[h.verdict.tone];
+  const tone = judged ? TONE_STYLE[judged.grade] : null;
+  const sup = judged ? judged.factors.filter((f) => f.w > 0).sort((a, b) => b.w - a.w).slice(0, 3).map((f) => f.short) : [];
+  const opp = judged ? judged.factors.filter((f) => f.w < 0).sort((a, b) => a.w - b.w).slice(0, 3).map((f) => f.short) : [];
   const lordPos = h.lord.position;
   return (
     <li className="border-b border-line-soft last:border-0">
@@ -102,7 +127,7 @@ function HouseRow({ h }: { h: HouseInterpretation }) {
         <span className="w-28 shrink-0 font-serif text-sm font-bold text-heading">
           {h.house}. {SIGNS[h.sign]}
         </span>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${tone.className}`}>{tone.label}</span>
+        {tone && <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${tone.className}`}>{tone.label}</span>}
         <span className="text-fg">
           {h.occupied ? h.planets.map((p) => PLANET_NAMES[p.id]).join(", ") : <span className="text-fg-subtle">empty</span>}
         </span>
@@ -121,15 +146,16 @@ function HouseRow({ h }: { h: HouseInterpretation }) {
           {h.bhavaRupas !== null ? ` · ${h.bhavaRupas.toFixed(1)} rupas` : ""}
         </span>
       </button>
-      {!open && (h.verdict.support.length > 0 || h.verdict.against.length > 0) && (
+      {!open && (sup.length > 0 || opp.length > 0) && (
         <p className="px-2 pb-2 pl-8 text-[11px] leading-snug text-fg-muted">
-          {h.verdict.support.length > 0 && <span className="text-good">▲ {h.verdict.support.join(", ")}</span>}
-          {h.verdict.support.length > 0 && h.verdict.against.length > 0 && " · "}
-          {h.verdict.against.length > 0 && <span className="text-bad">▼ {h.verdict.against.join(", ")}</span>}
+          {sup.length > 0 && <span className="text-good">▲ {sup.join(", ")}</span>}
+          {sup.length > 0 && opp.length > 0 && " · "}
+          {opp.length > 0 && <span className="text-bad">▼ {opp.join(", ")}</span>}
         </p>
       )}
       {open && (
         <div className="space-y-2 px-2 pb-3 pl-8">
+          {judged && <JudgedFactors judged={judged} />}
           {h.paragraphs.map((p, i) => (
             <p key={i} className="text-sm leading-relaxed text-fg">
               {p}
@@ -150,6 +176,7 @@ function HouseRow({ h }: { h: HouseInterpretation }) {
  */
 export default function InterpretationPanel() {
   const { chart, yogas, extendedYogas, houseReadings } = useChart();
+  const rc = useReadingContext();
   if (!chart) return null;
 
   return (
@@ -208,12 +235,14 @@ export default function InterpretationPanel() {
         </h3>
         <p className="mt-1 text-xs leading-relaxed text-fg-muted">
           One row per house: occupants, the lord's placement and dignity, the planets aspecting it, its
-          Ashtakavarga points (SAV) and Bhava Bala, and the verdict of the independent measures (▲ support,
-          ▼ against). Open a row for the full reading and the classical corroboration.
+          Ashtakavarga points (SAV) and Bhava Bala. The verdict weighs all of them together — the lord's
+          condition and placement, occupants and aspects by their benefic or malefic nature and strength,
+          Argala and Kartari (▲ support, ▼ against). Open a row for the weighed factors, the full reading and
+          the classical corroboration.
         </p>
         <ul className="mt-2 rounded-lg border border-line-soft bg-surface">
           {houseReadings.map((h) => (
-            <HouseRow key={h.house} h={h} />
+            <HouseRow key={h.house} h={h} judged={rc ? houseState(rc, h.house) : null} />
           ))}
         </ul>
       </section>

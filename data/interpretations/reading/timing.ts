@@ -5,6 +5,7 @@ import { HOUSE_GOVERNS } from "../significations";
 import { functionalRole } from "../synthesis";
 import { dashaLordAssessment } from "../yearForecast";
 import { strongerPeriodAhead } from "./personality";
+import { planetState, stateTag } from "./judge";
 import {
   DIGNITY_WORD, fmtRatio, joinAnd, lordQuality, name, ord, owned, planet, ratio, sentences, type ReadingContext, type ReadingPart,
   type ReadingSubsection,
@@ -23,6 +24,12 @@ function lordProfile(rc: ReadingContext, id: PlanetId): string {
 
 /** How well a dasha lord can deliver — see `lordQuality`. */
 function quality(rc: ReadingContext, id: PlanetId): "strong" | "mixed" | "demanding" {
+  // The nodes own no house, so their functional role is always "neutral";
+  // their periods are judged by their condition instead.
+  if (id === "Ra" || id === "Ke") {
+    const g = planetState(rc, id).grade;
+    return g === "strong" ? "strong" : g === "weak" ? "demanding" : "mixed";
+  }
   return lordQuality(rc, id, functionalRole(id, rc.chart.ascendant.sign)).q;
 }
 
@@ -61,7 +68,7 @@ export function timingPart(rc: ReadingContext): ReadingPart {
         const age = (d: Date) => Math.floor((d.getTime() - rc.chart.birthUtc!.getTime()) / YEAR);
         const q = quality(rc, md.lord);
         const lq = lordQuality(rc, md.lord, functionalRole(md.lord, rc.chart.ascendant.sign));
-        return `${name(md.lord)} Mahadasha, ${fmt(md.start)} – ${fmt(md.end)} (age ${age(md.start)}–${age(md.end)}): ${lordProfile(rc, md.lord)} — ${q === "strong" ? "a strong period that delivers" : q === "demanding" ? "a demanding period that rewards patience" : "a mixed period: good in some areas, effortful in others"}, because ${name(md.lord)} is ${lq.why}.`;
+        return `${name(md.lord)} Mahadasha, ${fmt(md.start)} – ${fmt(md.end)} (age ${age(md.start)}–${age(md.end)}): ${lordProfile(rc, md.lord)} — ${q === "strong" ? "a strong period that delivers" : q === "demanding" ? "a demanding period that rewards patience" : "a mixed period: good in some areas, effortful in others"}, because ${name(md.lord)} is ${md.lord === "Ra" || md.lord === "Ke" ? `a node judged by its condition (${planetState(rc, md.lord).grade})` : lq.why}. Overall condition: ${stateTag(planetState(rc, md.lord))}.`;
       }),
     });
   }

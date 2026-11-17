@@ -10,6 +10,8 @@ import { ageAt } from "@/utils/astrology/ageBands";
 import BandNote from "./BandNote";
 import RankedList from "./RankedList";
 import SectionCard, { Section } from "./SectionCard";
+import { foreignPart } from "@/data/interpretations/reading/foreign";
+import { useReadingContext } from "./useReadingContext";
 import TimingWindows from "./TimingWindows";
 
 /** Foreign travel & settlement: scenario scores, purpose, direction, timing. */
@@ -30,6 +32,11 @@ export default function ForeignCard() {
     [chart, showTiming, dashaTree, ayanamsha, ashtakavarga, now]
   );
 
+  // The verdict comes from the chart reading's weighing (judge.ts), so the
+  // card and 5 of the reading always agree.
+  const rc = useReadingContext();
+  const judged = useMemo(() => (rc ? foreignPart(rc, false) : null), [rc]);
+
   const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
@@ -39,12 +46,11 @@ export default function ForeignCard() {
     <SectionCard
       icon={Plane}
       title={report.title}
-      headline={report.headline}
-      score={report.score}
-      verdict={report.verdict}
-      confidence={report.confidence}
+      headline={judged?.summary[0] ?? report.headline}
+      verdict={judged?.verdict?.word}
+      confidence={judged?.verdict?.confidence ?? report.confidence}
     >
-      <BriefView brief={brief} topTitle="Most likely form of foreign connection" />
+      <BriefView absolute brief={brief} topTitle="Most likely form of foreign connection" />
       <FullReasoning>
       {report.blocks.map((b) => (
         <Section key={b.heading} title={b.heading}>
@@ -53,7 +59,7 @@ export default function ForeignCard() {
               {p}
             </p>
           ))}
-          {b.items && <RankedList items={b.items} />}
+          {b.items && <RankedList words absolute items={b.items} />}
         </Section>
       ))}
       </FullReasoning>
@@ -66,7 +72,7 @@ export default function ForeignCard() {
         />
         {showTiming ? (
           timing && timing.length ? (
-            <TimingWindows windows={timing} title="Windows across ages 18–55" />
+            <TimingWindows words windows={timing} title="Windows across ages 18–55" />
           ) : (
             <p className="text-xs text-fg-muted">
               {report.hasDasha

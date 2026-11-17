@@ -82,6 +82,7 @@ import { yoginiDasha } from "../yogini";
 import { buildExpertLayers } from "../../export/expertLayers";
 import { buildMarkdownReport } from "../../export/markdownReport";
 import { buildReading as buildReading14, buildReadingContext as buildReadingContext14 } from "../../../data/interpretations/reading";
+import { houseState as houseState17, planetState as planetState17 } from "../../../data/interpretations/reading/judge";
 import { compactPoint as compactPoint13, stripGlosses as stripGlosses13 } from "../../../data/interpretations/brief";
 import { buildConfirmContext as buildConfirmContext13, confirmWindow as confirmWindow13 } from "../dashaConfirm";
 import { briefOfSection as briefOfSection13, decisive as decisive13, oneSentence as oneSentence13 } from "../../../data/interpretations/brief";
@@ -4136,6 +4137,100 @@ console.log("\n=== Phase 6: birth time rectification ===");
   // The 9th (Leo) is empty and receives Jupiter's 7th, Saturn's 10th and Rahu's 5th.
   check("Aspects-received table lists Jupiter (7th), Saturn (10th) and Rahu (5th) on the 9th house",
     /\| 9 \| Leo \| Sun \| — \| Jupiter \(7th\), Saturn \(10th\), Rahu \(5th\) \|/.test(md16));
+}
+
+// ---------------------------------------------------------------------------
+// Phase 17: the judgement layer of the chart reading. The reference is the
+// user's own expert reading of a Cancer-Lagna chart (1984-12-23 20:38 IST,
+// Madikeri). Each check pins a conclusion that reading states — weighed
+// evidence, not placement alone — so the reading cannot drift away from it.
+// ---------------------------------------------------------------------------
+{
+  console.log("\n=== Phase 17: chart-reading judgement layer ===");
+  const c17 = computeAutoChart({ name: "Ref", dateISO: "1984-12-23", time: "20:38", gender: "male",
+    place: { name: "Madikeri", lat: 12.4244, lon: 75.7382, timezone: "Asia/Kolkata" } } as AutoInputState, "lahiri")!;
+  const sg17: Partial<Record<PlanetId, number>> = {};
+  for (const p of c17.planets) sg17[p.id] = p.sign;
+  const av17 = computeAshtakavarga(sg17, c17.ascendant.sign);
+  const sb17 = computeShadbala(c17);
+  const jm17 = computeJaimini(c17);
+  const rc17 = buildReadingContext14({
+    chart: c17, ayanamsha: "lahiri", now: new Date("2026-11-17T00:00:00Z"), vargas: computeVargaSet(c17), jaimini: jm17, shadbala: sb17,
+    bhavaBala: sb17 ? computeBhavaBala(c17, sb17) : null, av: av17, strengths: allStrengths(c17, av17), yogas: detectYogas(c17),
+    extended: detectExtendedYogas(c17, jm17), special: computeSpecialPoints(c17, "lahiri"),
+    dashaTree: vimshottariTree(c17.planets.find((p) => p.id === "Mo")!.longitude, c17.birthUtc!),
+    confirm: buildConfirmContext13(c17),
+  });
+  const parts17 = buildReading14(rc17, { withTiming: true });
+  const part = (k: string) => parts17.find((p) => p.key === k)!;
+  const sec = (k: string, heading: string) => part(k).subsections.find((s) => s.heading.startsWith(heading));
+  const txt = (k: string, heading: string) => { const s = sec(k, heading); return s ? [...s.lead, ...s.bullets].join("\n") : ""; };
+  const has17 = (label: string, k: string, heading: string, needle: string | RegExp) => {
+    const t = txt(k, heading);
+    check(`Reference reading: ${label}`, typeof needle === "string" ? t.includes(needle) : needle.test(t));
+  };
+
+  // Career.
+  has17("10th is the strongest house (rank 1) — supporting", "career", "Supporting", /The 10th is the strongest house in the chart \(Bhava Bala [\d.]+, rank 1\)/);
+  has17("Mars, the yogakaraka, strongest — supporting", "career", "Supporting", /Its lord Mars, the yogakaraka \(5th and 10th lord\), is strong: the strongest planet by Shadbala/);
+  has17("Argala from Rahu and Mars, only Venus obstructs", "career", "Supporting", "Argala on the 10th comes from Rahu and Mars. Only Venus obstructs it.");
+  has17("Jupiter aspects the 10th", "career", "Supporting", "aspects the 10th");
+  has17("10th from the Moon (Virgo) SAV 38, the highest", "career", "Supporting", "The 10th from the Moon (Virgo) has SAV 38, the highest in the chart.");
+  has17("D10 Moon own sign in the Lagna, AmK Venus in the 10th", "career", "Supporting", /Moon is in its own sign in the D10 Lagna.*Amatyakaraka Venus is in the D10 10th/);
+  has17("A10 in Sagittarius with the Atmakaraka — problem-solver image", "career", "Supporting", /A10 is in Sagittarius .* the Atmakaraka Jupiter\. .*problem-solver/);
+  has17("10th lord in the 8th — opposing, sudden changes", "career", "Opposing", "The 10th lord sits in the 8th: career brings sudden changes, office politics, restructurings");
+  has17("10th SAV 28 only average — opposing", "career", "Opposing", "The 10th has SAV 28, only average.");
+  has17("D10 strains: Sun in the 8th, Mercury in the 7th, Saturn in the Lagna", "career", "Opposing", /Sun in the D10 8th \(friction with bosses or government\).*Mercury.*D10 7th.*Saturn in the D10 Lagna/);
+  has17("Rahu the Avayogi — opposing", "career", "Opposing", "Rahu is the Avayogi");
+  has17("Job vs business: A10 and Lagna lord in the 6th favour employment", "career", "Job vs. business", /A10 in the 6th,? (and )?the Lagna lord in the 6th.* favour employment/);
+  has17("Profession list includes finance/risk and healthcare", "career", "Profession types", /Finance, risk, insurance[\s\S]*Healthcare/);
+  check("Reference reading: career verdict is Strong with High confidence",
+    part("career").verdict?.word === "Strong promise" && part("career").verdict?.confidence === "High", JSON.stringify(part("career").verdict));
+  has17("career: senior-specialist authority, not a top political position", "career", "Verdict", "Senior-specialist or managerial authority is indicated rather than a top political-style position.");
+  has17("career now: three systems agree (Rahu–Venus, Chara Aries, Yogini Mars)", "career", "Timing: now", /Three systems agree\. Rahu–Venus .*Chara Aries antardasha .*Yogini Mars/);
+  has17("career past: Mars Mahadasha with Chara Aries", "career", "Timing: past", "The Mars Mahadasha (2006–13), together with Chara Aries (2004–14)");
+  has17("career ahead: Rahu–Sun is a pressure period", "career", "Timing: ahead", /Rahu–Sun \([^)]*\): .*career pressure/);
+  has17("career ahead: double transit on the 10th from Jun 2027", "career", "Timing: ahead", /Jun 2027 – Oct 2027.*Saturn transits Aries while Jupiter in Leo aspects Aries — a double transit on the 10th/);
+
+  // Wealth.
+  has17("11th SAV above the 12th — a natural saver", "wealth", "Supporting", "The 11th SAV (31) is well above the 12th (22), so income tends to exceed expenses");
+  has17("D2: Sun moolatrikona, Moon own sign, Jupiter exalted", "wealth", "Supporting", /D2 is excellent: .*Sun is in its moolatrikona.*Moon is in its own sign.*Jupiter is exalted/);
+  has17("Saturn aspects the 2nd — slow accumulation", "wealth", "Opposing", "aspects the 2nd, so accumulation is slow and family expenses are significant");
+  has17("2nd lord Sun in the 6th — loans, money lent", "wealth", "Opposing", "The 2nd lord Sun sits in the 6th: this points to EMIs or loans");
+  has17("5th afflicted — speculation loses", "wealth", "Opposing", /The 5th is afflicted by Saturn, Ketu and Mercury, plus Rahu's aspect/);
+  has17("Mars in the 8th — sudden expenses", "wealth", "Opposing", "Mars in the 8th brings sudden expenses as well as sudden gains.");
+  has17("Property strong, Venus moolatrikona in the D4 Lagna", "wealth", "Property and vehicles", /Property: Strong\..*4th SAV is 37.*Venus is in its moolatrikona in the D4 Lagna/);
+  has17("Indu Lagna in Pisces, matures in the Jupiter Mahadasha", "wealth", "Supporting", /The Indu Lagna is in Pisces .* Jupiter Mahadasha/);
+  check("Reference reading: wealth verdict is Good (above-average) and not the speculative stream",
+    part("wealth").verdict?.word === "Good promise" && !/speculation & windfalls/.test(part("wealth").summary[0]), part("wealth").summary[0]);
+
+  // Marriage.
+  has17("Venus in the 7th in a great friend's sign — supporting", "marriage", "Supporting", "Venus, the marriage karaka, is in the 7th in a great friend's sign");
+  has17("D9 Libra Lagna with the Moon, D9 7th lord Mars in its own sign", "marriage", "Supporting", /D9: the Lagna is Libra \(Venus's sign\) with the Moon in it and the D9 7th lord Mars is in its own sign/);
+  has17("Upapada Aries ruled by the strongest planet", "marriage", "Supporting", /The Upapada is Aries .*ruled by Mars, the strongest planet/);
+  has17("A7 in Virgo with SAV 38", "marriage", "Supporting", "A7 is in Virgo, with SAV 38.");
+  has17("7th SAV 21, the lowest", "marriage", "Opposing", "The 7th has SAV 21, the lowest in the chart");
+  has17("Venus aspected by Saturn and Rahu", "marriage", "Opposing", /Venus is aspected by Saturn and Rahu \(Drik Bala -/);
+  has17("7th lord at a junction, tight with Ketu", "marriage", "Opposing", "The 7th lord Saturn is at a sign junction and tight with Ketu.");
+  has17("Rahu in the 2nd from the Upapada", "marriage", "Opposing", "Rahu sits in the 2nd from the Upapada (Taurus).");
+  has17("D9 Venus with Saturn and Ketu", "marriage", "Opposing", "In D9, Venus is with Saturn and Ketu, giving a duty-bound marriage with phases of emotional distance.");
+  has17("Mangal Dosha from the Lagna", "marriage", "Opposing", "Mangal Dosha forms from the Lagna");
+  has17("Spouse: practical, hardworking, responsible", "marriage", "Spouse", /practical, hardworking, responsible/);
+  has17("Most likely marriage window in the Mars Mahadasha, inside Chara Aries", "marriage", "Timing: past", /Most likely marriage window: 20(0[6-9]|1[0-3])–20(1[0-3]).*Mars Mahadasha.*Mars–Saturn.*Mars–Venus.*Chara Aries/);
+  has17("Rahu enters Capricorn (the 7th) in Dec 2026", "marriage", "Timing: ahead", /Rahu enters Capricorn \(the 7th\) on \d+ Dec 2026/);
+  has17("Rahu passes over natal Venus in early 2027", "marriage", "Timing: ahead", /Rahu passes over natal Venus \(23° Capricorn\) around (Feb|Mar|Apr|May) 2027/);
+  has17("Marriage verdict: lasting, built on duty and shared goals", "marriage", "Verdict", "A lasting marriage built on duty and shared goals");
+
+  // The judgement layer itself.
+  const st17 = (id: PlanetId) => planetState17(rc17, id);
+  check("Judge: Mars is strong (own nakshatra, strongest by Shadbala)", st17("Ma").grade === "strong");
+  check("Judge: the 10th is a strong house and the 7th is not", houseState17(rc17, 10).grade === "strong" && houseState17(rc17, 7).grade !== "strong");
+  check("Judge: a placement alone never decides — a combust lord loses strength",
+    (() => { const p = c17.planets.find((x) => x.id === "Me")!; const was = p.combust; p.combust = true; const r = planetState17(buildReadingContext14({ ...rc17 }), "Me").score < st17("Me").score || was; p.combust = was; return r; })());
+  check("Every life-topic part carries Supporting, Opposing, a Verdict and a word confidence",
+    ["career", "wealth", "marriage", "foreign", "health"].every((k) => sec(k, "Supporting") && sec(k, "Opposing") && sec(k, "Verdict") && ["High", "Medium", "Low"].includes(part(k).verdict?.confidence ?? "")));
+  check("No numeric 0–100 scores appear in the chart reading", !/\d+\/100/.test(JSON.stringify(parts17)));
+  check("Reference reading: no undefined / NaN", !/undefined|NaN/.test(JSON.stringify(parts17)));
 }
 
 // ---------------------------------------------------------------------------

@@ -38,6 +38,10 @@ export interface ReadingPart {
   title: string;
   subsections: ReadingSubsection[];
   summary: string[];
+  /** The full working (house, varga and yoga detail) behind a "Full reasoning" toggle. */
+  detail?: ReadingSubsection[];
+  /** Verdict word and confidence, for headers and cards. */
+  verdict?: { word: string; confidence: "High" | "Medium" | "Low" };
 }
 
 export interface ReadingContext {

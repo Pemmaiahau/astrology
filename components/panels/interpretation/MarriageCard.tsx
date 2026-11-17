@@ -9,6 +9,8 @@ import { buildMarriageReport, marriageTimingWindows } from "@/data/interpretatio
 import { ageAt } from "@/utils/astrology/ageBands";
 import BandNote from "./BandNote";
 import SectionCard, { Section } from "./SectionCard";
+import { marriagePart } from "@/data/interpretations/reading/marriage";
+import { useReadingContext } from "./useReadingContext";
 import TimingWindows from "./TimingWindows";
 import WhyList from "./WhyList";
 
@@ -31,6 +33,11 @@ export default function MarriageCard() {
     [chart, showTiming, dashaTree, ayanamsha, ashtakavarga, jaimini, now]
   );
 
+  // The verdict comes from the chart reading's weighing (judge.ts), so the
+  // card and 4 of the reading always agree.
+  const rc = useReadingContext();
+  const judged = useMemo(() => (rc ? marriagePart(rc, false) : null), [rc]);
+
   const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
@@ -40,9 +47,9 @@ export default function MarriageCard() {
     <SectionCard
       icon={HeartHandshake}
       title={report.title}
-      headline={report.headline}
-      score={report.score}
-      confidence={report.confidence}
+      headline={judged?.summary[0] ?? report.headline}
+      verdict={judged?.verdict?.word}
+      confidence={judged?.verdict?.confidence ?? report.confidence}
     >
       <BriefView brief={brief} />
       <FullReasoning>
@@ -73,7 +80,7 @@ export default function MarriageCard() {
         />
         {showTiming ? (
           timing && timing.length ? (
-            <TimingWindows windows={timing} title="Windows across ages 22–45" />
+            <TimingWindows words windows={timing} title="Windows across ages 22–45" />
           ) : (
             <p className="text-xs text-fg-muted">
               {report.hasDasha

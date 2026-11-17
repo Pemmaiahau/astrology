@@ -10,6 +10,8 @@ import { ageAt } from "@/utils/astrology/ageBands";
 import BandNote from "./BandNote";
 import RankedList from "./RankedList";
 import SectionCard, { Section } from "./SectionCard";
+import { wealthPart } from "@/data/interpretations/reading/wealth";
+import { useReadingContext } from "./useReadingContext";
 import TimingWindows from "./TimingWindows";
 
 /** Sources of income: ranked streams, percentage split, per-stream timing. */
@@ -30,6 +32,11 @@ export default function WealthCard() {
     [chart, timingKey, dashaTree, ayanamsha, ashtakavarga, now]
   );
 
+  // The verdict comes from the chart reading's weighing (judge.ts), so the
+  // card and 3 of the reading always agree.
+  const rc = useReadingContext();
+  const judged = useMemo(() => (rc ? wealthPart(rc, false) : null), [rc]);
+
   const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
@@ -39,10 +46,9 @@ export default function WealthCard() {
     <SectionCard
       icon={Coins}
       title={report.title}
-      headline={report.headline}
-      score={report.score}
-      verdict={report.verdict}
-      confidence={report.confidence}
+      headline={judged?.summary[0] ?? report.headline}
+      verdict={judged?.verdict?.word}
+      confidence={judged?.verdict?.confidence ?? report.confidence}
     >
       <Section title="Balance of earning channels">
         <div className="space-y-1.5">
@@ -70,7 +76,7 @@ export default function WealthCard() {
               {p}
             </p>
           ))}
-          {b.items && <RankedList items={b.items} />}
+          {b.items && <RankedList words items={b.items} />}
         </Section>
       ))}
       </FullReasoning>
@@ -99,7 +105,7 @@ export default function WealthCard() {
         </div>
         {timingKey &&
           (timing && timing.length ? (
-            <TimingWindows windows={timing} title="Windows across ages 25–65" />
+            <TimingWindows words windows={timing} title="Windows across ages 25–65" />
           ) : (
             <p className="text-xs text-fg-muted">
               {report.hasDasha

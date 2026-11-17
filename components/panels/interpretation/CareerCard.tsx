@@ -10,6 +10,8 @@ import { ageAt } from "@/utils/astrology/ageBands";
 import BandNote from "./BandNote";
 import RankedList from "./RankedList";
 import SectionCard, { Section } from "./SectionCard";
+import { careerPart } from "@/data/interpretations/reading/career";
+import { useReadingContext } from "./useReadingContext";
 import TimingWindows from "./TimingWindows";
 import WhyList from "./WhyList";
 
@@ -33,6 +35,11 @@ export default function CareerCard() {
     [chart, showTiming, dashaTree, ayanamsha, ashtakavarga, jaimini, now]
   );
 
+  // The verdict comes from the chart reading's weighing (judge.ts), so the
+  // card and 2 of the reading always agree.
+  const rc = useReadingContext();
+  const judged = useMemo(() => (rc ? careerPart(rc, false) : null), [rc]);
+
   const age = chart?.birthUtc ? ageAt(chart.birthUtc, now) : null;
 
   if (!chart || !report) return null;
@@ -42,10 +49,9 @@ export default function CareerCard() {
     <SectionCard
       icon={Briefcase}
       title={report.title}
-      headline={report.headline}
-      score={report.score}
-      verdict={report.verdict}
-      confidence={report.confidence}
+      headline={judged?.summary[0] ?? report.headline}
+      verdict={judged?.verdict?.word}
+      confidence={judged?.verdict?.confidence ?? report.confidence}
     >
       <BriefView brief={brief} topTitle="Best-fitting career directions" />
       <FullReasoning>
@@ -56,7 +62,7 @@ export default function CareerCard() {
               {p}
             </p>
           ))}
-          {b.items && <RankedList items={b.items} />}
+          {b.items && <RankedList words items={b.items} />}
           {b.reasons && b.reasons.length > 0 && <WhyList reasons={b.reasons} />}
         </Section>
       ))}
@@ -70,7 +76,7 @@ export default function CareerCard() {
         />
         {showTiming ? (
           timing && timing.length ? (
-            <TimingWindows windows={timing} title="Windows by career stage" />
+            <TimingWindows words windows={timing} title="Windows by career stage" />
           ) : (
             <p className="text-xs text-fg-muted">
               {report.hasDasha

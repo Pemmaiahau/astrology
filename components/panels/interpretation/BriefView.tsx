@@ -3,6 +3,8 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { BriefPoint, SectionBrief } from "@/data/interpretations/brief";
+import { confidenceWord } from "./ConfidenceBadge";
+import { fitWord } from "./RankedList";
 
 const fmt = (d: Date) => d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 
@@ -41,7 +43,8 @@ export function BriefPoints({ points, title = "Key factors" }: { points: BriefPo
  * the next windows. Everything shown is selected from the section's own
  * weighted evidence (see `brief.ts`), so it never disagrees with the full text.
  */
-export default function BriefView({ brief, topTitle = "Most likely" }: { brief: SectionBrief; topTitle?: string }) {
+export default function BriefView({ brief, topTitle = "Most likely", absolute = false }: { brief: SectionBrief; topTitle?: string; absolute?: boolean }) {
+  const top = Math.max(0, ...brief.top.map((t) => t.score));
   return (
     <div className="space-y-3 rounded-lg border border-primary-border-soft bg-primary-wash/40 p-3">
       {brief.top.length > 0 && (
@@ -53,9 +56,7 @@ export default function BriefView({ brief, topTitle = "Most likely" }: { brief: 
                 <span className="font-semibold text-heading-2">
                   {i + 1}. {t.label}
                 </span>{" "}
-                <span className="font-mono text-xs text-fg-muted">
-                  {t.score}/100 · {t.verdict}
-                </span>
+                <span className="text-xs text-fg-muted">· {absolute ? t.verdict.toLowerCase() : fitWord(t.score, top, i)}</span>
                 {t.why && <span className="block text-xs text-fg-muted">{t.why}</span>}
               </li>
             ))}
@@ -73,7 +74,7 @@ export default function BriefView({ brief, topTitle = "Most likely" }: { brief: 
                   {fmt(w.start)} → {fmt(w.end)}
                 </span>{" "}
                 <span className="text-xs text-fg-muted">
-                  (age {w.ageRange.from}–{w.ageRange.to}) · {w.label} · {w.grade}, {w.confidence}%
+                  (age {w.ageRange.from}–{w.ageRange.to}) · {w.label} · {w.grade}, {confidenceWord(w.confidence)} confidence
                   {w.confirmedBy?.length ? ` · confirmed by ${w.confirmedBy.join(" + ")}` : ""}
                 </span>
               </li>

@@ -2,23 +2,34 @@
 
 import { ChevronDown, ChevronRight, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import type { Verdict } from "@/data/interpretations/report";
-import ConfidenceBadge from "./ConfidenceBadge";
+import ConfidenceBadge, { type ConfidenceValue } from "./ConfidenceBadge";
 
 /**
- * Collapsible card shell for the scored Interpretation sections — the visual
- * sibling of the Life Areas AreaCard (chevron header, verdict chip, score
- * bar). Children render only after first expand, which doubles as the lazy
- * boundary for expensive timing computations inside the section.
+ * Collapsible card shell for the Interpretation sections — the visual
+ * sibling of the Life Areas AreaCard (chevron header, verdict chip and
+ * confidence in words; no numeric scores). Children render only after first
+ * expand, which doubles as the lazy boundary for expensive timing
+ * computations inside the section.
  */
 
-const VERDICT_STYLE: Record<Verdict, string> = {
+const VERDICT_STYLE: Record<string, string> = {
   "Strong promise": "bg-good-soft text-good ring-good-ring",
+  "Good promise": "bg-info-soft text-info ring-info-ring",
   Supportive: "bg-info-soft text-info ring-info-ring",
+  "Mixed promise": "bg-primary-soft text-heading ring-primary-ring",
   Mixed: "bg-primary-soft text-heading ring-primary-ring",
   "Needs effort": "bg-warn-soft text-warn ring-warn-ring",
+  "Weak promise": "bg-bad-soft text-bad ring-bad-ring",
   Challenged: "bg-bad-soft text-bad ring-bad-ring",
 };
+
+export function VerdictChip({ verdict }: { verdict: string }) {
+  return (
+    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset ${VERDICT_STYLE[verdict] ?? VERDICT_STYLE.Mixed}`}>
+      {verdict}
+    </span>
+  );
+}
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -33,7 +44,6 @@ export default function SectionCard({
   icon: Icon,
   title,
   headline,
-  score,
   verdict,
   confidence,
   defaultOpen = false,
@@ -42,9 +52,8 @@ export default function SectionCard({
   icon: LucideIcon;
   title: string;
   headline?: string;
-  score?: number;
-  verdict?: Verdict;
-  confidence?: number;
+  verdict?: string;
+  confidence?: ConfidenceValue;
   defaultOpen?: boolean;
   children: ReactNode;
 }) {
@@ -73,25 +82,8 @@ export default function SectionCard({
             <span className="mt-0.5 block text-xs font-medium leading-snug text-heading-2">{headline}</span>
           )}
         </span>
-        {verdict && (
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset ${VERDICT_STYLE[verdict]}`}
-          >
-            {verdict}
-          </span>
-        )}
+        {verdict && <VerdictChip verdict={verdict} />}
         {confidence !== undefined && <ConfidenceBadge value={confidence} />}
-        {score !== undefined && (
-          <span className="hidden items-center gap-1.5 sm:flex">
-            <span className="h-1.5 w-24 overflow-hidden rounded-full bg-inset-2">
-              <span
-                className="block h-full rounded-full bg-gradient-to-r from-cta-from to-cta-to-hover"
-                style={{ width: `${score}%` }}
-              />
-            </span>
-            <span className="font-mono text-xs text-fg-muted">{score}</span>
-          </span>
-        )}
       </button>
       {open && (
         <div className="space-y-4 px-4 pb-4">

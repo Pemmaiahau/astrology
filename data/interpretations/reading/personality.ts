@@ -14,12 +14,21 @@ import {
   ratioRanking, savOrder, sav, sentences, SIGNS, strengthRankPhrase, vargaHighlights, vargaPos, vimshopaka,
   vimshopakaRank, within, type ReadingContext, type ReadingPart, type ReadingSubsection,
 } from "./context";
+import { planetState, type PlanetState } from "./judge";
 import {
   KARAKAMSA_PLANET, LAGNA_LORD_IN_HOUSE, LAGNA_PHYSIQUE, LAGNA_SHADOW, MERCURY_STRONG, MERCURY_WEAK,
   PLANET_ON_LAGNA_BODY, SIGN_TONE,
 } from "./tables";
 
 const MALEFICS: PlanetId[] = ["Su", "Ma", "Sa", "Ra", "Ke"];
+
+/** How fully a planet delivers what its placement text describes. */
+function conditionLine(id: PlanetId, st: PlanetState): string {
+  if (st.grade === "strong") return `Condition: strong (${st.plus.slice(0, 3).join(", ")}${st.minus.length ? `; against it: ${st.minus[0]}` : ""}), so ${name(id)} delivers these results fully.`;
+  if (st.grade === "weak") return `Condition: weak (${st.minus.slice(0, 3).join(", ")}${st.plus.length ? `; in its favour: ${st.plus[0]}` : ""}), so these results come in a diluted or effortful form, mostly in its own periods.`;
+  const mix = [...st.plus.slice(0, 2), ...st.minus.slice(0, 2)];
+  return `Condition: moderate${mix.length ? ` (${mix.join(", ")})` : ""}, so these results are real but measured.`;
+}
 
 /** Short form of a yoga description: its first sentence. */
 const yogaLine = (text: string) => sentences(text, 1)[0] ?? text;
@@ -85,7 +94,7 @@ export function personalityPart(rc: ReadingContext): ReadingPart {
       const lead = [
         `${name(lagnaLord)} is at ${deg(p.longitude)} ${SIGNS[p.sign]} in ${n.name} pada ${n.pada}, ${DIGNITY_WORD[p.dignity]}${p.retrograde ? ", retrograde" : ""}${p.combust ? ", combust" : ""}.`,
       ];
-      const bullets = [LAGNA_LORD_IN_HOUSE[p.house - 1]];
+      const bullets = [LAGNA_LORD_IN_HOUSE[p.house - 1], conditionLine(lagnaLord, planetState(rc, lagnaLord))];
       bullets.push(`${SIGNS[p.sign]} and ${n.name} make this ${SIGN_TONE[p.sign]}: ${NAKSHATRA_QUALITIES[n.index]}.`);
       const llRule = lordshipBullet(rc, lagnaLord);
       if (llRule) bullets.push(llRule);
@@ -125,7 +134,7 @@ export function personalityPart(rc: ReadingContext): ReadingPart {
     const lead = [
       `The Moon is at ${deg(moon.longitude)} ${SIGNS[moon.sign]} in ${n.name} pada ${n.pada}${conj.length ? `, joined by ${names(conj)}` : ""}.${asp.length ? ` ${names(asp)} ${asp.length > 1 ? "aspect" : "aspects"} ${conj.length ? "them" : "it"}.` : ""}`,
     ];
-    const bullets = [`With the Moon in ${SIGNS[moon.sign]}, the mind ${MOON_MIND[moon.sign]}`];
+    const bullets = [`With the Moon in ${SIGNS[moon.sign]}, the mind ${MOON_MIND[moon.sign]}`, conditionLine("Mo", planetState(rc, "Mo")).replace("these results are", "this emotional pattern is").replace("these results come", "this emotional pattern comes").replace("delivers these results", "delivers this emotional pattern")];
     bullets.push(`${n.name} gives ${NAKSHATRA_QUALITIES[n.index]}.`);
     for (const id of conj) {
       const text = CONJUNCTION_TEXT[conjunctionKey("Mo", id)];
@@ -250,6 +259,7 @@ export function personalityPart(rc: ReadingContext): ReadingPart {
     const r = ratio(rc, id);
     const lead = [`${name(id)} is at ${deg(p.longitude)} in ${n.name} pada ${n.pada}, ${DIGNITY_WORD[p.dignity]}${p.combust ? ", combust" : ""}${ownNak ? ", in its own nakshatra" : ""}${r !== null ? `, at ${fmtRatio(r)} its Shadbala requirement` : ""}.`];
     const bullets = sentences(PLANET_IN_HOUSE[id][p.house - 1], 3);
+    bullets.push(conditionLine(id, planetState(rc, id)));
     const l = lordshipBullet(rc, id);
     if (l) bullets.push(l);
     if (vo || ownNak) bullets.push(`Being ${joinAnd([vo ? "vargottama" : "", ownNak ? "in its own nakshatra" : ""].filter(Boolean))}, ${name(id)} is reliable: ${id === "Sa" ? "it takes slowly but gives lasting results" : "what it shows on the surface is what it delivers"}.`);

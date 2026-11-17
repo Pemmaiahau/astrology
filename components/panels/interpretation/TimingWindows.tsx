@@ -1,5 +1,6 @@
 "use client";
 
+import { confidenceWord } from "./ConfidenceBadge";
 import type { TimingWindow } from "@/data/interpretations/report";
 
 const fmt = (d: Date) => d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
@@ -27,7 +28,7 @@ const PHASE_LABEL: Record<TimingWindow["phase"], string> = {
   future: "upcoming",
 };
 
-function WindowRow({ w }: { w: TimingWindow }) {
+function WindowRow({ w, words = false }: { w: TimingWindow; words?: boolean }) {
   return (
     <li className={`text-xs leading-relaxed ${w.phase === "past" ? "text-fg-muted" : "text-fg"}`}>
       <div className="flex flex-wrap items-center gap-2">
@@ -50,7 +51,7 @@ function WindowRow({ w }: { w: TimingWindow }) {
         >
           {w.grade}
         </span>
-        <span className="text-[10px] text-fg-subtle">{w.confidence}% confidence</span>
+        <span className="text-[10px] text-fg-subtle">{words ? `${confidenceWord(w.confidence)} confidence` : `${w.confidence}% confidence`}</span>
         {w.confirmedBy?.map((c) => (
           <span key={c} className="rounded-full bg-good-soft px-1.5 py-0.5 text-[10px] font-semibold text-good">
             {c} ✓
@@ -91,7 +92,7 @@ function WindowRow({ w }: { w: TimingWindow }) {
  * always anchored to the reader's own age — a window is only meaningful as a
  * stage of a life. Windows carrying a `group` are rendered under its heading.
  */
-export default function TimingWindows({ windows, title }: { windows: TimingWindow[]; title: string }) {
+export default function TimingWindows({ windows, title, words = false }: { windows: TimingWindow[]; title: string; words?: boolean }) {
   if (!windows.length) return null;
 
   // Preserve first-appearance order of groups; ungrouped windows keep a flat list.
@@ -116,7 +117,7 @@ export default function TimingWindows({ windows, title }: { windows: TimingWindo
               )}
               <ul className="space-y-2">
                 {g.items.map((w, i) => (
-                  <WindowRow key={i} w={w} />
+                  <WindowRow key={i} w={w} words={words} />
                 ))}
               </ul>
             </div>
@@ -125,7 +126,7 @@ export default function TimingWindows({ windows, title }: { windows: TimingWindo
       ) : (
         <ul className="space-y-2">
           {windows.map((w, i) => (
-            <WindowRow key={i} w={w} />
+            <WindowRow key={i} w={w} words={words} />
           ))}
         </ul>
       )}
